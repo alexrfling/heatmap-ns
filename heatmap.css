@@ -1,0 +1,102 @@
+.axis path { /* the axis line */
+  stroke: none;
+  stroke-width: 0;
+}
+
+.axis line { /* the tickmarks */
+  stroke: black;
+  shape-rendering: crispEdges;
+}
+
+.axis text { /* the labels */
+  font-family: sans-serif;
+  font-size: 9px;
+}
+
+rect:hover {
+  fill-opacity: 0.5;
+  /*stroke-width: 3px;
+  stroke-opacity: 1;
+  stroke: dimgray;*/
+}
+
+p {
+  font-family: sans-serif;
+  font-size: 13px;
+}
+
+.tooltip {
+  position: absolute;
+  width: auto;
+  height: auto;
+  background-color: white;
+  padding: 5px;
+  -webkit-box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+  -moz-box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  /*-webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;*/
+  /*word-wrap: break-word;*/
+}
+
+#settings {
+	pointer-events: all;
+	/*opacity: 0.5;*/
+}
+
+/*.tooltip.hidden {
+  display: none;
+}*/
+.hidden {
+	display: none;
+}
+
+.tooltip p {
+  margin: 0;
+  font-family: sans-serif;
+  font-size: 14px;
+}
+
+.selection {
+	fill: lightgray;
+	fill-opacity: 0.2;
+	stroke: gray;
+}
+
+select {
+  margin: 0px;
+}
+
+button {
+  margin: 0px;
+}
+
+/*body > div {
+	border: solid;
+}*/
+
+svg {
+	border: solid;
+	shape-rendering: crispEdges; /* holy grail */
+}
+
+.annoTitle {
+	font-family: sans-serif;
+	font-size: 11px;
+	font-weight: bold;
+}
+
+.tooltip td:nth-child(1) p { /* the row names in the tooltip's table */
+	font-weight: bold;
+	text-align: right;
+}
+
+.tooltip td:nth-child(2) { /* the values in each row */
+	padding-left: 5px;
+}
+
+.tooltip > p { /* the title of the tooltip */
+	font-weight: bold;
+}
