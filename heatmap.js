@@ -3,7 +3,7 @@
 //--------------------------------------------------------------------------------------------------
 
 function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowClustOrder,
-                 height, renderOnBrushEnd = false, categorical = true,
+                 height = 600, renderOnBrushEnd = false, categorical = true,
                  categoricalScheme = "google", continuousScheme = "rainbow",
                  annoHeatScheme = "plasma", animDuration = 1200,
                  sideColorPadding = 3, annoTitlePadding = 7, axisOffset = 5,
@@ -1191,9 +1191,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
   function displayAnnoTooltip(d, mousedOverRect, dim) {
   	var obj = mousedOverRect.getBoundingClientRect(),
-			  anchor = [document.body.offsetHeight > window.innerHeight ?
-			            window.outerWidth - obj.left - window.pageXOffset :
-			            window.innerWidth - obj.left - window.pageXOffset,
+			  anchor = [//document.body.offsetHeight > window.innerHeight ?
+			            //window.outerWidth - obj.left - window.pageXOffset :
+			            //window.innerWidth - obj.left - window.pageXOffset,
+                  window.innerWidth - obj.left - window.pageXOffset,
 			            obj.top + window.pageYOffset];
 		annoTooltip.style("right", anchor[0] + "px")
 			         .style("top", 	 anchor[1] + "px")
