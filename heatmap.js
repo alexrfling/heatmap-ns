@@ -649,22 +649,18 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     if (col.annotated) {
       col.axisAnnoVis.call(col.axisAnno);
       positionElement(col.axisAnnoVis, col.anchorAnnoLabel);
-    }
-    if (row.annotated) {
-      row.axisAnnoVis.call(row.axisAnno);
-      positionElement(row.axisAnnoVis, row.anchorAnnoLabel);
-    }
 
-    // reposition/resize side colors
-    if (col.annotated) {
       positionElement(col.sideColorBar, col.anchorSideColor);
       col.sideColors.attr("x", col.xSideColor)
                     .attr("y", col.ySideColor)
                     .attr("width", col.widthSideColor)
                     .attr("height", col.heightSideColor);
     }
-
+    
     if (row.annotated) {
+      row.axisAnnoVis.call(row.axisAnno);
+      positionElement(row.axisAnnoVis, row.anchorAnnoLabel);
+
       positionElement(row.sideColorBar, row.anchorSideColor);
       row.sideColors.attr("x", row.xSideColor)
                     .attr("y", row.ySideColor)
@@ -689,6 +685,12 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
                   .attr("width", widthCellBottom)
                   .attr("height", heightCellBottom);
 
+    col.brushVis.call(col.brush);
+    row.brushVis.call(row.brush);
+
+    button.attr("x", row.anchorBrush[0])
+          .attr("y", col.anchorBrush[1]);
+
     // reposition/resize color key/anno colors
     if (col.annotated) {
       positionElement(col.annoTitle, col.anchorAnnoTitle);
@@ -709,12 +711,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
                     .attr("height", row.heightAnnoColor)
                     .attr("fill", row.fillAnnoColor);
     }
-
-    col.brushVis.call(col.brush);
-    row.brushVis.call(row.brush);
-
-    button.attr("x", row.anchorBrush[0])
-  				.attr("y", col.anchorBrush[1])
   }
 
   function svgSetup(w, h) {
