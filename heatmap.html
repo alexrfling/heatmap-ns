@@ -8,7 +8,6 @@
 	<script src="data.js"></script>
 </head>
 <body>
-	<p id="newView"></p>
 	<div id="heatmap"></div>
 	<script>
     var TEST_SET_INDEX = 0; // set to 0 for a dataset with more interesting features,
@@ -21,7 +20,7 @@
     				colClustOrder 		= colClustered[TEST_SET_INDEX],
     				rowClustOrder 		= rowClustered[TEST_SET_INDEX],
 	    			height 						= 700,
-	    			renderOnBrushEnd 	= false,				// set to true for extremely large datasets / slow browsers
+	    			renderOnBrushEnd 	= true,				// set to true for extremely large datasets / slow browsers
 	    			categorical 			= true,				// true = discrete colors for annotations false = continuous
 	    			categoricalScheme = "google", 	// "google", "rainbow" (ignored if categorical = false)
 	    			continuousScheme 	= "rainbow",	// "cubehelix", "rainbow" (ignored if categorical = true)
