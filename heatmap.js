@@ -3,13 +3,26 @@
 //--------------------------------------------------------------------------------------------------
 
 function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowClustOrder,
-                 height = 600, renderOnBrushEnd = false, categorical = true,
-                 categoricalScheme = "google", continuousScheme = "rainbow",
-                 annoHeatScheme = "plasma", animDuration = 1200,
-                 sideColorPadding = 3, annoTitlePadding = 7, axisOffset = 5,
-      					 fontSize = 9, fontSizeCK = 11,
-      					 lowColor = "cornflowerblue", midColor = "black", highColor = "orange",
-      					 numColors = 256) { // NOTE: ES6 needed to support default parameters
+                 height, renderOnBrushEnd, categorical, categoricalScheme, continuousScheme,
+                 annoHeatScheme, animDuration, sideColorPadding, annoTitlePadding, axisOffset,
+      					 fontSize, fontSizeCK, lowColor, midColor, highColor, numColors) {
+
+  height = height || 600;
+  renderOnBrushEnd = renderOnBrushEnd || false;
+  categorical = categorical || true;
+  categoricalScheme = categoricalScheme || "google";
+  continuousScheme = continuousScheme || "rainbow";
+  annoHeatScheme = annoHeatScheme || "plasma";
+  animDuration = animDuration || 1200;
+  sideColorPadding = sideColorPadding || 3;
+  annoTitlePadding = annoTitlePadding || 7;
+  axisOffset = axisOffset || 5;
+  fontSize = fontSize || 9;
+  fontSizeCK = fontSizeCK || 11;
+  lowColor = lowColor || "cornflowerblue";
+  midColor = midColor || "black";
+  highColor = highColor || "orange";
+  numColors = numColors || 256;
 
   var colors = getColors();
 
