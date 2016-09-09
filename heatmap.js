@@ -274,17 +274,14 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 		  							.attr("width", width + margin.left + margin.right)
 		  							.attr("height", height + margin.top + margin.bottom),
   		svg = SVG.append("g")             // the pseudo-SVG
-  						.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-  var scaleBy,
-  		scalingDim;
-
-  var settingsPanel = settingsPanelSetup();
-
-  var settingsHidden = true;
+  						.attr("transform", "translate(" + margin.left + "," + margin.top + ")"),
+      scaleBy,
+  		scalingDim,
+      settingsPanel = settingsPanelSetup(),
+      settingsHidden = true;
 
   function settingsPanelSetup() {
-  	var panel = container.append("div").attr("id", "settings").attr("draggable", "true")
+  	var panel = container.append("div").attr("id", "settings")
   								.attr("class", "tooltip").classed("hidden", true);
     panel.append("p").text("Settings");
   	var table = panel.append("table"),
@@ -730,10 +727,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // updates the current scope of the given dimension and, if renderOnBrushEnd is false, performs
   // visual updates on the main heatmap and side colors
   function brushed(dim) {
-    if (!settingsHidden) { // if the settings panel is visible, hide it
-      settingsPanel.classed("hidden", true);
-      settingsHidden = true;
-    }
+    settingsPanel.classed("hidden", true); // hide the settings panel in case it's visible
+    settingsHidden = true;
     if (!renderOnBrushEnd) {
     	var inverses = d3.event.selection.map(dim.scaleInverter); // bounds of brushed -> row/column
     	dim.currentScope = [dim.names.indexOf(inverses[0]), dim.names.indexOf(inverses[1]) + 1];
@@ -759,6 +754,9 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       	renderScope(dim, true);
       }
     } else {
+      settingsPanel.classed("hidden", true); // hide the settings panel in case it's visible
+      settingsHidden = true;
+      
     	dim.currentScope = [0, dim.names.length];
 
       // scale updates
