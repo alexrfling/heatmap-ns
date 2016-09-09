@@ -268,7 +268,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
   // TODO: implement resizability for real
   window.addEventListener("resize", resizeSVG);
-  var boundsViewer = d3.select("body").append("p");
 
   var container = d3.select("#" + id),  // a d3 selection of the DOM element the user passed in
   		SVG = container.append("svg")     // the actual SVG
@@ -283,22 +282,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   var settingsPanel = settingsPanelSetup();
 
   var settingsVisible = false;
-  var button = svg.append("rect")
-  	.attr("x", row.anchorBrush[0])
-  	.attr("y", col.anchorBrush[1])
-  	.attr("width", row.marginBrush)
-  	.attr("height", col.marginBrush)
-  	.attr("fill", "green")
-  	.on("click", function() {
-  		//var obj = container.getBoundingClientRect();//,
-        	//anchor = [obj.left + anchorHeatmap[0] + window.pageXOffset,
-          //        	obj.top + anchorHeatmap[1] + window.pageYOffset];
-      //boundsViewer.text(obj.left);
-  		settingsPanel.style("left", 0 + "px")
-               		 .style("top", 	0 + "px")
-  								 .classed("hidden", settingsVisible);
-  		settingsVisible = !settingsVisible;
-  	});
 
   function settingsPanelSetup() {
   	var panel = container.append("div").attr("id", "settings").attr("draggable", "true")
@@ -493,12 +476,18 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   if (col.annotated) col.axisAnno = d3.axisRight(col.scaleAnnoLabel);
 
   // SVG elements (these are visible)
-  row.axisMainVis = svg.append("g").attr("class", "axis").call(row.axisMain);
-  col.axisMainVis = svg.append("g").attr("class", "axis").call(col.axisMain);
-  row.axisSubVis 	= svg.append("g").attr("class", "axis").call(row.axisSub);
-  col.axisSubVis 	= svg.append("g").attr("class", "axis").call(col.axisSub);
-  if (row.annotated) row.axisAnnoVis = svg.append("g").attr("class", "axis").call(row.axisAnno);
-  if (col.annotated) col.axisAnnoVis = svg.append("g").attr("class", "axis").call(col.axisAnno);
+  row.axisMainVis = svg.append("g").attr("class", "axis")
+                      .style("font-size", fontSize).call(row.axisMain);
+  col.axisMainVis = svg.append("g").attr("class", "axis")
+                      .style("font-size", fontSize).call(col.axisMain);
+  row.axisSubVis 	= svg.append("g").attr("class", "axis")
+                      .style("font-size", fontSize).call(row.axisSub);
+  col.axisSubVis 	= svg.append("g").attr("class", "axis")
+                      .style("font-size", fontSize).call(col.axisSub);
+  if (row.annotated) row.axisAnnoVis = svg.append("g").attr("class", "axis")
+                      .style("font-size", fontSize).call(row.axisAnno);
+  if (col.annotated) col.axisAnnoVis = svg.append("g").attr("class", "axis")
+                      .style("font-size", fontSize).call(col.axisAnno);
 
   //------------------------------------------------------------------------------------------------
   //                                         	CELLS AND TITLES
@@ -535,7 +524,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
                 .append("rect")           	// the cells have now been added, but still not visible
                 .attr("fill", fillCell)
                 .on("mouseover", function(d) { displayCellTooltip(d, this); })
-                .on("mouseout", function() { cellTooltip.classed("hidden", true); });
+                .on("mouseout", function() { cellTooltip.classed("hidden", true); })
+                .on("click", function() { toggleSettingsPanel(this) });
 
   // brushable heatmap at the right
   var heatmapRight = svg.append("g");
@@ -675,9 +665,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
     col.brushVis.call(col.brush);
     row.brushVis.call(row.brush);
-
-    button.attr("x", row.anchorBrush[0])
-          .attr("y", col.anchorBrush[1]);
 
     // reposition/resize color key/anno colors
     if (col.annotated) {
@@ -1079,7 +1066,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // appends the title for the color key of the given dimension and returns a reference to the
   // selection
   function annoTitleSetup(dim) {
-    return svg.append("text").attr("class", "annoTitle")
+    return svg.append("text").attr("class", "annoTitle").style("font-size", fontSizeCK)
     				.text(undersToSpaces(dim.annotypeAnno));
   }
 
@@ -1122,6 +1109,18 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 	  row1.append("td").append("p").attr("id", "annotype");
 	  row1.append("td").append("p").attr("id", "value");
 	  return tooltip;
+  }
+
+  function toggleSettingsPanel(clickedRect) {
+    cellTooltip.classed("hidden", true);
+    // copied from 'displayCellTooltip'
+    var obj = clickedRect.getBoundingClientRect(),
+        anchor = [obj.left + widthCell() + window.pageXOffset,
+                  obj.top + heightCell() + window.pageYOffset];
+    settingsPanel.style("left", anchor[0] + "px")
+                .style("top", 	anchor[1] + "px")
+                .classed("hidden", settingsVisible);
+    settingsVisible = !settingsVisible;
   }
 
   function displayCellTooltip(d, mousedOverRect) {

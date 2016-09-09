@@ -5,24 +5,15 @@
 
 .axis line { /* tickmarks */
   stroke: black;
-  shape-rendering: crispEdges;
+  /*shape-rendering: crispEdges;*/
 }
 
 .axis text { /* labels */
   font-family: sans-serif;
-  font-size: 9px;
 }
 
-rect:hover {
+rect:hover { /* all rects except those in the 'squished' heatmaps */
   fill-opacity: 0.5;
-  /*stroke-width: 3px;
-  stroke-opacity: 1;
-  stroke: dimgray;*/
-}
-
-p {
-  font-family: sans-serif;
-  font-size: 13px;
 }
 
 .tooltip {
@@ -41,31 +32,27 @@ p {
   /*word-wrap: break-word;*/
 }
 
-#settings {
+#settings { /* the control panel is only tooltip to have pointer events */
 	pointer-events: all;
-	/*opacity: 0.5;*/
 }
 
-/*.tooltip.hidden {
-  display: none;
-}*/
-.hidden {
+.hidden { /* used for hiding tooltips */
 	display: none;
 }
 
-.tooltip p {
+.tooltip p { /* all text inside tooltips */
   margin: 0;
   font-family: sans-serif;
   font-size: 14px;
 }
 
-.selection {
+.selection { /* sliding window for zoom/pan */
 	fill: lightgray;
 	fill-opacity: 0.2;
 	stroke: gray;
 }
 
-select {
+select { /* 'annotate by' and 'sort by' dropdowns */
   margin: 0px;
 }
 
@@ -73,18 +60,13 @@ button {
   margin: 0px;
 }
 
-/*body > div {
-	border: solid;
-}*/
-
 svg {
 	border: solid 1px;
 	shape-rendering: crispEdges; /* holy grail */
 }
 
-.annoTitle {
+.annoTitle { /* title(s) of the color key(s) */
 	font-family: sans-serif;
-	font-size: 11px;
 	font-weight: bold;
 }
 
@@ -93,10 +75,10 @@ svg {
 	text-align: right;
 }
 
-.tooltip td:nth-child(2) { /* the values in each row */
+.tooltip td:nth-child(2) { /* values in each row */
 	padding-left: 5px;
 }
 
-.tooltip > p { /* the title of the tooltip */
+.tooltip > p { /* title(s) of the tooltip(s) */
 	font-weight: bold;
 }
