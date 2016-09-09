@@ -1,3 +1,13 @@
+#uniqueid {
+  margin: 0px;
+  border: 0px;
+  padding: 0px;
+}
+
+svg {
+	shape-rendering: crispEdges; /* holy grail */
+}
+
 .axis path { /* axis line */
   stroke: none;
   stroke-width: 0;
@@ -5,7 +15,6 @@
 
 .axis line { /* tickmarks */
   stroke: black;
-  /*shape-rendering: crispEdges;*/
 }
 
 .axis text { /* labels */
@@ -50,19 +59,6 @@ rect:hover { /* all rects except those in the 'squished' heatmaps */
 	fill: lightgray;
 	fill-opacity: 0.2;
 	stroke: gray;
-}
-
-select { /* 'annotate by' and 'sort by' dropdowns */
-  margin: 0px;
-}
-
-button {
-  margin: 0px;
-}
-
-svg {
-	border: solid 1px;
-	shape-rendering: crispEdges; /* holy grail */
 }
 
 .annoTitle { /* title(s) of the color key(s) */

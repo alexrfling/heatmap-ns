@@ -24,11 +24,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   highColor = highColor || "orange";
   numColors = numColors || 256;
 
-  var colors = getColors();
-
-  var holder = document.getElementById(id),
-      holderSize = holder.getBoundingClientRect(),
-      width = holderSize.width;
+  var colors = getColors(),
+      parent = document.getElementById(id),
+      width = parent.clientWidth,
+      container = d3.select("#" + id).append("div").attr("id", "uniqueid");  // a d3 selection of the DOM element the user passed in
 
   var margin = {top: 3, right: 3, bottom: 3, left: 3};
   width = width - margin.left - margin.right;
@@ -206,15 +205,17 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   function marginsSetup(w, h) {
     marginAnnoColor = col.annotated || row.annotated ? h / 20 : 0;
     marginAnnoLabel = col.annotated || row.annotated ? // TODO: font width estimation
-                                    (col.annotypeAnno ? annoMax() * 7 : 76) : 0;
+                                    Math.min(w / 4, col.annotypeAnno ? annoMax() * 7 : 76) : 0;
     marginAnnoTitle = col.annotated || row.annotated ? fontSizeCK + 2 * annoTitlePadding : 0;
 
-    col.marginTotal = h;                                           // estimate of font width
-    col.marginLabel = Math.floor(axisOffset + lengthOfLongest(col.names) * 0.56 * fontSize);
+    col.marginTotal = h;
+    col.marginLabel = Math.min(w / 8,                                 // estimate of font width
+                        Math.floor(axisOffset + lengthOfLongest(col.names) * 0.56 * fontSize));
     col.marginBrush = h / 10;
 
-    row.marginTotal = w;                                           // estimate of font width
-    row.marginLabel = Math.floor(axisOffset + lengthOfLongest(row.names) * 0.78 * fontSize);
+    row.marginTotal = w;
+    row.marginLabel = Math.min(w / 8,                                 // estimate of font width
+                        Math.floor(axisOffset + lengthOfLongest(row.names) * 0.78 * fontSize));
     row.marginBrush = h / 10;
 
     // TODO: optionalize
@@ -282,8 +283,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // TODO: implement resizability for real
   window.addEventListener("resize", resizeSVG);
 
-  var container = d3.select("#" + id),  // a d3 selection of the DOM element the user passed in
-  		SVG = container.append("svg")     // the actual SVG
+  var SVG = container.append("svg")     // the actual SVG
 		  							.attr("width", width + margin.left + margin.right)
 		  							.attr("height", height + margin.top + margin.bottom),
   		svg = SVG.append("g")             // the pseudo-SVG
@@ -706,8 +706,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   }
 
   function resizeSVG() {
-    holderSize = holder.getBoundingClientRect();
-  	w = holderSize.width - margin.left - margin.right;
+  	w = parent.clientWidth - margin.left - margin.right;
   	h = height - margin.top - margin.bottom;
     svgSetup(w, h);
     marginsSetup(w, h);
