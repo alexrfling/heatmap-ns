@@ -393,8 +393,12 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   row.scaleCell      = d3.scaleBand(); // row.names, heightHeatmap -> y, height of cells
   col.scaleCellBrush = d3.scaleBand(); // col.names, row.marginBrush -> x, width of cellsRight
   row.scaleCellBrush = d3.scaleBand(); // row.names, col.marginBrush -> y, height of cellsBottom
-  if (col.annotated) col.scaleAnnoColor = d3.scaleBand().domain(col.annoTypesAndValues[col.annotypeAnno]);
-  if (row.annotated) row.scaleAnnoColor = d3.scaleBand().domain(row.annoTypesAndValues[row.annotypeAnno]);
+  if (col.annotated) {
+    col.scaleAnnoColor = d3.scaleBand().domain(col.annoTypesAndValues[col.annotypeAnno]);
+  }
+  if (row.annotated) {
+    row.scaleAnnoColor = d3.scaleBand().domain(row.annoTypesAndValues[row.annotypeAnno]);
+  }
 
   // scales for the labels of the rows, columns, and annotations
   row.scaleLabel 		 = d3.scalePoint();
@@ -424,13 +428,11 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     // so that the labels/tickmarks are centered on the cells)
     row.scaleLabel.domain(sample(row.names, Math.floor(heightHeatmap() / fontSize)))
              			.range([heightCell() / 2, heightHeatmap() - heightCell() / 2]);
-    col.scaleLabel.domain(sample(col.names,
-    																						Math.floor(col.factor * widthHeatmap() / fontSize)))
+    col.scaleLabel.domain(sample(col.names, Math.floor(col.factor * widthHeatmap() / fontSize)))
              			.range([widthCell() / 2, widthHeatmap() - widthCell() / 2]);
     row.scaleSubLabel.domain(sample(row.names, Math.floor(heightHeatmap() / fontSize)))
              				 .range([heightCell() / 2, heightHeatmap() - heightCell() / 2]);
-    col.scaleSubLabel.domain(sample(col.names,
-    																						Math.floor(col.factor * widthHeatmap() / fontSize)))
+    col.scaleSubLabel.domain(sample(col.names, Math.floor(col.factor * widthHeatmap() / fontSize)))
              				 .range([widthCell() / 2, widthHeatmap() - widthCell() / 2]);
     if (col.annotated) {
       col.scaleAnnoLabel.domain(sample(col.annoTypesAndValues[col.annotypeAnno],
@@ -738,14 +740,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
   // Resets the scope of the given dim only if there is no current selection (i.e., the user clicks
   // off of the selected area, otherwise renders the dim's current scope if renderOnBrushEnd is true
-  // @param 		dim - the dimension (either row or col) to be updated
-  // @modifies 	dim.currentScope
-  //						dim.scaleCell
-  //						dim.scaleLabel
-  // 						dim.axisMain
-  //						dim.axisMainVis
-  //						dim.sideColors
-  //						cells
   function ended(dim) {
     if (d3.event.selection) {
       if (renderOnBrushEnd) {
@@ -756,12 +750,13 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     } else {
       settingsPanel.classed("hidden", true); // hide the settings panel in case it's visible
       settingsHidden = true;
-      
+
     	dim.currentScope = [0, dim.names.length];
 
       // scale updates
       dim.scaleCell.domain(dim.names);
-      updateDimScale(dim, sample(dim.names, Math.floor(dim.factor * dim.sizeHeatmap() / fontSize)));
+      updateScaleLabel(dim, sample(dim.names,
+        Math.floor(dim.factor * dim.sizeHeatmap() / fontSize)));
 
       // visual updates
       dim.updateAxis(dim.axisMainVis, dim.axisMain);
@@ -783,7 +778,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
     // scale updates
     dim.scaleCell.domain(scopeArray);
-    updateDimScale(dim, sample(scopeArray, Math.floor(dim.factor * dim.sizeHeatmap() / fontSize)));
+    updateScaleLabel(dim, sample(scopeArray, Math.floor(dim.factor * dim.sizeHeatmap() / fontSize)));
 
     // visual updates
     transition ? dim.updateAxis(dim.axisMainVis, dim.axisMain)
@@ -928,7 +923,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
   // updates the main label scale of the given dimension with a domain of newDomain and
   // range realigned based on the sizeCell for that dimension
-  function updateDimScale(dim, newDomain) {
+  function updateScaleLabel(dim, newDomain) {
     dim.scaleLabel.domain(newDomain)
             			.range([dim.sizeCell() / 2, dim.sizeHeatmap() - dim.sizeCell() / 2]);
   }
