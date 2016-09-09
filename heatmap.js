@@ -281,7 +281,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
   var settingsPanel = settingsPanelSetup();
 
-  var settingsVisible = false;
+  var settingsHidden = true;
 
   function settingsPanelSetup() {
   	var panel = container.append("div").attr("id", "settings").attr("draggable", "true")
@@ -730,6 +730,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // updates the current scope of the given dimension and, if renderOnBrushEnd is false, performs
   // visual updates on the main heatmap and side colors
   function brushed(dim) {
+    if (!settingsHidden) { // if the settings panel is visible, hide it
+      settingsPanel.classed("hidden", true);
+      settingsHidden = true;
+    }
     if (!renderOnBrushEnd) {
     	var inverses = d3.event.selection.map(dim.scaleInverter); // bounds of brushed -> row/column
     	dim.currentScope = [dim.names.indexOf(inverses[0]), dim.names.indexOf(inverses[1]) + 1];
@@ -1112,6 +1116,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   }
 
   function toggleSettingsPanel(clickedRect) {
+    settingsHidden = !settingsHidden;
     cellTooltip.classed("hidden", true);
     // copied from 'displayCellTooltip'
     var obj = clickedRect.getBoundingClientRect(),
@@ -1119,8 +1124,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
                   obj.top + heightCell() + window.pageYOffset];
     settingsPanel.style("left", anchor[0] + "px")
                 .style("top", 	anchor[1] + "px")
-                .classed("hidden", settingsVisible);
-    settingsVisible = !settingsVisible;
+                .classed("hidden", settingsHidden);
   }
 
   function displayCellTooltip(d, mousedOverRect) {
