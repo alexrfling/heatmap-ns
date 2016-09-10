@@ -7,31 +7,54 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
                  annoHeatScheme, animDuration, sideColorPadding, annoTitlePadding, axisOffset,
       					 fontSize, fontSizeCK, lowColor, midColor, highColor, numColors) {
 
-  height = height || 600;
-  renderOnBrushEnd = renderOnBrushEnd || false;
-  categorical = categorical || true;
+  // assign parameters to defaults if not given
+  height            = height || 600;
+  renderOnBrushEnd  = renderOnBrushEnd || false;
+  categorical       = categorical || true;
   categoricalScheme = categoricalScheme || "google";
-  continuousScheme = continuousScheme || "rainbow";
-  annoHeatScheme = annoHeatScheme || "plasma";
-  animDuration = animDuration || 1200;
-  sideColorPadding = sideColorPadding || 3;
-  annoTitlePadding = annoTitlePadding || 7;
-  axisOffset = axisOffset || 5;
-  fontSize = fontSize || 9;
-  fontSizeCK = fontSizeCK || 11;
-  lowColor = lowColor || "cornflowerblue";
-  midColor = midColor || "black";
-  highColor = highColor || "orange";
-  numColors = numColors || 256;
+  continuousScheme  = continuousScheme || "rainbow";
+  annoHeatScheme    = annoHeatScheme || "plasma";
+  animDuration      = animDuration || 1200;
+  sideColorPadding  = sideColorPadding || 3;
+  annoTitlePadding  = annoTitlePadding || 7;
+  axisOffset        = axisOffset || 5;
+  fontSize          = fontSize || 9;
+  fontSizeCK        = fontSizeCK || 11;
+  lowColor          = lowColor || "cornflowerblue";
+  midColor          = midColor || "black";
+  highColor         = highColor || "orange";
+  numColors         = numColors || 256;
 
+  // TODO: implement resizability for real
+  window.addEventListener("resize", resizeSVG);
+
+  // contains all colors used for the heatmap, side colors, and color keys
   var colors = getColors(),
-      parent = document.getElementById(id),
-      width = parent.clientWidth,
-      container = d3.select("#" + id).append("div").attr("id", "uniqueid");  // a d3 selection of the DOM element the user passed in
 
+  // the DOM element passed in
+      parent = document.getElementById(id),
+
+  // the width of the SVG will be the same as the parent
+      width = parent.clientWidth,
+
+  // holds all DOM elements of the heatmap (SVG and divs for the tooltips)
+      container = d3.select("#" + id).append("div").attr("id", "uniqueid");
+
+  // margin convention for D3
   var margin = {top: 3, right: 3, bottom: 3, left: 3};
+
+  // width and height will refer to the 'inner' width/height of the widget, with margins applied
   width = width - margin.left - margin.right;
   height = height - margin.top - margin.bottom;
+
+  // the actual SVG, whose width is the same as the parent
+  var SVG = container.append("svg")
+              .attr("width", width + margin.left + margin.right)
+		  				.attr("height", height + margin.top + margin.bottom),
+
+  // the pseudo-SVG, with margins applied, to which all subsequent SVG elements are appended
+  		svg = SVG.append("g")
+  						.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
   // the "dims" will hold all elements relevant to the rows and columns of the data, separately
   var col = {}, row = {};
@@ -280,15 +303,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //
   //------------------------------------------------------------------------------------------------
 
-  // TODO: implement resizability for real
-  window.addEventListener("resize", resizeSVG);
-
-  var SVG = container.append("svg")     // the actual SVG
-		  							.attr("width", width + margin.left + margin.right)
-		  							.attr("height", height + margin.top + margin.bottom),
-  		svg = SVG.append("g")             // the pseudo-SVG
-  						.attr("transform", "translate(" + margin.left + "," + margin.top + ")"),
-      scaleBy,
+  var scaleBy,
   		scalingDim,
       settingsPanel = settingsPanelSetup(),
       settingsHidden = true;
