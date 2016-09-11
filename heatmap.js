@@ -25,9 +25,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   highColor         = highColor || "orange";
   numColors         = numColors || 256;
 
-  // TODO: implement resizability for real
-  window.addEventListener("resize", resizeSVG);
-
   // contains all colors used for the heatmap, side colors, and color keys
   var colors = getColors(),
 
@@ -55,6 +52,9 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // the pseudo-SVG, with margins applied, to which all subsequent SVG elements are appended
   		svg = SVG.append("g")
   						.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  // when the browser window resizes, the SVG also resizes to fit the parent's width
+  window.addEventListener("resize", resizeSVG);
 
   // the "dims" will hold all elements relevant to the rows and columns of the data, separately
   var col = {}, row = {};
@@ -297,7 +297,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   }
 
   //------------------------------------------------------------------------------------------------
-  //                               						CONTROL PANEL
+  //                               					SETTINGS PANEL
   //
   //
   //
@@ -315,6 +315,17 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   	var table = panel.append("table"),
   			row1 = table.append("tr");
     row1.append("td").append("p").text("Scale by");
+    scaleBy = row1.append("td").append("select").attr("id", "scaleBy")
+  								.on("change", function() { updateColorScaling(this.value); });
+  	scaleBy.selectAll("option")
+      .data([{ value: col.self, text: col.title },
+          	 { value: row.self, text: row.title },
+          	 { value: "none", text: "None" }])
+      .enter()
+      .append("option")
+      .attr("value", function(d) { return d.value; })
+      .text(function(d) { return d.text; });
+  	scalingDim = document.getElementById("scaleBy").value;
 
     // TODO: optionalize
   	if (col.annotated) {
@@ -341,18 +352,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     	sortOptionsSetup(row.sortBy, row);
       row.annotypeAnno = document.getElementById(row.idAnnoBy).value;
     }
-
-  	scaleBy = row1.append("td").append("select").attr("id", "scaleBy")
-  								.on("change", function() { updateColorScaling(this.value); });
-  	scaleBy.selectAll("option")
-      .data([{ value: col.self, text: col.title },
-          	 { value: row.self, text: row.title },
-          	 { value: "none", text: "None" }])
-      .enter()
-      .append("option")
-      .attr("value", function(d) { return d.value; })
-      .text(function(d) { return d.text; });
-  	scalingDim = document.getElementById("scaleBy").value;
 
   	return panel;
   }
