@@ -3,23 +3,58 @@
 //--------------------------------------------------------------------------------------------------
 
 function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowClustOrder,
-                 height = 600, renderOnBrushEnd = false, categorical = true,
-                 categoricalScheme = "google", continuousScheme = "rainbow",
-                 annoHeatScheme = "plasma", animDuration = 1200,
-                 sideColorPadding = 3, annoTitlePadding = 7, axisOffset = 5,
-      					 fontSize = 9, fontSizeCK = 11,
-      					 lowColor = "cornflowerblue", midColor = "black", highColor = "orange",
-      					 numColors = 256) { // NOTE: ES6 needed to support default parameters
+                 height, renderOnBrushEnd, categorical, categoricalScheme, continuousScheme,
+                 annoHeatScheme, animDuration, sideColorPadding, annoTitlePadding, axisOffset,
+      					 fontSize, fontSizeCK, lowColor, midColor, highColor, numColors) {
 
-  var colors = getColors();
+  // assign parameters to defaults if not given
+  height            = height || 600;
+  renderOnBrushEnd  = renderOnBrushEnd || false;
+  categorical       = categorical || true;
+  categoricalScheme = categoricalScheme || "google";
+  continuousScheme  = continuousScheme || "rainbow";
+  annoHeatScheme    = annoHeatScheme || "plasma";
+  animDuration      = animDuration || 1200;
+  sideColorPadding  = sideColorPadding || 3;
+  annoTitlePadding  = annoTitlePadding || 7;
+  axisOffset        = axisOffset || 5;
+  fontSize          = fontSize || 9;
+  fontSizeCK        = fontSizeCK || 11;
+  lowColor          = lowColor || "cornflowerblue";
+  midColor          = midColor || "black";
+  highColor         = highColor || "orange";
+  numColors         = numColors || 256;
 
-  var holder = document.getElementById(id),
-      holderSize = holder.getBoundingClientRect(),
-      width = holderSize.width;
+  // contains all colors used for the heatmap, side colors, and color keys
+  var colors = getColors(),
 
+  // the DOM element passed in
+      parent = document.getElementById(id),
+
+  // the width of the SVG will be the same as the parent
+      width = parent.clientWidth,
+
+  // holds all DOM elements of the heatmap (SVG and divs for the tooltips)
+      container = d3.select("#" + id).append("div").attr("id", "uniqueid");
+
+  // margin convention for D3
   var margin = {top: 3, right: 3, bottom: 3, left: 3};
+
+  // width and height will refer to the 'inner' width/height of the widget, with margins applied
   width = width - margin.left - margin.right;
   height = height - margin.top - margin.bottom;
+
+  // the actual SVG, whose width is the same as the parent
+  var SVG = container.append("svg")
+              .attr("width", width + margin.left + margin.right)
+		  				.attr("height", height + margin.top + margin.bottom),
+
+  // the pseudo-SVG, with margins applied, to which all subsequent SVG elements are appended
+  		svg = SVG.append("g")
+  						.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+  // when the browser window resizes, the SVG also resizes to fit the parent's width
+  window.addEventListener("resize", resizeSVG);
 
   // the "dims" will hold all elements relevant to the rows and columns of the data, separately
   var col = {}, row = {};
@@ -193,15 +228,17 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   function marginsSetup(w, h) {
     marginAnnoColor = col.annotated || row.annotated ? h / 20 : 0;
     marginAnnoLabel = col.annotated || row.annotated ? // TODO: font width estimation
-                                    (col.annotypeAnno ? annoMax() * 7 : 76) : 0;
+                                    Math.min(w / 4, col.annotypeAnno ? annoMax() * 7 : 76) : 0;
     marginAnnoTitle = col.annotated || row.annotated ? fontSizeCK + 2 * annoTitlePadding : 0;
 
-    col.marginTotal = h;                                           // estimate of font width
-    col.marginLabel = Math.floor(axisOffset + lengthOfLongest(col.names) * 0.56 * fontSize);
+    col.marginTotal = h;
+    col.marginLabel = Math.min(w / 8,                                 // estimate of font width
+                        Math.floor(axisOffset + lengthOfLongest(col.names) * 0.56 * fontSize));
     col.marginBrush = h / 10;
 
-    row.marginTotal = w;                                           // estimate of font width
-    row.marginLabel = Math.floor(axisOffset + lengthOfLongest(row.names) * 0.78 * fontSize);
+    row.marginTotal = w;
+    row.marginLabel = Math.min(w / 8,                                 // estimate of font width
+                        Math.floor(axisOffset + lengthOfLongest(row.names) * 0.78 * fontSize));
     row.marginBrush = h / 10;
 
     // TODO: optionalize
@@ -260,36 +297,35 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   }
 
   //------------------------------------------------------------------------------------------------
-  //                               						CONTROL PANEL
+  //                               					SETTINGS PANEL
   //
   //
   //
   //------------------------------------------------------------------------------------------------
 
-  // TODO: implement resizability for real
-  window.addEventListener("resize", resizeSVG);
-
-  var container = d3.select("#" + id),  // a d3 selection of the DOM element the user passed in
-  		SVG = container.append("svg")     // the actual SVG
-		  							.attr("width", width + margin.left + margin.right)
-		  							.attr("height", height + margin.top + margin.bottom),
-  		svg = SVG.append("g")             // the pseudo-SVG
-  						.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
   var scaleBy,
-  		scalingDim;
-
-  var settingsPanel = settingsPanelSetup();
-
-  var settingsHidden = true;
+  		scalingDim,
+      settingsPanel = settingsPanelSetup(),
+      settingsHidden = true;
 
   function settingsPanelSetup() {
-  	var panel = container.append("div").attr("id", "settings").attr("draggable", "true")
+  	var panel = container.append("div").attr("id", "settings")
   								.attr("class", "tooltip").classed("hidden", true);
     panel.append("p").text("Settings");
   	var table = panel.append("table"),
   			row1 = table.append("tr");
     row1.append("td").append("p").text("Scale by");
+    scaleBy = row1.append("td").append("select").attr("id", "scaleBy")
+  								.on("change", function() { updateColorScaling(this.value); });
+  	scaleBy.selectAll("option")
+      .data([{ value: col.self, text: col.title },
+          	 { value: row.self, text: row.title },
+          	 { value: "none", text: "None" }])
+      .enter()
+      .append("option")
+      .attr("value", function(d) { return d.value; })
+      .text(function(d) { return d.text; });
+  	scalingDim = document.getElementById("scaleBy").value;
 
     // TODO: optionalize
   	if (col.annotated) {
@@ -316,18 +352,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     	sortOptionsSetup(row.sortBy, row);
       row.annotypeAnno = document.getElementById(row.idAnnoBy).value;
     }
-
-  	scaleBy = row1.append("td").append("select").attr("id", "scaleBy")
-  								.on("change", function() { updateColorScaling(this.value); });
-  	scaleBy.selectAll("option")
-      .data([{ value: col.self, text: col.title },
-          	 { value: row.self, text: row.title },
-          	 { value: "none", text: "None" }])
-      .enter()
-      .append("option")
-      .attr("value", function(d) { return d.value; })
-      .text(function(d) { return d.text; });
-  	scalingDim = document.getElementById("scaleBy").value;
 
   	return panel;
   }
@@ -396,8 +420,12 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   row.scaleCell      = d3.scaleBand(); // row.names, heightHeatmap -> y, height of cells
   col.scaleCellBrush = d3.scaleBand(); // col.names, row.marginBrush -> x, width of cellsRight
   row.scaleCellBrush = d3.scaleBand(); // row.names, col.marginBrush -> y, height of cellsBottom
-  if (col.annotated) col.scaleAnnoColor = d3.scaleBand().domain(col.annoTypesAndValues[col.annotypeAnno]);
-  if (row.annotated) row.scaleAnnoColor = d3.scaleBand().domain(row.annoTypesAndValues[row.annotypeAnno]);
+  if (col.annotated) {
+    col.scaleAnnoColor = d3.scaleBand().domain(col.annoTypesAndValues[col.annotypeAnno]);
+  }
+  if (row.annotated) {
+    row.scaleAnnoColor = d3.scaleBand().domain(row.annoTypesAndValues[row.annotypeAnno]);
+  }
 
   // scales for the labels of the rows, columns, and annotations
   row.scaleLabel 		 = d3.scalePoint();
@@ -427,13 +455,11 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     // so that the labels/tickmarks are centered on the cells)
     row.scaleLabel.domain(sample(row.names, Math.floor(heightHeatmap() / fontSize)))
              			.range([heightCell() / 2, heightHeatmap() - heightCell() / 2]);
-    col.scaleLabel.domain(sample(col.names,
-    																						Math.floor(col.factor * widthHeatmap() / fontSize)))
+    col.scaleLabel.domain(sample(col.names, Math.floor(col.factor * widthHeatmap() / fontSize)))
              			.range([widthCell() / 2, widthHeatmap() - widthCell() / 2]);
     row.scaleSubLabel.domain(sample(row.names, Math.floor(heightHeatmap() / fontSize)))
              				 .range([heightCell() / 2, heightHeatmap() - heightCell() / 2]);
-    col.scaleSubLabel.domain(sample(col.names,
-    																						Math.floor(col.factor * widthHeatmap() / fontSize)))
+    col.scaleSubLabel.domain(sample(col.names, Math.floor(col.factor * widthHeatmap() / fontSize)))
              				 .range([widthCell() / 2, widthHeatmap() - widthCell() / 2]);
     if (col.annotated) {
       col.scaleAnnoLabel.domain(sample(col.annoTypesAndValues[col.annotypeAnno],
@@ -694,8 +720,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   }
 
   function resizeSVG() {
-    holderSize = holder.getBoundingClientRect();
-  	w = holderSize.width - margin.left - margin.right;
+  	w = parent.clientWidth - margin.left - margin.right;
   	h = height - margin.top - margin.bottom;
     svgSetup(w, h);
     marginsSetup(w, h);
@@ -730,10 +755,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // updates the current scope of the given dimension and, if renderOnBrushEnd is false, performs
   // visual updates on the main heatmap and side colors
   function brushed(dim) {
-    if (!settingsHidden) { // if the settings panel is visible, hide it
-      settingsPanel.classed("hidden", true);
-      settingsHidden = true;
-    }
+    settingsPanel.classed("hidden", true); // hide the settings panel in case it's visible
+    settingsHidden = true;
     if (!renderOnBrushEnd) {
     	var inverses = d3.event.selection.map(dim.scaleInverter); // bounds of brushed -> row/column
     	dim.currentScope = [dim.names.indexOf(inverses[0]), dim.names.indexOf(inverses[1]) + 1];
@@ -743,14 +766,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
   // Resets the scope of the given dim only if there is no current selection (i.e., the user clicks
   // off of the selected area, otherwise renders the dim's current scope if renderOnBrushEnd is true
-  // @param 		dim - the dimension (either row or col) to be updated
-  // @modifies 	dim.currentScope
-  //						dim.scaleCell
-  //						dim.scaleLabel
-  // 						dim.axisMain
-  //						dim.axisMainVis
-  //						dim.sideColors
-  //						cells
   function ended(dim) {
     if (d3.event.selection) {
       if (renderOnBrushEnd) {
@@ -759,11 +774,15 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       	renderScope(dim, true);
       }
     } else {
+      settingsPanel.classed("hidden", true); // hide the settings panel in case it's visible
+      settingsHidden = true;
+
     	dim.currentScope = [0, dim.names.length];
 
       // scale updates
       dim.scaleCell.domain(dim.names);
-      updateDimScale(dim, sample(dim.names, Math.floor(dim.factor * dim.sizeHeatmap() / fontSize)));
+      updateScaleLabel(dim, sample(dim.names,
+        Math.floor(dim.factor * dim.sizeHeatmap() / fontSize)));
 
       // visual updates
       dim.updateAxis(dim.axisMainVis, dim.axisMain);
@@ -785,7 +804,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
     // scale updates
     dim.scaleCell.domain(scopeArray);
-    updateDimScale(dim, sample(scopeArray, Math.floor(dim.factor * dim.sizeHeatmap() / fontSize)));
+    updateScaleLabel(dim, sample(scopeArray, Math.floor(dim.factor * dim.sizeHeatmap() / fontSize)));
 
     // visual updates
     transition ? dim.updateAxis(dim.axisMainVis, dim.axisMain)
@@ -930,7 +949,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
   // updates the main label scale of the given dimension with a domain of newDomain and
   // range realigned based on the sizeCell for that dimension
-  function updateDimScale(dim, newDomain) {
+  function updateScaleLabel(dim, newDomain) {
     dim.scaleLabel.domain(newDomain)
             			.range([dim.sizeCell() / 2, dim.sizeHeatmap() - dim.sizeCell() / 2]);
   }
