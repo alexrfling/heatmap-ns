@@ -226,29 +226,29 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   marginsSetup(width, height);
 
   function marginsSetup(w, h) {
-    marginAnnoColor = col.annotated || row.annotated ? h / 20 : 0;
+    marginAnnoColor = col.annotated || row.annotated ? Math.floor(h / 20) : 0;
     marginAnnoLabel = col.annotated || row.annotated ? // TODO: font width estimation
                                     Math.min(w / 4, col.annotypeAnno ? annoMax() * 7 : 76) : 0;
     marginAnnoTitle = col.annotated || row.annotated ? fontSizeCK + 2 * annoTitlePadding : 0;
 
     col.marginTotal = h;
-    col.marginLabel = Math.min(w / 8,                                 // estimate of font width
+    col.marginLabel = Math.min(Math.floor(w / 8),                     // estimate of font width
                         Math.floor(axisOffset + lengthOfLongest(col.names) * 0.56 * fontSize));
-    col.marginBrush = h / 10;
+    col.marginBrush = Math.floor(h / 10);
 
     row.marginTotal = w;
-    row.marginLabel = Math.min(w / 8,                                 // estimate of font width
+    row.marginLabel = Math.min(Math.floor(w / 8),                     // estimate of font width
                         Math.floor(axisOffset + lengthOfLongest(row.names) * 0.78 * fontSize));
-    row.marginBrush = h / 10;
+    row.marginBrush = Math.floor(h / 10);
 
     // TODO: optionalize
-    col.marginSideColor = col.annotated ? h / 40 : 0;
-    col.marginAnnoTotal = col.annotated ? 3 * h / 8 : 0;
+    col.marginSideColor = col.annotated ? Math.floor(h / 40) : 0;
+    col.marginAnnoTotal = col.annotated ? Math.floor(3 * h / 8) : 0;
     col.marginAnnoHeight = col.annotated ? col.marginAnnoTotal - marginAnnoTitle : 0;
 
     // TODO: optionalize
-    row.marginSideColor = row.annotated ? h / 40 : 0;
-    row.marginAnnoTotal = row.annotated ? 3 * h / 8 : 0;
+    row.marginSideColor = row.annotated ? Math.floor(h / 40) : 0;
+    row.marginAnnoTotal = row.annotated ? Math.floor(3 * h / 8) : 0;
     row.marginAnnoHeight = row.annotated ? row.marginAnnoTotal - marginAnnoTitle : 0;
   }
 
@@ -749,7 +749,15 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //------------------------------------------------------------------------------------------------
   //                                   INTERACTIVITY FUNCTIONS
   //
+  // These functions determine all the things that can happen after the heatmap is initially
+  // rendered (TODO: include resizeSVG in this section?).
   //
+  // For the brushes (the tools used to zoom/pan), there are 2 functions, brushed and ended, which
+  // handle all the updates to the data structures and DOM that are necessary to perform zoom/pan
+  // (with the help of helper functions).
+  //
+  // For the dropdowns in the settings panel, there are 3 functions, annoUpdate, sortUpdate, and
+  // updateColorScaling.
   //
   //------------------------------------------------------------------------------------------------
 
@@ -796,6 +804,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
   }
 
+  // renders the currentScope for the given dim. If transition is true, the labels will update with
+  // a transition, else they will update without a transition
   function renderScope(dim, transition) {
     var scopeArray = dim.names.slice(dim.currentScope[0], dim.currentScope[1]);
 	  var inScope = {};
@@ -925,7 +935,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
            .style("text-anchor", "start")    // end
            .attr("dx", ".8em")               // -.8em
            .attr("dy", ".15em")              // .15em
-           .attr("transform", "rotate(45)"); // rotate(45)
+           .attr("transform", "rotate(45)"); // rotate(-45)
   }
 
   // visually updates the given column axis (labels will be angled) WITH NO TRANSITION
@@ -1138,9 +1148,13 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 	  return tooltip;
   }
 
+  // positions the settings panel at the lower-right corner of the cell (clickedRect), with width
+  // function widthOffset and height function heightOffset. Sets settingsHidden to !settingsHidden
+  // and then hides the given tooltip if settingsHidden is false and hides the settings panel if
+  // settingsHidden is true (else shows the settings panel)
   function toggleSettingsPanel(clickedRect, widthOffset, heightOffset, tooltip) {
     settingsHidden = !settingsHidden;
-    tooltip.classed("hidden", true);
+    if (!settingsHidden) tooltip.classed("hidden", true);
     // copied from 'displayCellTooltip'
     var obj = clickedRect.getBoundingClientRect(),
         anchor = [obj.left + widthOffset() + window.pageXOffset,
@@ -1150,6 +1164,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
                 .classed("hidden", settingsHidden);
   }
 
+  // displays the tooltip for the heatmap cell (mousedOverRect) with the given data d
   function displayCellTooltip(d, mousedOverRect) {
   	var obj = mousedOverRect.getBoundingClientRect(),
         anchor = [obj.left + widthCell() + window.pageXOffset,
@@ -1180,6 +1195,9 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
   }
 
+  // displays the tooltip for the annotation cell (mouserOverRect) with the given data d and the
+  // given dimension
+  // TODO: fix scroll bar weirdness for Windows
   function displayAnnoTooltip(d, mousedOverRect, dim) {
   	var obj = mousedOverRect.getBoundingClientRect(),
 			  anchor = [//document.body.offsetHeight > window.innerHeight ?
@@ -1251,6 +1269,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     return dim.marginTotal - dim.marginSideColor - (2 * dim.marginLabel) - dim.marginBrush;
   }
 
+  // returns the key field of the given object
   function key(d) {
   	return d.key;
   }
