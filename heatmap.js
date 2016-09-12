@@ -226,29 +226,29 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   marginsSetup(width, height);
 
   function marginsSetup(w, h) {
-    marginAnnoColor = col.annotated || row.annotated ? h / 20 : 0;
+    marginAnnoColor = col.annotated || row.annotated ? Math.floor(h / 20) : 0;
     marginAnnoLabel = col.annotated || row.annotated ? // TODO: font width estimation
                                     Math.min(w / 4, col.annotypeAnno ? annoMax() * 7 : 76) : 0;
     marginAnnoTitle = col.annotated || row.annotated ? fontSizeCK + 2 * annoTitlePadding : 0;
 
     col.marginTotal = h;
-    col.marginLabel = Math.min(w / 8,                                 // estimate of font width
+    col.marginLabel = Math.min(Math.floor(w / 8),                     // estimate of font width
                         Math.floor(axisOffset + lengthOfLongest(col.names) * 0.56 * fontSize));
-    col.marginBrush = h / 10;
+    col.marginBrush = Math.floor(h / 10);
 
     row.marginTotal = w;
-    row.marginLabel = Math.min(w / 8,                                 // estimate of font width
+    row.marginLabel = Math.min(Math.floor(w / 8),                     // estimate of font width
                         Math.floor(axisOffset + lengthOfLongest(row.names) * 0.78 * fontSize));
-    row.marginBrush = h / 10;
+    row.marginBrush = Math.floor(h / 10);
 
     // TODO: optionalize
-    col.marginSideColor = col.annotated ? h / 40 : 0;
-    col.marginAnnoTotal = col.annotated ? 3 * h / 8 : 0;
+    col.marginSideColor = col.annotated ? Math.floor(h / 40) : 0;
+    col.marginAnnoTotal = col.annotated ? Math.floor(3 * h / 8) : 0;
     col.marginAnnoHeight = col.annotated ? col.marginAnnoTotal - marginAnnoTitle : 0;
 
     // TODO: optionalize
-    row.marginSideColor = row.annotated ? h / 40 : 0;
-    row.marginAnnoTotal = row.annotated ? 3 * h / 8 : 0;
+    row.marginSideColor = row.annotated ? Math.floor(h / 40) : 0;
+    row.marginAnnoTotal = row.annotated ? Math.floor(3 * h / 8) : 0;
     row.marginAnnoHeight = row.annotated ? row.marginAnnoTotal - marginAnnoTitle : 0;
   }
 
