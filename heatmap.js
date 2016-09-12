@@ -1140,7 +1140,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
   function toggleSettingsPanel(clickedRect, widthOffset, heightOffset, tooltip) {
     settingsHidden = !settingsHidden;
-    tooltip.classed("hidden", true);
+    if (!settingsHidden) tooltip.classed("hidden", true);
     // copied from 'displayCellTooltip'
     var obj = clickedRect.getBoundingClientRect(),
         anchor = [obj.left + widthOffset() + window.pageXOffset,
