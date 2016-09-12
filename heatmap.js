@@ -1138,6 +1138,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 	  return tooltip;
   }
 
+  // positions the settings panel at the lower-right corner of the cell (clickedRect), with width
+  // function widthOffset and height function heightOffset. Sets settingsHidden to !settingsHidden
+  // and then hides the given tooltip if settingsHidden is false and hides the settings panel if
+  // settingsHidden is true (else shows the settings panel)
   function toggleSettingsPanel(clickedRect, widthOffset, heightOffset, tooltip) {
     settingsHidden = !settingsHidden;
     if (!settingsHidden) tooltip.classed("hidden", true);
@@ -1150,6 +1154,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
                 .classed("hidden", settingsHidden);
   }
 
+  // displays the tooltip for the heatmap cell (mousedOverRect) with the given data d
   function displayCellTooltip(d, mousedOverRect) {
   	var obj = mousedOverRect.getBoundingClientRect(),
         anchor = [obj.left + widthCell() + window.pageXOffset,
@@ -1180,6 +1185,9 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
   }
 
+  // displays the tooltip for the annotation cell (mouserOverRect) with the given data d and the
+  // given dimension
+  // TODO: fix scroll bar weirdness for Windows
   function displayAnnoTooltip(d, mousedOverRect, dim) {
   	var obj = mousedOverRect.getBoundingClientRect(),
 			  anchor = [//document.body.offsetHeight > window.innerHeight ?
@@ -1251,6 +1259,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     return dim.marginTotal - dim.marginSideColor - (2 * dim.marginLabel) - dim.marginBrush;
   }
 
+  // returns the key field of the given object
   function key(d) {
   	return d.key;
   }
