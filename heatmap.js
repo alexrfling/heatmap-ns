@@ -749,7 +749,15 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //------------------------------------------------------------------------------------------------
   //                                   INTERACTIVITY FUNCTIONS
   //
+  // These functions determine all the things that can happen after the heatmap is initially
+  // rendered (TODO: include resizeSVG in this section?).
   //
+  // For the brushes (the tools used to zoom/pan), there are 2 functions, brushed and ended, which
+  // handle all the updates to the data structures and DOM that are necessary to perform zoom/pan
+  // (with the help of helper functions).
+  //
+  // For the dropdowns in the settings panel, there are 3 functions, annoUpdate, sortUpdate, and
+  // updateColorScaling.
   //
   //------------------------------------------------------------------------------------------------
 
@@ -796,6 +804,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
   }
 
+  // renders the currentScope for the given dim. If transition is true, the labels will update with
+  // a transition, else they will update without a transition
   function renderScope(dim, transition) {
     var scopeArray = dim.names.slice(dim.currentScope[0], dim.currentScope[1]);
 	  var inScope = {};
@@ -925,7 +935,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
            .style("text-anchor", "start")    // end
            .attr("dx", ".8em")               // -.8em
            .attr("dy", ".15em")              // .15em
-           .attr("transform", "rotate(45)"); // rotate(45)
+           .attr("transform", "rotate(45)"); // rotate(-45)
   }
 
   // visually updates the given column axis (labels will be angled) WITH NO TRANSITION
