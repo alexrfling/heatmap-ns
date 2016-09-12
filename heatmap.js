@@ -243,12 +243,12 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
     // TODO: optionalize
     col.marginSideColor = col.annotated ? h / 40 : 0;
-    col.marginAnnoTotal = col.annotated ? h / 3 : 0;
+    col.marginAnnoTotal = col.annotated ? 3 * h / 8 : 0;
     col.marginAnnoHeight = col.annotated ? col.marginAnnoTotal - marginAnnoTitle : 0;
 
     // TODO: optionalize
     row.marginSideColor = row.annotated ? h / 40 : 0;
-    row.marginAnnoTotal = row.annotated ? h / 3 : 0;
+    row.marginAnnoTotal = row.annotated ? 3 * h / 8 : 0;
     row.marginAnnoHeight = row.annotated ? row.marginAnnoTotal - marginAnnoTitle : 0;
   }
 
@@ -551,7 +551,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
                 .attr("fill", fillCell)
                 .on("mouseover", function(d) { displayCellTooltip(d, this); })
                 .on("mouseout", function() { cellTooltip.classed("hidden", true); })
-                .on("click", function() { toggleSettingsPanel(this) });
+                .on("click", function() { toggleSettingsPanel(this, widthCell, heightCell,
+                                                                    cellTooltip) });
 
   // brushable heatmap at the right
   var heatmapRight = svg.append("g");
@@ -1042,7 +1043,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
             	});
             })*/
             .on("mouseover", function(d) { displaySideTooltip(d, this, dim); })
-            .on("mouseout", function() { dim.tooltip.classed("hidden", true); });
+            .on("mouseout", function() { dim.tooltip.classed("hidden", true); })
+            .on("click", function() { toggleSettingsPanel(this, dim.widthSideColor,
+                                                                dim.heightSideColor,
+                                                                dim.tooltip) });
   }
 
   // appends the annotation cells with the given data to the annoColorBar for the given dim
@@ -1134,13 +1138,13 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 	  return tooltip;
   }
 
-  function toggleSettingsPanel(clickedRect) {
+  function toggleSettingsPanel(clickedRect, widthOffset, heightOffset, tooltip) {
     settingsHidden = !settingsHidden;
-    cellTooltip.classed("hidden", true);
+    tooltip.classed("hidden", true);
     // copied from 'displayCellTooltip'
     var obj = clickedRect.getBoundingClientRect(),
-        anchor = [obj.left + widthCell() + window.pageXOffset,
-                  obj.top + heightCell() + window.pageYOffset];
+        anchor = [obj.left + widthOffset() + window.pageXOffset,
+                  obj.top + heightOffset() + window.pageYOffset];
     settingsPanel.style("left", anchor[0] + "px")
                 .style("top", 	anchor[1] + "px")
                 .classed("hidden", settingsHidden);
