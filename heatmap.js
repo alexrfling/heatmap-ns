@@ -142,19 +142,17 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   col.currentScope = [Math.floor(col.names.length / 32), Math.ceil(5 * col.names.length / 32)];
   row.currentScope = [Math.floor(row.names.length / 4), Math.ceil(7 * row.names.length / 8)];
 
-  col.other  = row;
-  col.self   = "col";
-  col.title  = "Column";
-  col.pos 	 = "x";
-  col.size 	 = "width";
-  //col.factor = 0.75;
+  col.other = row;
+  col.self  = "col";
+  col.title = "Column";
+  col.pos 	= "x";
+  col.size 	= "width";
 
-  row.other  = col;
-  row.self   = "row";
-  row.title  = "Row";
-  row.pos 	 = "y";
-  row.size 	 = "height";
-  //row.factor = 1;
+  row.other = col;
+  row.self  = "row";
+  row.title = "Row";
+  row.pos 	= "y";
+  row.size 	= "height";
 
   col.sizeHeatmap = widthHeatmap;
   row.sizeHeatmap = heightHeatmap;
