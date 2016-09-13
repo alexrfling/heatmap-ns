@@ -147,14 +147,14 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   col.title  = "Column";
   col.pos 	 = "x";
   col.size 	 = "width";
-  col.factor = 0.75;
+  //col.factor = 0.75;
 
   row.other  = col;
   row.self   = "row";
   row.title  = "Row";
   row.pos 	 = "y";
   row.size 	 = "height";
-  row.factor = 1;
+  //row.factor = 1;
 
   col.sizeHeatmap = widthHeatmap;
   row.sizeHeatmap = heightHeatmap;
@@ -333,20 +333,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   row.scaleCell      = d3.scaleBand(); // row.names, heightHeatmap -> y, height of cells
   col.scaleCellBrush = d3.scaleBand(); // col.names, row.marginBrush -> x, width of cellsRight
   row.scaleCellBrush = d3.scaleBand(); // row.names, col.marginBrush -> y, height of cellsBottom
-  if (col.annotated) {
-    col.scaleAnnoColor = d3.scaleBand().domain(col.annoTypesAndValues[col.annotypeAnno]);
-  }
-  if (row.annotated) {
-    row.scaleAnnoColor = d3.scaleBand().domain(row.annoTypesAndValues[row.annotypeAnno]);
-  }
-
-  // scales for the labels of the rows, columns, and annotations
-  row.scaleLabel 		 = d3.scalePoint();
-  col.scaleLabel 		 = d3.scalePoint();
-  row.scaleSubLabel  = d3.scalePoint();
-  col.scaleSubLabel  = d3.scalePoint();
-  if (col.annotated) col.scaleAnnoLabel = d3.scalePoint();
-  if (row.annotated) row.scaleAnnoLabel = d3.scalePoint();
+  if (col.annotated) col.scaleAnnoColor = d3.scaleBand().domain(col.annoTypesAndValues[col.annotypeAnno]);
+  if (row.annotated) row.scaleAnnoColor = d3.scaleBand().domain(row.annoTypesAndValues[row.annotypeAnno]);
 
   // these take in pixel coordinates from the brushed area and spit out the row/column names which
   // are to be displayed in the main heatmap
@@ -362,32 +350,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     row.scaleCellBrush.domain(row.names).range([0, col.marginBrush]);
     if (col.annotated) col.scaleAnnoColor.range([0, col.marginAnnoHeight]);
     if (row.annotated) row.scaleAnnoColor.range([0, row.marginAnnoHeight]);
-  }
-
-  function scalesLabelsSetup(width, height) {
-    // the ranges for the label scales are the same as for their corresponding cell scales, but
-    // with the ends cut by half the width/height of one of the associated cells (this makes it
-    // so that the labels/tickmarks are centered on the cells)
-    row.scaleLabel.domain(sample(row.names, Math.floor(heightHeatmap() / fontSize)))
-             			.range([cells.height() / 2, heightHeatmap() - cells.height() / 2]);
-    col.scaleLabel.domain(sample(col.names, Math.floor(col.factor * widthHeatmap() / fontSize)))
-             			.range([cells.width() / 2, widthHeatmap() - cells.width() / 2]);
-    row.scaleSubLabel.domain(sample(row.names, Math.floor(heightHeatmap() / fontSize)))
-             				 .range([cells.height() / 2, heightHeatmap() - cells.height() / 2]);
-    col.scaleSubLabel.domain(sample(col.names, Math.floor(col.factor * widthHeatmap() / fontSize)))
-             				 .range([cells.width() / 2, widthHeatmap() - cells.width() / 2]);
-    if (col.annotated) {
-      col.scaleAnnoLabel.domain(sample(col.annoTypesAndValues[col.annotypeAnno],
-    																									Math.floor(col.marginAnnoHeight / fontSize)))
-                        .range([col.annoColors.height() / 2,
-                      													col.marginAnnoHeight - col.annoColors.height() / 2]);
-    }
-    if (row.annotated) {
-      row.scaleAnnoLabel.domain(sample(row.annoTypesAndValues[row.annotypeAnno],
-    																									Math.floor(row.marginAnnoHeight / fontSize)))
-                        .range([row.annoColors.height() / 2,
-                      													row.marginAnnoHeight - row.annoColors.height() / 2]);
-    }
   }
 
   function scalesInvertersSetup(width, height) {
@@ -542,8 +504,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   row.posCellBrush  = col.cellsSub.y;
   row.sizeCellBrush = col.cellsSub.height;
 
-  scalesLabelsSetup(width, height); // MAY NEED TO MOVE
-
   //------------------------------------------------------------------------------------------------
   //                                             	AXES
   //
@@ -561,19 +521,30 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // axis components (note that these are not yet added to the svg, so they aren't visible)
   // SVG elements (these are visible)
 
-  function Labels(scale, orientation, anchor, angled) {
-    this.scale = scale;
+  function Labels(names, room, offset, factor, orientation, anchor, angled) {
+    this.names = names;
+    this.room = room;
+    this.offset = offset;
+    this.factor = factor;
+    this.scale = d3.scalePoint();
+    this.updateScale = function(newNames) {
+      this.names = newNames;
+      this.scale.domain(sample(this.names, Math.floor(this.factor * this.room() / fontSize)))
+             		.range([this.offset() / 2, this.room() - this.offset() / 2]);
+    };
+    this.updateScale(this.names);
     switch(orientation) {
-      case "left": this.axis = d3.axisLeft(scale); break;
-      case "top": this.axis = d3.axisTop(scale); break;
-      case "right": this.axis = d3.axisRight(scale); break;
-      case "bottom": this.axis = d3.axisBottom(scale); break;
+      case "left": this.axis = d3.axisLeft(this.scale); break;
+      case "top": this.axis = d3.axisTop(this.scale); break;
+      case "right": this.axis = d3.axisRight(this.scale); break;
+      case "bottom": this.axis = d3.axisBottom(this.scale); break;
       //default: throw "Invalid orientation: must be one of 'left', 'top', right', or 'bottom'."
     }
     this.group = svg.append("g").attr("class", "axis").style("font-size", fontSize).call(this.axis);
     this.anchor = anchor;
     this.angled = angled;
     this.update = function() {
+      this.updateScale(this.names);
       if (this.angled) {
         this.group.transition().duration(animDuration).call(this.axis)
                .selectAll("text")								 // to angle the other way:
@@ -586,6 +557,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       }
     };
     this.updateNT = function() {
+      this.updateScale(this.names);
       if (this.angled) {
         this.group.call(this.axis)
                .selectAll("text")								 // to angle the other way:
@@ -600,12 +572,12 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     this.position = function() { positionElement(this.group, this.anchor); };
   }
 
-  row.labels = new Labels(row.scaleLabel, "right", null, false);
-  col.labels = new Labels(col.scaleLabel, "bottom", null, true);
-  row.labelsSub = new Labels(row.scaleSubLabel, "right", null, false);
-  col.labelsSub = new Labels(col.scaleSubLabel, "bottom", null, true);
-  if (row.annotated) row.labelsAnno = new Labels(row.scaleAnnoLabel, "right", null, false);
-  if (col.annotated) col.labelsAnno = new Labels(col.scaleAnnoLabel, "right", null, false);
+  row.labels = new Labels(row.names, heightHeatmap, cells.height, 1, "right", null, false);
+  col.labels = new Labels(col.names, widthHeatmap, cells.width, 0.75, "bottom", null, true);
+  row.labelsSub = new Labels(row.names, heightHeatmap, cells.height, 1, "right", null, false);
+  col.labelsSub = new Labels(col.names, widthHeatmap, cells.width, 0.75, "bottom", null, true);
+  if (row.annotated) row.labelsAnno = new Labels(row.annoTypesAndValues[row.annotypeAnno], function() { return row.marginAnnoHeight; }, row.annoColors.height, 1, "right", null, false);
+  if (col.annotated) col.labelsAnno = new Labels(col.annoTypesAndValues[col.annotypeAnno], function() { return col.marginAnnoHeight; }, col.annoColors.height, 1, "right", null, false);
 
   //------------------------------------------------------------------------------------------------
   //                                             ANCHORS
@@ -760,7 +732,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     marginsSetup(w, h);
     anchorsSetup(w, h);
     scalesSetup(w, h);
-    scalesLabelsSetup(w, h);
     scalesInvertersSetup(w, h);
     resizeBrushExtents();
     positionElements();
@@ -825,8 +796,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
       // scale updates
       dim.scaleCell.domain(dim.names);
-      updateScaleLabel(dim, sample(dim.names,
-        Math.floor(dim.factor * dim.sizeHeatmap() / fontSize)));
+      dim.labels.updateScale(dim.names);
 
       // visual updates
       dim.labels.update();
@@ -850,7 +820,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
     // scale updates
     dim.scaleCell.domain(scopeArray);
-    updateScaleLabel(dim, sample(scopeArray, Math.floor(dim.factor * dim.sizeHeatmap() / fontSize)));
+    dim.labels.updateScale(scopeArray);
 
     // visual updates
     transition ? dim.labels.update() : dim.labels.updateNT();
@@ -901,9 +871,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
 
     dim.scaleAnnoColor.domain(values);
-    dim.scaleAnnoLabel.domain(sample(values, Math.floor(dim.marginAnnoHeight / fontSize)))
-                      .range([dim.annoColors.height() / 2,
-              																	dim.marginAnnoHeight - dim.annoColors.height() / 2]);
+    dim.labelsAnno.scaleUpdate(values);
+    //dim.scaleAnnoLabel.domain(sample(values, Math.floor(dim.marginAnnoHeight / fontSize)))
+    //                  .range([dim.annoColors.height() / 2,
+    //          																	dim.marginAnnoHeight - dim.annoColors.height() / 2]);
 
     // visual updates
     dim.annoTitle.text(undersToSpaces(dim.annotypeAnno));
@@ -936,9 +907,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     dim.scaleCell.domain(dim.names);
     dim.scaleCellBrush.domain(dim.names);
     dim.scaleInverter.range(dim.names);
-    dim.scaleSubLabel.domain(sample(dim.names,
-                      											Math.floor(dim.factor * dim.sizeHeatmap() / fontSize)));
-
+    dim.labelsSub.scaleUpdate(dim.names);
     // visual updates for the brushable heatmaps
     dim.labelsSub.update();
     dim.cellsSub.selection.attr(dim.pos, dim.posCell)
@@ -963,10 +932,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
   // updates the main label scale of the given dimension with a domain of newDomain and
   // range realigned based on the sizeCell for that dimension
-  function updateScaleLabel(dim, newDomain) {
+  /*function updateScaleLabel(dim, newDomain) {
     dim.scaleLabel.domain(newDomain)
             			.range([dim.sizeCell() / 2, dim.sizeHeatmap() - dim.sizeCell() / 2]);
-  }
+  }*/
 
   //------------------------------------------------------------------------------------------------
   //                             ELEMENT GENERATING/DISPLAYING FUNCTIONS
