@@ -169,12 +169,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   row.posCellBrush   	= yCellBottom;
   row.sizeCellBrush  	= heightCellBottom;
 
-  col.updateAxis      = updateColAxis;
-  col.updateAxisNT    = updateColAxisNT;
-
-  row.updateAxis      = updateRowAxis;
-  row.updateAxisNT    = updateRowAxisNT;
-
   col.idSortBy        = "colSortBy"; // TODO: optionalize
   col.idAnnoBy        = "colAnnoBy";
 
@@ -496,7 +490,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // axis components (note that these are not yet added to the svg, so they aren't visible)
   // SVG elements (these are visible)
 
-  function Labels(scale, orientation, anchor) {
+  function Labels(scale, orientation, anchor, angled) {
     this.scale = scale;
     switch(orientation) {
       case "left": this.axis = d3.axisLeft(scale); break;
@@ -507,13 +501,38 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
     this.group = svg.append("g").attr("class", "axis").style("font-size", fontSize).call(this.axis);
     this.anchor = anchor;
+    this.angled = angled;
+    this.update = function() {
+      if (this.angled) {
+        this.group.transition().duration(animDuration).call(this.axis)
+               .selectAll("text")								 // to angle the other way:
+               .style("text-anchor", "start")    // end
+               .attr("dx", ".8em")               // -.8em
+               .attr("dy", ".15em")              // .15em
+               .attr("transform", "rotate(45)"); // rotate(-45)
+      } else {
+        this.group.transition().duration(animDuration).call(this.axis);
+      }
+    };
+    this.updateNT = function() {
+      if (this.angled) {
+        this.group.call(this.axis)
+               .selectAll("text")								 // to angle the other way:
+               .style("text-anchor", "start")    // end
+               .attr("dx", ".8em")               // -.8em
+               .attr("dy", ".15em")              // .15em
+               .attr("transform", "rotate(45)"); // rotate(-45)
+      } else {
+        this.group.call(this.axis);
+      }
+    };
   }
-  row.labels = new Labels(row.scaleLabel, "right", row.anchorLabel);
-  col.labels = new Labels(col.scaleLabel, "bottom", col.anchorLabel);
-  row.labelsSub = new Labels(row.scaleSubLabel, "right", row.anchorSubLabel);
-  col.labelsSub = new Labels(col.scaleSubLabel, "bottom", col.anchorSubLabel);
-  if (row.annotated) row.labelsAnno = new Labels(row.scaleAnnoLabel, "right", row.anchorAnnoLabel);
-  if (col.annotated) col.labelsAnno = new Labels(col.scaleAnnoLabel, "right", col.anchorAnnoLabel);
+  row.labels = new Labels(row.scaleLabel, "right", row.anchorLabel, false);
+  col.labels = new Labels(col.scaleLabel, "bottom", col.anchorLabel, true);
+  row.labelsSub = new Labels(row.scaleSubLabel, "right", row.anchorSubLabel, false);
+  col.labelsSub = new Labels(col.scaleSubLabel, "bottom", col.anchorSubLabel, true);
+  if (row.annotated) row.labelsAnno = new Labels(row.scaleAnnoLabel, "right", row.anchorAnnoLabel, false);
+  if (col.annotated) col.labelsAnno = new Labels(col.scaleAnnoLabel, "right", col.anchorAnnoLabel, false);
 
   //------------------------------------------------------------------------------------------------
   //                                         	CELLS AND TITLES
@@ -641,13 +660,13 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   }
 
   function positionElements() {
-  	updateRowAxisNT(row.labels.group, row.labels.axis); // just calls labels.axis
-    updateColAxisNT(col.labels.group, col.labels.axis); // calls labels.axis + angles labels
+  	row.labels.updateNT();
+    col.labels.updateNT();
     positionElement(row.labels.group, row.anchorLabel);
     positionElement(col.labels.group, col.anchorLabel);
 
-    updateRowAxisNT(row.labelsSub.group, row.labelsSub.axis); // just calls labelsSub.axis
-    updateColAxisNT(col.labelsSub.group, col.labelsSub.axis); // calls labelsSub.axis + angles labels
+    row.labelsSub.updateNT();
+    col.labelsSub.updateNT();
     positionElement(row.labelsSub.group, row.anchorSubLabel);
     positionElement(col.labelsSub.group, col.anchorSubLabel);
 
@@ -794,7 +813,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
         Math.floor(dim.factor * dim.sizeHeatmap() / fontSize)));
 
       // visual updates
-      dim.updateAxis(dim.labels.group, dim.labels.axis);
+      dim.labels.update();
       cells.attr(dim.pos,	 dim.posCell)
            .attr(dim.size, dim.sizeCell);
       if (dim.annotated) {
@@ -818,8 +837,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     updateScaleLabel(dim, sample(scopeArray, Math.floor(dim.factor * dim.sizeHeatmap() / fontSize)));
 
     // visual updates
-    transition ? dim.updateAxis(dim.labels.group, dim.labels.axis)
-    					 : dim.updateAxisNT(dim.labels.group, dim.labels.axis);
+    transition ? dim.labels.update() : dim.labels.updateNT();
     updateVisualScope(dim, inScope);
   }
 
@@ -907,7 +925,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
                       											Math.floor(dim.factor * dim.sizeHeatmap() / fontSize)));
 
     // visual updates for the brushable heatmaps
-    dim.updateAxis(dim.labelsSub.group, dim.labelsSub.axis);
+    dim.labelsSub.update();
     dim.cellsBrush.attr(dim.pos, dim.posCell)
     dim.other.cellsBrush.attr(dim.pos, dim.posCellBrush);
 
@@ -926,36 +944,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     cells.attr("fill", fillCell);
     col.cellsBrush.attr("fill", fillCellBottom);
     row.cellsBrush.attr("fill", fillCellRight);
-  }
-
-  // visually updates the given column axis (labels will be angled) WITH A TRANSITION
-  function updateColAxis(axisVis, axis) {
-    axisVis.transition().duration(animDuration).call(axis)
-           .selectAll("text")								 // to angle the other way:
-           .style("text-anchor", "start")    // end
-           .attr("dx", ".8em")               // -.8em
-           .attr("dy", ".15em")              // .15em
-           .attr("transform", "rotate(45)"); // rotate(-45)
-  }
-
-  // visually updates the given column axis (labels will be angled) WITH NO TRANSITION
-  function updateColAxisNT(axisVis, axis) {
-    axisVis.call(axis)
-           .selectAll("text")								 // to angle the other way:
-           .style("text-anchor", "start")    // end
-           .attr("dx", ".8em")               // -.8em
-           .attr("dy", ".15em")              // .15em
-           .attr("transform", "rotate(45)"); // rotate(-45)
-  }
-
-  // visually updates the given row axis (labels will not be angled) WITH A TRANSITION
-  function updateRowAxis(axisVis, axis) {
-    axisVis.transition().duration(animDuration).call(axis);
-  }
-
-  // visually updates the given row axis (labels will not be angled) WITH NO TRANSITION
-  function updateRowAxisNT(axisVis, axis) {
-    axisVis.call(axis);
   }
 
   // updates the main label scale of the given dimension with a domain of newDomain and
