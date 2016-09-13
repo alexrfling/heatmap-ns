@@ -457,9 +457,30 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
           .enter()										        // from here on, "d" refers to an individual cell
           .append("rect")           	        // the cells have now been added, but still not visible
           .attr("fill", this.fill);
+        if (!dim) {
+          this.selection.on("mouseover", function(d) { displayCellTooltip(d, this); })
+                        .on("mouseout", function() { cellTooltip.classed("hidden", true); })
+                        .on("click", function() { toggleSettingsPanel(this, width, height, cellTooltip) });
+        }
         break;
       case "sideColors":
-        this.selection = sideColorsSetup(dim, this.group, this.x, this.y, this.width, this.height, this.fill);
+        this.selection = this.group.selectAll("rect")
+                  .data(dim.labelsAnnotated, key)
+                  .enter()
+                  .append("rect")
+                  .attr("x", this.x)
+                  .attr("y", this.y)
+                  .attr("width", this.width)
+                  .attr("height", this.height)
+                  .attr("fill", this.fill)
+                  /*.on("click", function(d1) {
+                  	cells.style("fill-opacity", function(d2) {
+                  		return d2[dim.self] === d1.key && ? 1 : 0.5;
+                  	});
+                  })*/
+                  .on("mouseover", function(d) { displaySideTooltip(d, this, dim); })
+                  .on("mouseout", function() { dim.tooltip.classed("hidden", true); })
+                  .on("click", function() { toggleSettingsPanel(this, width, height, dim.tooltip) });
         break;
       case "annoColors":
         this.selection = this.group.selectAll("rect")
@@ -966,28 +987,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //
   //
   //------------------------------------------------------------------------------------------------
-
-  // appends the side colors for the given dimension to its side color bar and returns a reference
-  // to the selection
-  function sideColorsSetup(dim, group, x, y, width, height, fill) {
-    return group.selectAll("rect")
-            .data(dim.labelsAnnotated, key)
-            .enter()
-            .append("rect")
-            .attr("x", x)
-            .attr("y", y)
-            .attr("width", width)
-            .attr("height", height)
-            .attr("fill", fill)
-            /*.on("click", function(d1) {
-            	cells.style("fill-opacity", function(d2) {
-            		return d2[dim.self] === d1.key && ? 1 : 0.5;
-            	});
-            })*/
-            .on("mouseover", function(d) { displaySideTooltip(d, this, dim); })
-            .on("mouseout", function() { dim.tooltip.classed("hidden", true); })
-            .on("click", function() { toggleSettingsPanel(this, width, height, dim.tooltip) });
-  }
 
   // appends the annotation cells with the given data to the annoColors.group for the given dim
   // TODO: figure out how to properly position tooltip
