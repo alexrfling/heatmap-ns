@@ -494,26 +494,26 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //------------------------------------------------------------------------------------------------
 
   // axis components (note that these are not yet added to the svg, so they aren't visible)
-  row.axisMain = d3.axisRight(row.scaleLabel);
-  col.axisMain = d3.axisBottom(col.scaleLabel);
-  row.axisSub  = d3.axisRight(row.scaleSubLabel);
-  col.axisSub  = d3.axisBottom(col.scaleSubLabel);
-  if (row.annotated) row.axisAnno = d3.axisRight(row.scaleAnnoLabel);
-  if (col.annotated) col.axisAnno = d3.axisRight(col.scaleAnnoLabel);
-
   // SVG elements (these are visible)
-  row.axisMainVis = svg.append("g").attr("class", "axis")
-                      .style("font-size", fontSize).call(row.axisMain);
-  col.axisMainVis = svg.append("g").attr("class", "axis")
-                      .style("font-size", fontSize).call(col.axisMain);
-  row.axisSubVis 	= svg.append("g").attr("class", "axis")
-                      .style("font-size", fontSize).call(row.axisSub);
-  col.axisSubVis 	= svg.append("g").attr("class", "axis")
-                      .style("font-size", fontSize).call(col.axisSub);
-  if (row.annotated) row.axisAnnoVis = svg.append("g").attr("class", "axis")
-                      .style("font-size", fontSize).call(row.axisAnno);
-  if (col.annotated) col.axisAnnoVis = svg.append("g").attr("class", "axis")
-                      .style("font-size", fontSize).call(col.axisAnno);
+
+  function Labels(scale, orientation, anchor) {
+    this.scale = scale;
+    switch(orientation) {
+      case "left": this.axis = d3.axisLeft(scale); break;
+      case "top": this.axis = d3.axisTop(scale); break;
+      case "right": this.axis = d3.axisRight(scale); break;
+      case "bottom": this.axis = d3.axisBottom(scale); break;
+      //default: throw "Invalid orientation: must be one of 'left', 'top', right', or 'bottom'."
+    }
+    this.group = svg.append("g").attr("class", "axis").style("font-size", fontSize).call(this.axis);
+    this.anchor = anchor;
+  }
+  row.labels = new Labels(row.scaleLabel, "right", row.anchorLabel);
+  col.labels = new Labels(col.scaleLabel, "bottom", col.anchorLabel);
+  row.labelsSub = new Labels(row.scaleSubLabel, "right", row.anchorSubLabel);
+  col.labelsSub = new Labels(col.scaleSubLabel, "bottom", col.anchorSubLabel);
+  if (row.annotated) row.labelsAnno = new Labels(row.scaleAnnoLabel, "right", row.anchorAnnoLabel);
+  if (col.annotated) col.labelsAnno = new Labels(col.scaleAnnoLabel, "right", col.anchorAnnoLabel);
 
   //------------------------------------------------------------------------------------------------
   //                                         	CELLS AND TITLES
@@ -641,19 +641,19 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   }
 
   function positionElements() {
-  	updateRowAxisNT(row.axisMainVis, row.axisMain); // just calls axisMain
-    updateColAxisNT(col.axisMainVis, col.axisMain); // calls axisMain + angles labels
-    positionElement(row.axisMainVis, row.anchorLabel);
-    positionElement(col.axisMainVis, col.anchorLabel);
+  	updateRowAxisNT(row.labels.group, row.labels.axis); // just calls labels.axis
+    updateColAxisNT(col.labels.group, col.labels.axis); // calls labels.axis + angles labels
+    positionElement(row.labels.group, row.anchorLabel);
+    positionElement(col.labels.group, col.anchorLabel);
 
-    updateRowAxisNT(row.axisSubVis, row.axisSub); // just calls axisSub
-    updateColAxisNT(col.axisSubVis, col.axisSub); // calls axisSub + angles labels
-    positionElement(row.axisSubVis, row.anchorSubLabel);
-    positionElement(col.axisSubVis, col.anchorSubLabel);
+    updateRowAxisNT(row.labelsSub.group, row.labelsSub.axis); // just calls labelsSub.axis
+    updateColAxisNT(col.labelsSub.group, col.labelsSub.axis); // calls labelsSub.axis + angles labels
+    positionElement(row.labelsSub.group, row.anchorSubLabel);
+    positionElement(col.labelsSub.group, col.anchorSubLabel);
 
     if (col.annotated) {
-      col.axisAnnoVis.call(col.axisAnno);
-      positionElement(col.axisAnnoVis, col.anchorAnnoLabel);
+      col.labelsAnno.group.call(col.labelsAnno.axis);
+      positionElement(col.labelsAnno.group, col.anchorAnnoLabel);
 
       positionElement(col.sideColorBar, col.anchorSideColor);
       col.sideColors.attr("x", col.xSideColor)
@@ -663,8 +663,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
 
     if (row.annotated) {
-      row.axisAnnoVis.call(row.axisAnno);
-      positionElement(row.axisAnnoVis, row.anchorAnnoLabel);
+      row.labelsAnno.group.call(row.labelsAnno.axis);
+      positionElement(row.labelsAnno.group, row.anchorAnnoLabel);
 
       positionElement(row.sideColorBar, row.anchorSideColor);
       row.sideColors.attr("x", row.xSideColor)
@@ -794,7 +794,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
         Math.floor(dim.factor * dim.sizeHeatmap() / fontSize)));
 
       // visual updates
-      dim.updateAxis(dim.axisMainVis, dim.axisMain);
+      dim.updateAxis(dim.labels.group, dim.labels.axis);
       cells.attr(dim.pos,	 dim.posCell)
            .attr(dim.size, dim.sizeCell);
       if (dim.annotated) {
@@ -818,8 +818,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     updateScaleLabel(dim, sample(scopeArray, Math.floor(dim.factor * dim.sizeHeatmap() / fontSize)));
 
     // visual updates
-    transition ? dim.updateAxis(dim.axisMainVis, dim.axisMain)
-    					 : dim.updateAxisNT(dim.axisMainVis, dim.axisMain);
+    transition ? dim.updateAxis(dim.labels.group, dim.labels.axis)
+    					 : dim.updateAxisNT(dim.labels.group, dim.labels.axis);
     updateVisualScope(dim, inScope);
   }
 
@@ -875,7 +875,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     dim.annoTitle.text(undersToSpaces(dim.annotypeAnno));
     dim.annoColorBar.selectAll("rect").remove();		// clear out all previous colored rects
     dim.annoColors = annoColorsSetup(dim, values);	// add back in colored rects for new annotation
-    dim.axisAnnoVis.call(dim.axisAnno);
+    dim.labelsAnno.group.call(dim.labelsAnno.axis);
     dim.sideColors.transition().duration(animDuration) // add a delay???
                   .attr("fill", dim.fillSideColor);
   }
@@ -907,7 +907,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
                       											Math.floor(dim.factor * dim.sizeHeatmap() / fontSize)));
 
     // visual updates for the brushable heatmaps
-    dim.updateAxis(dim.axisSubVis, dim.axisSub);
+    dim.updateAxis(dim.labelsSub.group, dim.labelsSub.axis);
     dim.cellsBrush.attr(dim.pos, dim.posCell)
     dim.other.cellsBrush.attr(dim.pos, dim.posCellBrush);
 
