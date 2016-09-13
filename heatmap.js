@@ -474,27 +474,44 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //
   //------------------------------------------------------------------------------------------------
 
-  var cells = {};
+  function Cells(anchor, x, y, width, height, fill) {
+    this.anchor = anchor;
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+    this.fill = fill;
+
+    // added later
+    this.group;
+    this.selection;
+    this.update = function(attributes) {
+      for (var attribute of attributes) {
+        this.selection.attr(attribute, this[attribute]);
+      }
+    };
+  }
+
+  var cells = new Cells(anchorHeatmap,
+                      function(d) { return col.scaleCell(d.col); },// also cellsBottom, col.sideColors
+                      function(d) { return row.scaleCell(d.row); },// also cellsRight, row.sideColors
+                      function() { return col.scaleCell.bandwidth(); },// also cellsBottom, col.sideColors
+                      function() { return row.scaleCell.bandwidth(); },// also cellsRight, row.sideColors
+                      function(d) {
+                        if (scalingDim === "none") {
+                          return mainColorScale(d.value);
+                        } else {
+                          var ref = dataset.stats[scalingDim][dotsToUnders(d[scalingDim])];
+                          return mainColorScale((d.value - ref.mean) / ref.stdev);
+                        }
+                      });
+
   //col.sideColors = {};
   //row.sideColors = {};
   //col.heatmapSub = {};
   //row.heatmapSub = {};
   //if (col.annotated) col.annoColors = {};
   //if (row.annotated) row.annoColors = {};
-
-  // cell attributes
-  cells.x = function(d) { return col.scaleCell(d.col); } // also cellsBottom, col.sideColors
-  cells.y = function(d) { return row.scaleCell(d.row); } // also cellsRight, row.sideColors
-  cells.width = function() { return col.scaleCell.bandwidth(); } // also cellsBottom, col.sideColors
-  cells.height = function() { return row.scaleCell.bandwidth(); } // also cellsRight, row.sideColors
-  cells.fill = function(d) {
-    if (scalingDim === "none") {
-      return mainColorScale(d.value);
-    } else {
-      var ref = dataset.stats[scalingDim][dotsToUnders(d[scalingDim])];
-      return mainColorScale((d.value - ref.mean) / ref.stdev);
-    }
-  }
 
   col.posCell       	= cells.x;
   col.sizeCell      	= cells.width;
@@ -771,7 +788,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
 
     // reposition/resize heatmaps
-    positionElement(cells.group, anchorHeatmap);
+    positionElement(cells.group, cells.anchor);
     positionElement(heatmapRight, row.anchorBrush);
     positionElement(heatmapBottom, col.anchorBrush);
     cells.selection.attr("x", cells.x)
