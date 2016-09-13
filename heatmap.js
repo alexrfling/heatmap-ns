@@ -474,6 +474,69 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   }
 
   //------------------------------------------------------------------------------------------------
+  //                                     ATTRIBUTE FUNCTIONS
+  //
+  //
+  //
+  //------------------------------------------------------------------------------------------------
+
+  // cell attributes
+  function xCell(d) { return col.scaleCell(d.col); } // also cellsBottom, col.sideColors
+  function yCell(d) { return row.scaleCell(d.row); } // also cellsRight, row.sideColors
+  function widthCell() { return col.scaleCell.bandwidth(); } // also cellsBottom, col.sideColors
+  function heightCell() { return row.scaleCell.bandwidth(); } // also cellsRight, row.sideColors
+  function fillCell(d) {
+    if (scalingDim === "none") {
+      return mainColorScale(d.value);
+    } else {
+      var ref = dataset.stats[scalingDim][dotsToUnders(d[scalingDim])];
+      return mainColorScale((d.value - ref.mean) / ref.stdev);
+    }
+  }
+
+  // cellBottom attributes
+  function xCellBottom(d) { return xCell(d); }
+  function yCellBottom(d) { return row.scaleCellBrush(d.row); }
+  function widthCellBottom() { return widthCell(); }
+  function heightCellBottom() { return row.scaleCellBrush.bandwidth(); }
+  function fillCellBottom(d) { return fillCell(d); }
+
+  // cellRight attributes
+  function xCellRight(d) { return col.scaleCellBrush(d.col); }
+  function yCellRight(d) { return yCell(d); }
+  function widthCellRight() { return col.scaleCellBrush.bandwidth(); }
+  function heightCellRight() { return heightCell(); }
+  function fillCellRight(d) { return fillCell(d); }
+
+  // row side color attributes
+  function xRowSideColor() { return 0; }
+  function yRowSideColor(d) { return row.scaleCell(d.key); }
+  function widthRowSideColor() { return row.marginSideColor - sideColorPadding; }
+  function heightRowSideColor() { return heightCell(); }
+  function fillRowSideColor(d) { return row.numToColor(row.annoToNum(d.annos[row.annotypeAnno])); }
+
+  // col side color attributes
+  function xColSideColor(d) { return col.scaleCell(d.key); }
+  function yColSideColor() { return 0; }
+  function widthColSideColor() { return widthCell(); }
+  function heightColSideColor() { return col.marginSideColor - sideColorPadding; }
+  function fillColSideColor(d) { return col.numToColor(col.annoToNum(d.annos[col.annotypeAnno])); }
+
+  // row anno color attributes
+  function xRowAnnoColor() { return 0; }
+  function yRowAnnoColor(d) { return row.scaleAnnoColor(d); }
+  function widthRowAnnoColor() { return marginAnnoColor; }
+  function heightRowAnnoColor() { return row.scaleAnnoColor.bandwidth(); }
+  function fillRowAnnoColor(d) { return row.numToColor(row.annoToNum(d)); }
+
+  // col anno color attributes
+  function xColAnnoColor() { return 0; }
+  function yColAnnoColor(d) { return col.scaleAnnoColor(d); }
+  function widthColAnnoColor() { return marginAnnoColor; }
+  function heightColAnnoColor() { return col.scaleAnnoColor.bandwidth(); }
+  function fillColAnnoColor(d) { return col.numToColor(col.annoToNum(d)); }
+
+  //------------------------------------------------------------------------------------------------
   //                                             	AXES
   //
   // The axes provide a visualization for the labels of rows, columns, and annotations. There are 3
@@ -527,6 +590,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       }
     };
   }
+
   row.labels = new Labels(row.scaleLabel, "right", row.anchorLabel, false);
   col.labels = new Labels(col.scaleLabel, "bottom", col.anchorLabel, true);
   row.labelsSub = new Labels(row.scaleSubLabel, "right", row.anchorSubLabel, false);
@@ -671,7 +735,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     positionElement(col.labelsSub.group, col.anchorSubLabel);
 
     if (col.annotated) {
-      col.labelsAnno.group.call(col.labelsAnno.axis);
+      col.labelsAnno.updateNT();
       positionElement(col.labelsAnno.group, col.anchorAnnoLabel);
 
       positionElement(col.sideColorBar, col.anchorSideColor);
@@ -682,7 +746,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
 
     if (row.annotated) {
-      row.labelsAnno.group.call(row.labelsAnno.axis);
+      row.labelsAnno.updateNT();
       positionElement(row.labelsAnno.group, row.anchorAnnoLabel);
 
       positionElement(row.sideColorBar, row.anchorSideColor);
@@ -952,69 +1016,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     dim.scaleLabel.domain(newDomain)
             			.range([dim.sizeCell() / 2, dim.sizeHeatmap() - dim.sizeCell() / 2]);
   }
-
-  //------------------------------------------------------------------------------------------------
-  //                                     ATTRIBUTE FUNCTIONS
-  //
-  //
-  //
-  //------------------------------------------------------------------------------------------------
-
-  // cell attributes
-  function xCell(d) { return col.scaleCell(d.col); } // also cellsBottom, col.sideColors
-  function yCell(d) { return row.scaleCell(d.row); } // also cellsRight, row.sideColors
-  function widthCell() { return col.scaleCell.bandwidth(); } // also cellsBottom, col.sideColors
-  function heightCell() { return row.scaleCell.bandwidth(); } // also cellsRight, row.sideColors
-  function fillCell(d) {
-    if (scalingDim === "none") {
-      return mainColorScale(d.value);
-    } else {
-      var ref = dataset.stats[scalingDim][dotsToUnders(d[scalingDim])];
-      return mainColorScale((d.value - ref.mean) / ref.stdev);
-    }
-  }
-
-  // cellBottom attributes
-  function xCellBottom(d) { return xCell(d); }
-  function yCellBottom(d) { return row.scaleCellBrush(d.row); }
-  function widthCellBottom() { return widthCell(); }
-  function heightCellBottom() { return row.scaleCellBrush.bandwidth(); }
-  function fillCellBottom(d) { return fillCell(d); }
-
-  // cellRight attributes
-  function xCellRight(d) { return col.scaleCellBrush(d.col); }
-  function yCellRight(d) { return yCell(d); }
-  function widthCellRight() { return col.scaleCellBrush.bandwidth(); }
-  function heightCellRight() { return heightCell(); }
-  function fillCellRight(d) { return fillCell(d); }
-
-  // row side color attributes
-  function xRowSideColor() { return 0; }
-  function yRowSideColor(d) { return row.scaleCell(d.key); }
-  function widthRowSideColor() { return row.marginSideColor - sideColorPadding; }
-  function heightRowSideColor() { return heightCell(); }
-  function fillRowSideColor(d) { return row.numToColor(row.annoToNum(d.annos[row.annotypeAnno])); }
-
-  // col side color attributes
-  function xColSideColor(d) { return col.scaleCell(d.key); }
-  function yColSideColor() { return 0; }
-  function widthColSideColor() { return widthCell(); }
-  function heightColSideColor() { return col.marginSideColor - sideColorPadding; }
-  function fillColSideColor(d) { return col.numToColor(col.annoToNum(d.annos[col.annotypeAnno])); }
-
-  // row anno color attributes
-  function xRowAnnoColor() { return 0; }
-  function yRowAnnoColor(d) { return row.scaleAnnoColor(d); }
-  function widthRowAnnoColor() { return marginAnnoColor; }
-  function heightRowAnnoColor() { return row.scaleAnnoColor.bandwidth(); }
-  function fillRowAnnoColor(d) { return row.numToColor(row.annoToNum(d)); }
-
-  // col anno color attributes
-  function xColAnnoColor() { return 0; }
-  function yColAnnoColor(d) { return col.scaleAnnoColor(d); }
-  function widthColAnnoColor() { return marginAnnoColor; }
-  function heightColAnnoColor() { return col.scaleAnnoColor.bandwidth(); }
-  function fillColAnnoColor(d) { return col.numToColor(col.annoToNum(d)); }
 
   //------------------------------------------------------------------------------------------------
   //                             ELEMENT GENERATING/DISPLAYING FUNCTIONS
