@@ -202,73 +202,15 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   }
 
   //------------------------------------------------------------------------------------------------
-  //                               					SETTINGS PANEL
-  //
-  //
-  //
-  //------------------------------------------------------------------------------------------------
-
-  var scaleBy,
-  		scalingDim,
-      settingsPanel = settingsPanelSetup(),
-      settingsHidden = true;
-
-  function settingsPanelSetup() {
-  	var panel = container.append("div").attr("id", "settings")
-  								.attr("class", "tooltip").classed("hidden", true);
-    panel.append("p").text("Settings");
-  	var table = panel.append("table"),
-  			row1 = table.append("tr");
-    row1.append("td").append("p").text("Scale by");
-    scaleBy = row1.append("td").append("select").attr("id", "scaleBy")
-  								.on("change", function() { updateColorScaling(this.value); });
-  	scaleBy.selectAll("option")
-      .data([{ value: col.self, text: col.title },
-          	 { value: row.self, text: row.title },
-          	 { value: "none", text: "None" }])
-      .enter()
-      .append("option")
-      .attr("value", function(d) { return d.value; })
-      .text(function(d) { return d.text; });
-  	scalingDim = document.getElementById("scaleBy").value;
-
-    // TODO: optionalize
-  	if (col.annotated) {
-      var row2 = table.append("tr"),
-  		    row3 = table.append("tr");
-      row2.append("td").append("p").text("Annotate columns by");
-      row3.append("td").append("p").text("Sort columns by");
-      col.annoBy = controlsSetup(row2, col, annoUpdate);
-      col.sortBy = controlsSetup(row3, col, sortUpdate);
-      annoOptionsSetup(col.annoBy, col);
-      sortOptionsSetup(col.sortBy, col);
-      col.annotypeAnno = Object.keys(col.annoTypesAndValues)[0];
-    }
-
-    // TODO: optionalize
-    if (row.annotated) {
-      var row4 = table.append("tr"),
-  		    row5 = table.append("tr");
-      row4.append("td").append("p").text("Annotate rows by");
-      row5.append("td").append("p").text("Sort rows by");
-      row.annoBy = controlsSetup(row4, row, annoUpdate);
-    	row.sortBy = controlsSetup(row5, row, sortUpdate);
-    	annoOptionsSetup(row.annoBy, row);
-    	sortOptionsSetup(row.sortBy, row);
-      row.annotypeAnno = Object.keys(row.annoTypesAndValues)[0];
-    }
-
-  	return panel;
-  }
-
-  //------------------------------------------------------------------------------------------------
-  //                                            TOOLTIPS
+  //                                      TOOLTIPS/SETTINGS PANEL
   //
   // Tooltips provide information for rows, columns, matrix data, and annotations when hovering over
   // the side colors, heatmap cells, and color key.
   //
   //------------------------------------------------------------------------------------------------
 
+  var scaleBy, scalingDim, settingsHidden = true;
+  var settingsPanel              = settingsPanelSetup();
   var cellTooltip                = cellTooltipSetup();
   var annoTooltip                = annoTooltipSetup();
   if (col.annotated) col.tooltip = sideTooltipSetup(col);
@@ -898,7 +840,44 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //
   //------------------------------------------------------------------------------------------------
 
-  function controlsSetup(s, dim, update) {
+  function settingsPanelSetup() {
+  	var panel = container.append("div").attr("id", "settings")
+  								.attr("class", "tooltip").classed("hidden", true);
+    panel.append("p").text("Settings");
+  	var table = panel.append("table"),
+  			row1 = table.append("tr");
+    row1.append("td").append("p").text("Scale by");
+    scaleBy = row1.append("td").append("select")
+  								.on("change", function() { updateColorScaling(this.value); });
+  	scaleBy.selectAll("option")
+      .data([{ value: col.self, text: col.title },
+          	 { value: row.self, text: row.title },
+          	 { value: "none", text: "None" }])
+      .enter()
+      .append("option")
+      .attr("value", function(d) { return d.value; })
+      .text(function(d) { return d.text; });
+  	scalingDim = col.self;
+
+    if (row.annotated) controlsSetup(row);
+    if (col.annotated) controlsSetup(col);
+
+    function controlsSetup(dim) {
+      var r1 = table.append("tr"),
+    		  r2 = table.append("tr");
+      r1.append("td").append("p").text(dim.title + "s: annotate by");
+      r2.append("td").append("p").text(dim.title + "s: sort by");
+      dim.annoBy = selectorSetup(r1, dim, annoUpdate);
+      dim.sortBy = selectorSetup(r2, dim, sortUpdate);
+      annoOptionsSetup(dim.annoBy, dim);
+      sortOptionsSetup(dim.sortBy, dim);
+      dim.annotypeAnno = Object.keys(dim.annoTypesAndValues)[0];
+    }
+
+  	return panel;
+  }
+
+  function selectorSetup(s, dim, update) {
   	return s.append("td").append("select").on("change", function() { update(dim, this.value); });
   }
 
