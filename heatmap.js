@@ -869,36 +869,26 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       r2.append("td").append("p").text(dim.title + "s: sort by");
       dim.annoBy = selectorSetup(r1, dim, annoUpdate);
       dim.sortBy = selectorSetup(r2, dim, sortUpdate);
-      annoOptionsSetup(dim.annoBy, dim);
-      sortOptionsSetup(dim.sortBy, dim);
+      dim.annoBy.selectAll("option")
+        .data(["Clustered Order"].concat(Object.keys(dim.annoTypesAndValues)))
+        .enter()
+        .append("option")
+        .attr("value", function(d) { return d; })
+        .text(function(d) { return undersToSpaces(d); });
+      dim.sortBy.selectAll("option")
+        .data(Object.keys(dim.annoTypesAndValues))
+        .enter()
+        .append("option")
+        .attr("value", function(d) { return d; })
+        .text(function(d) { return undersToSpaces(d); });
       dim.annotypeAnno = Object.keys(dim.annoTypesAndValues)[0];
     }
 
+    function selectorSetup(s, dim, update) {
+    	return s.append("td").append("select").on("change", function() { update(dim, this.value); });
+    }
+
   	return panel;
-  }
-
-  function selectorSetup(s, dim, update) {
-  	return s.append("td").append("select").on("change", function() { update(dim, this.value); });
-  }
-
-  // appends the sorting options for the given dimension to the given selection
-  function sortOptionsSetup(selection, dim) {
-    selection.selectAll("option")
-      .data(["Clustered Order"].concat(Object.keys(dim.annoTypesAndValues)))
-      .enter()
-      .append("option")
-      .attr("value", function(d) { return d; })
-      .text(function(d) { return undersToSpaces(d); });
-  }
-
-  // appends the annotation options for the given dimension to the given selection
-  function annoOptionsSetup(selection, dim) {
-    selection.selectAll("option")
-      .data(Object.keys(dim.annoTypesAndValues))
-      .enter()
-      .append("option")
-      .attr("value", function(d) { return d; })
-      .text(function(d) { return undersToSpaces(d); });
   }
 
   // appends the title for the color key of the given dimension and returns a reference to the
