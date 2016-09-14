@@ -846,7 +846,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
 
     dim.scaleAnnoColor.domain(values);
-    dim.labelsAnno.scaleUpdate(values);
+    dim.labelsAnno.updateScale(values);
 
     // visual updates
     dim.annoTitle.text(undersToSpaces(dim.annotypeAnno));
@@ -879,7 +879,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     dim.scaleCell.domain(dim.names);
     dim.scaleCellBrush.domain(dim.names);
     dim.brusher.inverter.range(dim.names);
-    dim.labelsSub.scaleUpdate(dim.names);
+    dim.labelsSub.updateScale(dim.names);
     // visual updates for the brushable heatmaps
     dim.labelsSub.update();
     dim.cellsSub.selection.attr(dim.pos, dim.posCell)
