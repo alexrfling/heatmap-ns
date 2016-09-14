@@ -60,18 +60,15 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   var col = {}, row = {};
 
   // parse the files (.csv strings) and assign the data structures to col and row fields
-  var dataset = parseDataMatrix(datasetFile);
-
-  col.stats       = dataset.stats.col;
-  col.clustOrder  = colClustOrder || dataset.colnames;
-  col.names				= colClustOrder || dataset.colnames;
-
-  row.stats       = dataset.stats.row;
-  row.clustOrder  = rowClustOrder || dataset.rownames;
-  row.names				= rowClustOrder || dataset.rownames;
-
-  col.annotated = colAnnoFile ? true : false;
-  row.annotated = rowAnnoFile ? true : false;
+  var dataset    = parseDataMatrix(datasetFile);
+  col.stats      = dataset.stats.col;
+  row.stats      = dataset.stats.row;
+  col.clustOrder = colClustOrder || dataset.colnames;
+  row.clustOrder = rowClustOrder || dataset.rownames;
+  col.names			 = colClustOrder || dataset.colnames;
+  row.names			 = rowClustOrder || dataset.rownames;
+  col.annotated  = colAnnoFile ? true : false;
+  row.annotated  = rowAnnoFile ? true : false;
 
   (function() {
     if (col.annotated) {
@@ -204,10 +201,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //
   //------------------------------------------------------------------------------------------------
 
-  var scaleBy, scalingDim, settingsHidden = true;
-  var settingsPanel              = settingsPanelSetup();
-  var cellTooltip                = cellTooltipSetup();
-  var annoTooltip                = annoTooltipSetup();
+  var scaleBy, scalingDim, settingsHidden = true,
+      settingsPanel              = settingsPanelSetup(),
+      cellTooltip                = cellTooltipSetup(),
+      annoTooltip                = annoTooltipSetup();
   if (col.annotated) col.tooltip = sideTooltipSetup(col);
   if (row.annotated) row.tooltip = sideTooltipSetup(row);
 
@@ -224,37 +221,20 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   var mainColorScale = d3.scaleQuantize()
                         .domain([-dataset.stats.zMax[scalingDim], dataset.stats.zMax[scalingDim]])
                         .range(colors.heatmap);
-  if (!categorical) {
-    if (col.annotated) {
-      col.annoToNum = d3.scalePoint()
-      									.domain(col.annoTypesAndValues[col.annotypeAnno])
-      									.range([0, 0.9]); // must be within [0, 1]
-      col.numToColor = colors.continuous;
-    }
-    if (row.annotated) {
-      row.annoToNum = d3.scalePoint()
-      									.domain(row.annoTypesAndValues[row.annotypeAnno])
-      									.range([0, 0.9]); // must be within [0, 1]
-      row.numToColor = colors.continuous;
-    }
-  } else {
-    if (col.annotated) {
-      col.annoToNum = d3.scaleOrdinal()
-      									.domain(col.annoTypesAndValues[col.annotypeAnno])
-      									.range(d3.range(col.annoTypesAndValues[col.annotypeAnno].length));
-      col.numToColor = categoricalNumToColor;
-    }
-    if (row.annotated) {
-      row.annoToNum = d3.scaleOrdinal()
-      									.domain(row.annoTypesAndValues[row.annotypeAnno])
-      									.range(d3.range(row.annoTypesAndValues[row.annotypeAnno].length));
-      row.numToColor = categoricalNumToColor;
-    }
+
+  if (col.annotated) colorScalesSetup(col);
+  if (row.annotated) colorScalesSetup(row);
+
+  function colorScalesSetup(dim) {
+    dim.annoToNum = categorical ?
+                      d3.scaleOrdinal().domain(dim.annoTypesAndValues[dim.annotypeAnno]).range(d3.range(dim.annoTypesAndValues[dim.annotypeAnno].length))
+                    : d3.scalePoint().domain(dim.annoTypesAndValues[dim.annotypeAnno]).range([0, 0.9]); // must be within [0, 1]
+    dim.numToColor = categorical ? categoricalNumToColor : colors.continuous;
   }
 
   function categoricalNumToColor(index) {
     return colors.categorical[index % colors.categorical.length];
-  };
+  }
 
   // scales for cell dimensions/positioning. These will map row/col names to x/y/width/height based
   // on the margins in which the cells reside
