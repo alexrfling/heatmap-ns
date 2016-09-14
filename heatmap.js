@@ -157,12 +157,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   col.sizeHeatmap = widthHeatmap;
   row.sizeHeatmap = heightHeatmap;
 
-  col.idSortBy = "colSortBy"; // TODO: optionalize
-  col.idAnnoBy = "colAnnoBy";
-
-  row.idSortBy = "rowSortBy"; // TODO: optionalize
-  row.idAnnoBy = "rowAnnoBy";
-
   //------------------------------------------------------------------------------------------------
   //                                              MARGINS
   //
@@ -244,11 +238,11 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   		    row3 = table.append("tr");
       row2.append("td").append("p").text("Annotate columns by");
       row3.append("td").append("p").text("Sort columns by");
-      col.annoBy = controlsSetup(row2, col, col.idAnnoBy, annoUpdate);
-      col.sortBy = controlsSetup(row3, col, col.idSortBy, sortUpdate);
+      col.annoBy = controlsSetup(row2, col, annoUpdate);
+      col.sortBy = controlsSetup(row3, col, sortUpdate);
       annoOptionsSetup(col.annoBy, col);
       sortOptionsSetup(col.sortBy, col);
-      col.annotypeAnno = document.getElementById(col.idAnnoBy).value;
+      col.annotypeAnno = Object.keys(col.annoTypesAndValues)[0];
     }
 
     // TODO: optionalize
@@ -257,11 +251,11 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   		    row5 = table.append("tr");
       row4.append("td").append("p").text("Annotate rows by");
       row5.append("td").append("p").text("Sort rows by");
-      row.annoBy = controlsSetup(row4, row, row.idAnnoBy, annoUpdate);
-    	row.sortBy = controlsSetup(row5, row, row.idSortBy, sortUpdate);
+      row.annoBy = controlsSetup(row4, row, annoUpdate);
+    	row.sortBy = controlsSetup(row5, row, sortUpdate);
     	annoOptionsSetup(row.annoBy, row);
     	sortOptionsSetup(row.sortBy, row);
-      row.annotypeAnno = document.getElementById(row.idAnnoBy).value;
+      row.annotypeAnno = Object.keys(row.annoTypesAndValues)[0];
     }
 
   	return panel;
@@ -722,10 +716,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     if (row.currentScope[0] != 0 && row.currentScope[1] != row.names.length) row.brusher.brushToScope();
   }
 
-  // places the given selection at its anchor point
-  function positionElement(element, anchor) {
-  	element.attr("transform", "translate(" + anchor[0] + "," + anchor[1] + ")");
-  }
+  // places the given element (e) at its anchor point (a)
+  function positionElement(e, a) { e.attr("transform", "translate(" + a[0] + "," + a[1] + ")"); }
 
   //------------------------------------------------------------------------------------------------
   //                                   INTERACTIVITY FUNCTIONS
@@ -789,9 +781,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   function renderScope(dim, transition) {
     var scopeArray = dim.names.slice(dim.currentScope[0], dim.currentScope[1]);
 	  var inScope = {};
-	  for (var name of scopeArray) {
-	    inScope[name] = true; // note that "undefined" is falsy
-	  }
+	  for (var name of scopeArray) inScope[name] = true; // note that "undefined" is falsy
 
     // scale updates
     dim.scaleCell.domain(scopeArray);
@@ -811,7 +801,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     // push to respective side???
     if (dim.annotated) {
       dim.sideColors.selection.attr(dim.pos,	function(d) { return inScope[d.key] ? dim.posSideColor(d) : 0; })
-                    .attr(dim.size, function(d) { return inScope[d.key] ? dim.sizeSideColor() : 0; });
+                              .attr(dim.size, function(d) { return inScope[d.key] ? dim.sizeSideColor() : 0; });
     }
   }
 
@@ -872,8 +862,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       });
     }
 
-    dim.names = annotype === "Clustered Order" ? dim.clustOrder :
-                                        dim.labelsAnnotated.map(function(obj) { return obj.key; });
+    dim.names = annotype === "Clustered Order" ? dim.clustOrder : dim.labelsAnnotated.map(key);
 
     // update scales
     dim.scaleCell.domain(dim.names);
@@ -909,9 +898,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //
   //------------------------------------------------------------------------------------------------
 
-  function controlsSetup(selection, dim, id, update) {
-  	return selection.append("td").append("select").attr("id", id)
-  					.on("change", function() { update(dim, this.value); });
+  function controlsSetup(s, dim, update) {
+  	return s.append("td").append("select").on("change", function() { update(dim, this.value); });
   }
 
   // appends the sorting options for the given dimension to the given selection
