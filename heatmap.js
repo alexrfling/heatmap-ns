@@ -273,24 +273,16 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
           .selectAll("rect")        	        // then, we add the cells in (visible)
           .data(function(d) { return d; }, key) // in the key function, "d" is now a cell
           .enter()										        // from here on, "d" refers to an individual cell
-          .append("rect")           	        // the cells have now been added, but still not visible
-          .attr("fill", this.fill);
-        if (!dim) {
-          this.selection.on("mouseover", function(d) { displayCellTooltip(d, this); })
-                        .on("mouseout", function() { cellTooltip.classed("hidden", true); })
-                        .on("click", function() { toggleSettingsPanel(this, width, height, cellTooltip) });
-        }
+          .append("rect");           	        // the cells have now been added, but still not visible
+        if (!dim) this.selection.on("mouseover", function(d) { displayCellTooltip(d, this); })
+                    .on("mouseout", function() { cellTooltip.classed("hidden", true); })
+                    .on("click", function() { toggleSettingsPanel(this, width, height, cellTooltip) });
         break;
       case "sideColors":
         this.selection = this.group.selectAll("rect")
                   .data(dim.labelsAnnotated, key)
                   .enter()
                   .append("rect")
-                  .attr("x", this.x)
-                  .attr("y", this.y)
-                  .attr("width", this.width)
-                  .attr("height", this.height)
-                  .attr("fill", this.fill)
                   .on("mouseover", function(d) { displaySideTooltip(d, this, dim); })
                   .on("mouseout", function() { dim.tooltip.classed("hidden", true); })
                   .on("click", function() { toggleSettingsPanel(this, width, height, dim.tooltip) });
@@ -302,24 +294,22 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       			      .data(data, function(d) { return d; })
       			      .enter()
       			      .append("rect")
-      			      .attr("x", this.x)
-      			      .attr("y", this.y)
-      			      .attr("width", this.width)
-      			      .attr("height", this.height)
-      			      .attr("fill", this.fill)
+                  .attr("x", this.x)
+                  .attr("y", this.y)
+                  .attr("width", this.width)
+                  .attr("height", this.height)
+                  .attr("fill", this.fill)
       			      .on("mouseover", function(d) { displayAnnoTooltip(d, this, dim); })
       			      .on("mouseout", function() { annoTooltip.classed("hidden", true); });
         };
         this.setup(dim.annoTypesAndValues[dim.annotypeAnno]); // initialize
         break;
-      default:
-        this.selection = null;
+      //default:
+      //  this.selection = null; throw exception???
     }
-    this.selection;
+    this.selection.attr("fill", this.fill);
     this.update = function(attributes) {
-      for (var attribute of attributes) {
-        this.selection.attr(attribute, this[attribute]);
-      }
+      for (var attribute of attributes) this.selection.attr(attribute, this[attribute]);
     };
     this.position = function() { positionElement(this.group, this.anchor); };
   }
@@ -367,7 +357,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     col.sizeSideColor = col.sideColors.width;
     col.posSideColor = col.sideColors.x;
   }
-
   if (row.annotated) {
     row.sideColors = new Cells(null, "sideColors", row,
       function() { return 0; },
@@ -386,13 +375,12 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   }
 
   col.posCell       = cells.x;
-  col.sizeCell      = cells.width;
-  col.posCellBrush  = row.cellsSub.x;
-  col.sizeCellBrush = row.cellsSub.width;
-
   row.posCell       = cells.y;
+  col.sizeCell      = cells.width;
   row.sizeCell      = cells.height;
+  col.posCellBrush  = row.cellsSub.x;
   row.posCellBrush  = col.cellsSub.y;
+  col.sizeCellBrush = row.cellsSub.width;
   row.sizeCellBrush = col.cellsSub.height;
 
   //------------------------------------------------------------------------------------------------
@@ -408,9 +396,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // its SVG element.
   //
   //------------------------------------------------------------------------------------------------
-
-  // axis components (note that these are not yet added to the svg, so they aren't visible)
-  // SVG elements (these are visible)
 
   function Labels(names, room, offset, orientation, anchor, angled) {
     this.names = names;
@@ -801,13 +786,13 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       dim.annoBy = selectorSetup(r1, dim, annoUpdate);
       dim.sortBy = selectorSetup(r2, dim, sortUpdate);
       dim.annoBy.selectAll("option")
-        .data(["Clustered Order"].concat(Object.keys(dim.annoTypesAndValues)))
+        .data(Object.keys(dim.annoTypesAndValues))
         .enter()
         .append("option")
         .attr("value", function(d) { return d; })
         .text(function(d) { return undersToSpaces(d); });
       dim.sortBy.selectAll("option")
-        .data(Object.keys(dim.annoTypesAndValues))
+        .data(["Clustered Order"].concat(Object.keys(dim.annoTypesAndValues)))
         .enter()
         .append("option")
         .attr("value", function(d) { return d; })
