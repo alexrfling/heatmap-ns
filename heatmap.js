@@ -508,11 +508,13 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // axis components (note that these are not yet added to the svg, so they aren't visible)
   // SVG elements (these are visible)
 
-  function Labels(names, room, offset, factor, orientation, anchor, angled) {
+  function Labels(names, room, offset, orientation, anchor, angled) {
     this.names = names;
     this.room = room;
     this.offset = offset;
-    this.factor = factor;
+    this.anchor = anchor;
+    this.angled = angled;
+    this.factor = this.angled ? 0.75 : 1;
     this.scale = d3.scalePoint();
     this.updateScale = function(newNames) {
       this.names = newNames;
@@ -528,8 +530,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       //default: throw "Invalid orientation: must be one of 'left', 'top', right', or 'bottom'."
     }
     this.group = svg.append("g").attr("class", "axis").style("font-size", fontSize).call(this.axis);
-    this.anchor = anchor;
-    this.angled = angled;
     this.update = function() {
       this.updateScale(this.names);
       if (this.angled) {
@@ -559,12 +559,12 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     this.position = function() { positionElement(this.group, this.anchor); };
   }
 
-  row.labels = new Labels(row.names, heightHeatmap, cells.height, 1, "right", null, false);
-  col.labels = new Labels(col.names, widthHeatmap, cells.width, 0.75, "bottom", null, true);
-  row.labelsSub = new Labels(row.names, heightHeatmap, cells.height, 1, "right", null, false);
-  col.labelsSub = new Labels(col.names, widthHeatmap, cells.width, 0.75, "bottom", null, true);
-  if (row.annotated) row.labelsAnno = new Labels(row.annoTypesAndValues[row.annotypeAnno], function() { return row.marginAnnoHeight; }, row.annoColors.height, 1, "right", null, false);
-  if (col.annotated) col.labelsAnno = new Labels(col.annoTypesAndValues[col.annotypeAnno], function() { return col.marginAnnoHeight; }, col.annoColors.height, 1, "right", null, false);
+  row.labels = new Labels(row.names, heightHeatmap, cells.height, "right", null, false);
+  col.labels = new Labels(col.names, widthHeatmap, cells.width, "bottom", null, true);
+  row.labelsSub = new Labels(row.names, heightHeatmap, cells.height, "right", null, false);
+  col.labelsSub = new Labels(col.names, widthHeatmap, cells.width, "bottom", null, true);
+  if (row.annotated) row.labelsAnno = new Labels(row.annoTypesAndValues[row.annotypeAnno], function() { return row.marginAnnoHeight; }, row.annoColors.height, "right", null, false);
+  if (col.annotated) col.labelsAnno = new Labels(col.annoTypesAndValues[col.annotypeAnno], function() { return col.marginAnnoHeight; }, col.annoColors.height, "right", null, false);
 
   //------------------------------------------------------------------------------------------------
   //                                             ANCHORS
@@ -635,9 +635,9 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //
   //------------------------------------------------------------------------------------------------
 
-  function Brush(dim, lowerRight) {
+  function Brush(dim, upperLeft, lowerRight) {
     this.brush = dim.self === "col" ? d3.brushX() : d3.brushY();
-    this.upperLeft = function() { return dim.cellsSub.anchor; };
+    this.upperLeft = upperLeft;
     this.lowerRight = lowerRight;
     this.index = dim.self === "col" ? 0 : 1;
     this.inverter = d3.scaleQuantize().range(dim.names);
@@ -659,8 +659,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     this.extentsSetup();
   }
 
-  col.brusher = new Brush(col, function() { return [col.cellsSub.anchor[0] + widthHeatmap(), col.cellsSub.anchor[1] + col.marginBrush]; });
-  row.brusher = new Brush(row, function() { return [row.cellsSub.anchor[0] + row.marginBrush, row.cellsSub.anchor[1] + heightHeatmap()]; });
+  col.brusher = new Brush(col, function() { return col.cellsSub.anchor; }, function() { return [col.cellsSub.anchor[0] + widthHeatmap(), col.cellsSub.anchor[1] + col.marginBrush]; });
+  row.brusher = new Brush(row, function() { return row.cellsSub.anchor; }, function() { return [row.cellsSub.anchor[0] + row.marginBrush, row.cellsSub.anchor[1] + heightHeatmap()]; });
 
   positionElements();
   col.brusher.brushToScope();
