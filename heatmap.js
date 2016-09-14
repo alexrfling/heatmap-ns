@@ -350,12 +350,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     if (row.annotated) row.scaleAnnoColor.range([0, row.marginAnnoHeight]);
   }
 
-  function scalesInvertersSetup(width, height) {
-    // the domains of the inverters should be the same as the extents of their corresponding brushes
-    row.scaleInverter.domain([row.cellsSub.anchor[1], row.cellsSub.anchor[1] + heightHeatmap()]);
-    col.scaleInverter.domain([col.cellsSub.anchor[0], col.cellsSub.anchor[0] + widthHeatmap()]);
-  }
-
   //------------------------------------------------------------------------------------------------
   //                                     ATTRIBUTE FUNCTIONS
   //
@@ -613,8 +607,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     																																				row.annoColors.anchor[1]];
   }
 
-  scalesInvertersSetup(width, height);
-
   //------------------------------------------------------------------------------------------------
   //                                         	CELLS AND TITLES
   //
@@ -664,6 +656,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   col.brushVis = svg.append("g").attr("class", "brush").call(col.brush);
   row.brushVis = svg.append("g").attr("class", "brush").call(row.brush);
 
+  brushExtentsSetup();
+
   positionElements();
 
   // initialize the brushed area to be the current scope
@@ -674,11 +668,15 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   							[row.scaleInverter.invertExtent(row.names[row.currentScope[0]])[0],
   							 row.scaleInverter.invertExtent(row.names[row.currentScope[1] - 1])[1] - 1]);
 
-  function resizeBrushExtents() {
+  function brushExtentsSetup() {
     col.brush.extent([col.cellsSub.anchor,
     								[col.cellsSub.anchor[0] + widthHeatmap(), col.cellsSub.anchor[1] + col.marginBrush]]);
     row.brush.extent([row.cellsSub.anchor,
     								[row.cellsSub.anchor[0] + row.marginBrush, row.cellsSub.anchor[1] + heightHeatmap()]]);
+    // the domains of the inverters should be the same as the extents of their corresponding brushes
+    var rowExtent = row.brush.extent()(), colExtent = col.brush.extent()();
+    row.scaleInverter.domain([rowExtent[0][1], rowExtent[1][1]]);
+    col.scaleInverter.domain([colExtent[0][0], colExtent[1][0]]);
   }
 
   function positionElements() {
@@ -730,8 +728,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     marginsSetup(w, h);
     anchorsSetup(w, h);
     scalesSetup(w, h);
-    scalesInvertersSetup(w, h);
-    resizeBrushExtents();
+    brushExtentsSetup();
     positionElements();
     if (col.currentScope[0] != 0 && col.currentScope[1] != col.names.length) {
     	col.brushVis.call(col.brush.move,
