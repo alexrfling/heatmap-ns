@@ -69,22 +69,14 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   row.names			 = rowClustOrder || dataset.rownames;
   col.annotated  = colAnnoFile ? true : false;
   row.annotated  = rowAnnoFile ? true : false;
+  if (col.annotated) annoSetup(col, colAnnoFile);
+  if (row.annotated) annoSetup(row, rowAnnoFile);
 
-  (function() {
-    if (col.annotated) {
-      var colAnnosParsed     = parseAnnotations(colAnnoFile); // TODO: optionalize
-      col.annoTypesAndValues = colAnnosParsed.annoTypesAndValues;
-      col.labelsAnnotated    = colAnnosParsed.labels;
-    }
-  })();
-
-  (function() {
-    if (row.annotated) {
-      var rowAnnosParsed     = parseAnnotations(rowAnnoFile); // TODO: optionalize
-      row.annoTypesAndValues = rowAnnosParsed.annoTypesAndValues;
-      row.labelsAnnotated    = rowAnnosParsed.labels;
-    }
-  })();
+  function annoSetup(dim, annoFile) {
+    var annosParsed        = parseAnnotations(annoFile);
+    dim.annoTypesAndValues = annosParsed.annoTypesAndValues;
+    dim.labelsAnnotated    = annosParsed.labels;
+  }
 
   //------------------------------------------------------------------------------------------------
   //                                 				REFERENCES BY DIM
