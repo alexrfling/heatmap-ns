@@ -657,13 +657,14 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       this.inverter.domain([this.upperLeft()[this.index], this.lowerRight()[this.index]]);
     };
     this.extentsSetup();
-    this.brushToScope();
   }
 
   col.brusher = new Brush(col, function() { return [col.cellsSub.anchor[0] + widthHeatmap(), col.cellsSub.anchor[1] + col.marginBrush]; });
   row.brusher = new Brush(row, function() { return [row.cellsSub.anchor[0] + row.marginBrush, row.cellsSub.anchor[1] + heightHeatmap()]; });
-  
+
   positionElements();
+  col.brusher.brushToScope();
+  row.brusher.brushToScope();
 
   function positionElements() {
     row.labels.position();
