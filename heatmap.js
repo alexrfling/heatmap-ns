@@ -221,11 +221,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     dim.annoToNum = categorical ?
                       d3.scaleOrdinal().domain(dim.annoTypesAndValues[dim.annotypeAnno]).range(d3.range(dim.annoTypesAndValues[dim.annotypeAnno].length))
                     : d3.scalePoint().domain(dim.annoTypesAndValues[dim.annotypeAnno]).range([0, 0.9]); // must be within [0, 1]
-    dim.numToColor = categorical ? categoricalNumToColor : colors.continuous;
-  }
-
-  function categoricalNumToColor(index) {
-    return colors.categorical[index % colors.categorical.length];
+    dim.numToColor = colors.annoFill;
   }
 
   // scales for cell dimensions/positioning. These will map row/col names to x/y/width/height based
@@ -702,7 +698,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     if (values.every(function(value) { return !isNaN(value); }) && values.length > 2) {
     	dim.numToColor = categorical ? function(index) { return colors.annoHeat(index / values.length); } : colors.annoHeat;
     } else {
-    	dim.numToColor = categorical ? categoricalNumToColor : colors.continuous;
+    	dim.numToColor = colors.annoFill;
     }
     dim.scaleAnnoColor.domain(values);
     dim.labelsAnno.updateScale(values);
@@ -951,19 +947,13 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 			  	warm: 		d3.interpolateWarm,
 			  	cool: 		d3.interpolateCool
 			  };
-  	if (categorical) {
-  		return {
-  			heatmap: heatmapColors,
-  			categorical: categoricalSchemes[categoricalScheme],
-  			annoHeat: annoHeatSchemes[annoHeatScheme]
-  		};
-  	} else {
-  		return {
-  			heatmap: heatmapColors,
-  			continuous: continuousSchemes[continuousScheme],
-  			annoHeat: annoHeatSchemes[annoHeatScheme]
-  		};
-  	}
+    var catColors = categoricalSchemes[categoricalScheme],
+        conColors = continuousSchemes[continuousScheme];
+    return {
+      heatmap: heatmapColors,
+      annoFill: categorical ? function(index) { return catColors[index % catColors.length]; } : conColors,
+      annoHeat: annoHeatSchemes[annoHeatScheme]
+    };
   }
 
   // return the width/height of the main heatmap in pixels
