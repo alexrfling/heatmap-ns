@@ -1128,6 +1128,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   function parseAnnotations(file) {
 
     // parse the file into an array of arrays
+    file = file.charAt(0) === "," ? "Name" + file : file;
     var parsedRows = d3.csvParseRows(file);
 
     // the names of the different kinds of annotations should be stored in the header/first row of
