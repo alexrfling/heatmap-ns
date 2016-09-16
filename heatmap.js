@@ -1077,12 +1077,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
 
     // reassign min and max if necessary
-    if (value < stats[dim][name].min) {
-      stats[dim][name].min = value;
-    }
-    if (value > stats[dim][name].max) {
-      stats[dim][name].max = value;
-    }
+    if (value < stats[dim][name].min) stats[dim][name].min = value;
+    if (value > stats[dim][name].max) stats[dim][name].max = value;
 
     // add the value and squared value to the mean and meanOfSquares, respectively (these will be
     // averaged later)
@@ -1096,8 +1092,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   function finalCalculations(stats, dim, name, numVals) {
     stats[dim][name].mean *= (1 / numVals);
     stats[dim][name].meanOfSquares *= (1 / numVals);
-    stats[dim][name].stdev = Math.sqrt(stats[dim][name].meanOfSquares -
-    																														Math.pow(stats[dim][name].mean, 2));
+    stats[dim][name].stdev = Math.sqrt(stats[dim][name].meanOfSquares - Math.pow(stats[dim][name].mean, 2));
   }
 
   // parses the given file (a string) into the data structures used for annotating/sorting the
@@ -1137,9 +1132,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
         // if this value is not already in the array of unique values for its corresponding
         // annotation type, then add it in
-        if (annotations[annotypes[k]].indexOf(value) < 0) {
-          annotations[annotypes[k]].push(value);
-        }
+        if (annotations[annotypes[k]].indexOf(value) < 0) annotations[annotypes[k]].push(value);
       }
     }
 
@@ -1148,9 +1141,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     // lexicographically
     for (var j = 0; j < annotypes.length; j++) {
       annotations[annotypes[j]].sort(function(a, b) {
-        if (!isNaN(a) && !isNaN(b)) {
-          return (+a) - (+b); // the "+" converts a and b to numbers
-        }
+        if (!isNaN(a) && !isNaN(b)) return (+a) - (+b); // the "+" converts a and b to numbers
         return a.localeCompare(b);
       });
     }
