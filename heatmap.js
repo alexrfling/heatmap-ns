@@ -412,7 +412,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       case "bottom": this.axis = d3.axisBottom(this.scale); break;
       //default: throw "Invalid orientation: must be one of 'left', 'top', right', or 'bottom'."
     }
-    this.group = svg.append("g").attr("class", "axis").style("font-size", fontSize).call(this.axis);
+    this.group = svg.append("g").attr("class", "axis").style("font-size", fontSize).call(this.axis); // TODO: no call??
     this.update = function() {
       this.updateScale(this.names);
       if (this.angled) {
@@ -439,6 +439,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
         this.group.call(this.axis);
       }
     };
+    this.updateNT(); // for initial angling
     this.position = function() { positionElement(this.group, this.anchor); };
   }
 
@@ -557,9 +558,9 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
   function positionElements() {
     row.labels.position();
-  	row.labels.updateNT();
+  	//row.labels.updateNT(); // unnecessary??? cuz brush???
     col.labels.position();
-    col.labels.updateNT();
+    //col.labels.updateNT(); // unnecessary??? cuz brush???
     row.labelsSub.position();
     row.labelsSub.updateNT();
     col.labelsSub.position();
