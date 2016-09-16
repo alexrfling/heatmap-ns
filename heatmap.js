@@ -636,11 +636,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       dim.labels.updateScale(dim.names);
       // visual updates
       dim.labels.update();
-      cells.selection.attr(dim.pos,	cells[dim.pos])
-                    .attr(dim.size, cells[dim.size]);
-      if (dim.annotated) dim.sideColors.selection
-                     .attr(dim.pos, dim.sideColors[dim.pos])
-                    .attr(dim.size, dim.sideColors[dim.size]);
+      cells.update([dim.pos, dim.size]);
+      if (dim.annotated) dim.sideColors.update([dim.pos, dim.size]);
     }
   }
 
@@ -711,8 +708,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     dim.labelsSub.updateScale(dim.names);
     // visual updates for the brushable heatmaps
     dim.labelsSub.update();
-    dim.cellsSub.selection.attr(dim.pos, dim.cells[dim.pos])
-    dim.other.cellsSub.selection.attr(dim.pos, dim.other.cellsSub[dim.pos]);
+    dim.cellsSub.update([dim.pos]);
+    dim.other.cellsSub.update([dim.pos]);
     renderScope(dim, true);
   }
 
@@ -721,9 +718,9 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     scalingDim = newScalingDim;
     mainColorScale.domain(scalingDim === "none" ? [dataset.stats.totalMin, dataset.stats.totalMax]
                               : [-dataset.stats.zMax[scalingDim], dataset.stats.zMax[scalingDim]]);
-    cells.selection.attr("fill", cells.fill);
-    col.cellsSub.selection.attr("fill", col.cellsSub.fill);
-    row.cellsSub.selection.attr("fill", row.cellsSub.fill);
+    cells.update(["fill"]);
+    col.cellsSub.update(["fill"]);
+    row.cellsSub.update(["fill"]);
   }
 
   //------------------------------------------------------------------------------------------------
