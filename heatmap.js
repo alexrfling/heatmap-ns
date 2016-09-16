@@ -309,10 +309,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   }
 
   var cells = new Cells(null, "heatmap", null,
-    function(d) { return col.scaleCell(d.col); },// also cellsBottom, col.sideColors
-    function(d) { return row.scaleCell(d.row); },// also cellsRight, row.sideColors
-    function() { return col.scaleCell.bandwidth(); },// also cellsBottom, col.sideColors
-    function() { return row.scaleCell.bandwidth(); },// also cellsRight, row.sideColors
+    function(d) { return col.scaleCell(d.col); },
+    function(d) { return row.scaleCell(d.row); },
+    function() { return col.scaleCell.bandwidth(); },
+    function() { return row.scaleCell.bandwidth(); },
     function(d) {
       if (scalingDim === "none") {
         return mainColorScale(d.value);
@@ -323,49 +323,36 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     });
 
   col.cellsSub = new Cells(null, "heatmap", col,
-    function(d) { return cells.x(d); },
+    cells.x, // inherit x attribute from cells
     function(d) { return row.scaleCellBrush(d.row); },
-    function() { return cells.width(); },
+    cells.width, // inherit width attribute from cells
     function() { return row.scaleCellBrush.bandwidth(); },
-    function(d) { return cells.fill(d); });
+    cells.fill); // inherit fill attribute from cells
   row.cellsSub = new Cells(null, "heatmap", row,
     function(d) { return col.scaleCellBrush(d.col); },
-    function(d) { return cells.y(d); },
+    cells.y, // inherit y attribute from cells
     function() { return col.scaleCellBrush.bandwidth(); },
-    function() { return cells.height(); },
-    function(d) { return cells.fill(d); });
+    cells.height, // inherit height attribute from cells
+    cells.fill); // inherit fill attribute from cells
+  
+  if (col.annotated) sideAndAnnoColorsSetup(col);
+  if (row.annotated) sideAndAnnoColorsSetup(row);
 
-  if (col.annotated) {
-    col.sideColors = new Cells(null, "sideColors", col,
-      function(d) { return col.scaleCell(d.key); },
+  function sideAndAnnoColorsSetup(dim) {
+    dim.sideColors = new Cells(null, "sideColors", dim,
+      dim.self === "col" ? function(d) { return col.scaleCell(d.key); } : function() { return 0; },
+      dim.self === "row" ? function(d) { return row.scaleCell(d.key); } : function() { return 0; },
+      dim.self === "col" ? cells.width : function() { return row.marginSideColor - sideColorPadding; },
+      dim.self === "row" ? cells.height : function() { return col.marginSideColor - sideColorPadding; },
+      function(d) { return dim.numToColor(dim.annoToNum(d.annos[dim.annotypeAnno])); });
+    dim.annoColors = new Cells(null, "annoColors", dim,
       function() { return 0; },
-      function() { return cells.width(); },
-      function() { return col.marginSideColor - sideColorPadding; },
-      function(d) { return col.numToColor(col.annoToNum(d.annos[col.annotypeAnno])); });
-    col.annoColors = new Cells(null, "annoColors", col,
-      function() { return 0; },
-      function(d) { return col.scaleAnnoColor(d); },
+      function(d) { return dim.scaleAnnoColor(d); },
       function() { return marginAnnoColor; },
-      function() { return col.scaleAnnoColor.bandwidth(); },
-      function(d) { return col.numToColor(col.annoToNum(d)); });
-    col.sizeSideColor = col.sideColors.width;
-    col.posSideColor = col.sideColors.x;
-  }
-  if (row.annotated) {
-    row.sideColors = new Cells(null, "sideColors", row,
-      function() { return 0; },
-      function(d) { return row.scaleCell(d.key); },
-      function() { return row.marginSideColor - sideColorPadding; },
-      function() { return cells.height(); },
-      function(d) { return row.numToColor(row.annoToNum(d.annos[row.annotypeAnno])); });
-    row.annoColors = new Cells(null, "annoColors", row,
-      function() { return 0; },
-      function(d) { return row.scaleAnnoColor(d); },
-      function() { return marginAnnoColor; },
-      function() { return row.scaleAnnoColor.bandwidth(); },
-      function(d) { return row.numToColor(row.annoToNum(d)); });
-    row.sizeSideColor = row.sideColors.height;
-    row.posSideColor = row.sideColors.y;
+      function() { return dim.scaleAnnoColor.bandwidth(); },
+      function(d) { return dim.numToColor(dim.annoToNum(d)); });
+    dim.sizeSideColor = dim.sideColors[dim.size];
+    dim.posSideColor = dim.sideColors[dim.pos];
   }
 
   col.posCell       = cells.x;
