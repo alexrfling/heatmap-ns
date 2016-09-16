@@ -224,10 +224,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
   // scales for cell dimensions/positioning. These will map row/col names to x/y/width/height based
   // on the margins in which the cells reside
-  col.scaleCell      = d3.scaleBand(); // col.names, widthHeatmap -> x, width of cells
-  row.scaleCell      = d3.scaleBand(); // row.names, heightHeatmap -> y, height of cells
-  col.scaleCellBrush = d3.scaleBand(); // col.names, row.marginBrush -> x, width of cellsRight
-  row.scaleCellBrush = d3.scaleBand(); // row.names, col.marginBrush -> y, height of cellsBottom
+  col.scaleCell    = d3.scaleBand(); // col.names, widthHeatmap -> x, width of cells
+  row.scaleCell    = d3.scaleBand(); // row.names, heightHeatmap -> y, height of cells
+  col.scaleCellSub = d3.scaleBand(); // col.names, row.marginBrush -> x, width of cellsRight
+  row.scaleCellSub = d3.scaleBand(); // row.names, col.marginBrush -> y, height of cellsBottom
   if (col.annotated) col.scaleAnnoColor = d3.scaleBand().domain(col.annoTypesAndValues[col.annotypeAnno]);
   if (row.annotated) row.scaleAnnoColor = d3.scaleBand().domain(row.annoTypesAndValues[row.annotypeAnno]);
 
@@ -236,8 +236,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   function scalesSetup(width, height) {
     col.scaleCell.domain(col.names).range([0, widthHeatmap()]);
     row.scaleCell.domain(row.names).range([0, heightHeatmap()]);
-    col.scaleCellBrush.domain(col.names).range([0, row.marginBrush]);
-    row.scaleCellBrush.domain(row.names).range([0, col.marginBrush]);
+    col.scaleCellSub.domain(col.names).range([0, row.marginBrush]);
+    row.scaleCellSub.domain(row.names).range([0, col.marginBrush]);
     if (col.annotated) col.scaleAnnoColor.range([0, col.marginAnnoHeight]);
     if (row.annotated) row.scaleAnnoColor.range([0, row.marginAnnoHeight]);
   }
@@ -324,17 +324,17 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
   col.cellsSub = new Cells(null, "heatmap", col,
     cells.x, // inherit x attribute from cells
-    function(d) { return row.scaleCellBrush(d.row); },
+    function(d) { return row.scaleCellSub(d.row); },
     cells.width, // inherit width attribute from cells
-    function() { return row.scaleCellBrush.bandwidth(); },
+    function() { return row.scaleCellSub.bandwidth(); },
     cells.fill); // inherit fill attribute from cells
   row.cellsSub = new Cells(null, "heatmap", row,
-    function(d) { return col.scaleCellBrush(d.col); },
+    function(d) { return col.scaleCellSub(d.col); },
     cells.y, // inherit y attribute from cells
-    function() { return col.scaleCellBrush.bandwidth(); },
+    function() { return col.scaleCellSub.bandwidth(); },
     cells.height, // inherit height attribute from cells
     cells.fill); // inherit fill attribute from cells
-  
+
   if (col.annotated) sideAndAnnoColorsSetup(col);
   if (row.annotated) sideAndAnnoColorsSetup(row);
 
@@ -351,18 +351,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       function() { return marginAnnoColor; },
       function() { return dim.scaleAnnoColor.bandwidth(); },
       function(d) { return dim.numToColor(dim.annoToNum(d)); });
-    dim.sizeSideColor = dim.sideColors[dim.size];
-    dim.posSideColor = dim.sideColors[dim.pos];
   }
-
-  col.posCell       = cells.x;
-  row.posCell       = cells.y;
-  col.sizeCell      = cells.width;
-  row.sizeCell      = cells.height;
-  col.posCellBrush  = row.cellsSub.x;
-  row.posCellBrush  = col.cellsSub.y;
-  col.sizeCellBrush = row.cellsSub.width;
-  row.sizeCellBrush = col.cellsSub.height;
 
   //------------------------------------------------------------------------------------------------
   //                                             	AXES
@@ -647,11 +636,11 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       dim.labels.updateScale(dim.names);
       // visual updates
       dim.labels.update();
-      cells.selection.attr(dim.pos,	dim.posCell)
-                    .attr(dim.size, dim.sizeCell);
+      cells.selection.attr(dim.pos,	cells[dim.pos])
+                    .attr(dim.size, cells[dim.size]);
       if (dim.annotated) dim.sideColors.selection
-                     .attr(dim.pos, dim.posSideColor)
-                    .attr(dim.size, dim.sizeSideColor);
+                     .attr(dim.pos, dim.sideColors[dim.pos])
+                    .attr(dim.size, dim.sideColors[dim.size]);
     }
   }
 
@@ -672,11 +661,11 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // repositions and resizes the cells of the main heatmap and the side colors of the given
   // dimension, showing only those that are in scope (for which inScope[d[dim.self]] is true)
   function updateVisualScope(dim, inScope) {
-    cells.selection.attr(dim.pos,	function(d) { return inScope[d[dim.self]] ? dim.posCell(d) : 0; })
-                  .attr(dim.size, function(d) { return inScope[d[dim.self]] ? dim.sizeCell() : 0; });
+    cells.selection.attr(dim.pos,	function(d) { return inScope[d[dim.self]] ? cells[dim.pos](d) : 0; })
+                  .attr(dim.size, function(d) { return inScope[d[dim.self]] ? cells[dim.size]() : 0; });
     if (dim.annotated) dim.sideColors.selection // push to respective side???
-                   .attr(dim.pos, function(d) { return inScope[d.key] ? dim.posSideColor(d) : 0; })
-                  .attr(dim.size, function(d) { return inScope[d.key] ? dim.sizeSideColor() : 0; });
+                   .attr(dim.pos, function(d) { return inScope[d.key] ? dim.sideColors[dim.pos](d) : 0; })
+                  .attr(dim.size, function(d) { return inScope[d.key] ? dim.sideColors[dim.size]() : 0; });
   }
 
   // annotates the rows/columns (depending on dim) and updates the respective annotation colors by
@@ -717,13 +706,13 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     dim.names = annotype === "Clustered Order" ? dim.clustOrder : dim.labelsAnnotated.map(key);
     // update scales
     dim.scaleCell.domain(dim.names);
-    dim.scaleCellBrush.domain(dim.names);
+    dim.scaleCellSub.domain(dim.names);
     dim.brusher.inverter.range(dim.names);
     dim.labelsSub.updateScale(dim.names);
     // visual updates for the brushable heatmaps
     dim.labelsSub.update();
-    dim.cellsSub.selection.attr(dim.pos, dim.posCell)
-    dim.other.cellsSub.selection.attr(dim.pos, dim.posCellBrush);
+    dim.cellsSub.selection.attr(dim.pos, dim.cells[dim.pos])
+    dim.other.cellsSub.selection.attr(dim.pos, dim.other.cellsSub[dim.pos]);
     renderScope(dim, true);
   }
 
