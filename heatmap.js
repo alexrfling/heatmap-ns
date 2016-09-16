@@ -974,18 +974,14 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     var stats = {
                   col: {},
                   row: {},
-                  zMax: {
-                    col: 0,
-                    row: 0
-                  },
+                  zMax: { col: 0, row: 0 },
                   totalMin: Number.POSITIVE_INFINITY,
                   totalMax: Number.NEGATIVE_INFINITY
-                };
+    };
 
     // traverse the parsed rows to create the matrix (a doubly-nested array) for the heatmap, adding
     // to the rownames array and updating the stats object as we go
-    var matrix =
-      d3.range(parsedRows.length).map(function(j) { // j = index of parsedRows (row index)
+    var matrix = d3.range(parsedRows.length).map(function(j) { // j = index of parsedRows (row index)
 
         // grab the row name out of the parsed row. This makes parsedRows[j] the same length as
         // colnames, with parsedRows[j][k] being the value in the row labeled rowname and the column
@@ -995,8 +991,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
         // add the new row name to the list of row names
         rownames.push(rowname);
 
-        // traverse the current parsed row, reformatting each element (which are assumed to be
-        // numbers) and updating the stats object
+        // traverse the parsed row, reformatting each element (a number) and updating stats
         return d3.range(colnames.length).map(function(k) { // k = index of colnames (column index)
 
           // the "+" converts parsedRows[j][k] to a number (since it was parsed as a string)
@@ -1013,7 +1008,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
             value: value            // determines visual attributes of the cell (color)
           };
         });
-      });
+    });
 
     // perform final calculations of the stats for each column, and find the totalMin and totalMax
     // of the dataset (this could also be done in the final calculations for the row stats)
@@ -1049,6 +1044,41 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       }
     }
 
+    // updates the stats object for the given dimension at the given name with the given value
+    function updateStats(stats, dim, name, value) {
+
+      // if we have not yet seen this dimension name for this dimension, create a new object to keep
+      // track of its stats
+      if (stats[dim][name] === undefined) {
+
+        // an stdev field will be added to this object during final calculations
+        stats[dim][name] = {
+                min: value,       // helps to find most negative z-score
+                max: value,       // helps to find most positive z-score
+                mean: 0,          // used in calculating standard deviation/z-scores for cell fills
+                meanOfSquares: 0  // used in calculating standard deviation
+              };
+      }
+
+      // reassign min and max if necessary
+      if (value < stats[dim][name].min) stats[dim][name].min = value;
+      if (value > stats[dim][name].max) stats[dim][name].max = value;
+
+      // add the value and squared value to the mean and meanOfSquares, respectively (these will be
+      // averaged later)
+      stats[dim][name].mean += value;
+      stats[dim][name].meanOfSquares += value * value;
+    }
+
+    // performs final calculations on the stats object for the dimension at the given name. The mean
+    // and meanOfSquares are divided by the given numVals and an stdev field is added to
+    // stats[dim][name] based on their values
+    function finalCalculations(stats, dim, name, numVals) {
+      stats[dim][name].mean *= (1 / numVals);
+      stats[dim][name].meanOfSquares *= (1 / numVals);
+      stats[dim][name].stdev = Math.sqrt(stats[dim][name].meanOfSquares - Math.pow(stats[dim][name].mean, 2));
+    }
+
     return {
       matrix: matrix,     // array of arrays of objects (cells have value, row, col, key)
       rownames: rownames, // arrays of strings (list of all row names, assumed to be clustered)
@@ -1060,41 +1090,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     };
   }
 
-  // updates the stats object for the given dimension at the given name with the given value
-  function updateStats(stats, dim, name, value) {
-
-    // if we have not yet seen this dimension name for this dimension, create a new object to keep
-    // track of its stats
-    if (stats[dim][name] === undefined) {
-
-      // an stdev field will be added to this object during final calculations
-      stats[dim][name] = {
-              min: value,       // helps to find most negative z-score
-              max: value,       // helps to find most positive z-score
-              mean: 0,          // used in calculating standard deviation/z-scores for cell fills
-              meanOfSquares: 0  // used in calculating standard deviation
-            };
-    }
-
-    // reassign min and max if necessary
-    if (value < stats[dim][name].min) stats[dim][name].min = value;
-    if (value > stats[dim][name].max) stats[dim][name].max = value;
-
-    // add the value and squared value to the mean and meanOfSquares, respectively (these will be
-    // averaged later)
-    stats[dim][name].mean += value;
-    stats[dim][name].meanOfSquares += value * value;
-  }
-
-  // performs final calculations on the stats object for the dimension at the given name. The mean
-  // and meanOfSquares are divided by the given numVals and an stdev field is added to
-  // stats[dim][name] based on their values
-  function finalCalculations(stats, dim, name, numVals) {
-    stats[dim][name].mean *= (1 / numVals);
-    stats[dim][name].meanOfSquares *= (1 / numVals);
-    stats[dim][name].stdev = Math.sqrt(stats[dim][name].meanOfSquares - Math.pow(stats[dim][name].mean, 2));
-  }
-
   // parses the given file (a string) into the data structures used for annotating/sorting the
   // heatmap for one of the dimensions
   function parseAnnotations(file) {
@@ -1103,8 +1098,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     file = file.charAt(0) === "," ? "Name" + file : file;
     var parsedRows = d3.csvParseRows(file);
 
-    // the names of the different kinds of annotations should be stored in the header/first row of
-    // the file
+    // the names of the different kinds of annotations should be stored in the first row of the file
     var annotypes = parsedRows.shift(); // pops off the first element (ACTUALLY modifies parsedRows)
     annotypes = annotypes.map(dotsToUnders); // periods in names of annotypes will mess up JS code
 
@@ -1137,8 +1131,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
 
     // sort the values for each annotation type. When comparing two values, if both can be parsed as
-    // numbers, then they will be compared numerically, otherwise they will be compared
-    // lexicographically
+    // numbers, then compare them numerically, otherwise compare them lexicographically
     for (var j = 0; j < annotypes.length; j++) {
       annotations[annotypes[j]].sort(function(a, b) {
         if (!isNaN(a) && !isNaN(b)) return (+a) - (+b); // the "+" converts a and b to numbers
