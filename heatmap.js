@@ -1167,15 +1167,12 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
       // reformat the original object so that it's keys contain no periods and it's values are
       // renamed if blank (same convention as when parsing the hashmap)
-      var objReformatted = {};
-      var keys = Object.keys(obj);
-      for (var j = 0; j < keys.length; j++) {
-        objReformatted[dotsToUnders(keys[j])] = obj[keys[j]] === "" ? "{ no data }" : obj[keys[j]];
-      }
+      var objClean = {}, keys = Object.keys(obj);
+      for (var j = 0; j < keys.length; j++) objClean[dotsToUnders(keys[j])] = obj[keys[j]] || "{ no data }";
 
       return {
-        key: objReformatted[nameKey], // this corresponds to the name of the row/column
-        annos: objReformatted
+        key: objClean[nameKey], // this corresponds to the name of the row/column
+        annos: objClean
       };
     });
 
