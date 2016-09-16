@@ -38,8 +38,8 @@ function interpolateColors(low, mid, high, length) {
 // returns the length of longest stringy/array in the given array
 function lengthOfLongest(array) {
   var max = 0;
-  for (var element of array) {
-    max = Math.max(element.length, max);
+  for (var i = 0; i < array.length; i++) {
+    max = Math.max(array[i].length, max);
   }
   return max;
 }

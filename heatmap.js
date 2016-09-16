@@ -303,7 +303,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
     this.selection.attr("fill", this.fill);
     this.update = function(attributes) {
-      for (var attribute of attributes) this.selection.attr(attribute, this[attribute]);
+      for (var j = 0; j < attributes.length; j++) this.selection.attr(attributes[j], this[attributes[j]]);
     };
     this.position = function() { positionElement(this.group, this.anchor); };
   }
@@ -646,7 +646,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   function renderScope(dim, transition) {
     var scopeArray = dim.names.slice(dim.currentScope[0], dim.currentScope[1]);
 	  var inScope = {};
-	  for (var name of scopeArray) inScope[name] = true; // note that "undefined" is falsy
+	  for (var j = 0; j < scopeArray.length; j++) inScope[scopeArray[j]] = true; // note that "undefined" is falsy
     // scale updates
     dim.scaleCell.domain(scopeArray);
     dim.labels.updateScale(scopeArray);
@@ -693,7 +693,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   	if (annotype != "Clustered Order") { // sort the rows/columns by the chosen annotype
       var values = dim.annoTypesAndValues[annotype],
           valueToIndex = {}; // hashmap to determine priority for sorting
-      for (var j of d3.range(values.length)) valueToIndex[values[j]] = j;
+      for (var j = 0; j < values.length; j++) valueToIndex[values[j]] = j;
       dim.labelsAnnotated.sort(function(a, b) {
         var val1 = valueToIndex[a.annos[annotype]],
             val2 = valueToIndex[b.annos[annotype]];
@@ -867,12 +867,13 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     dim.tooltip.style("left", anchor[0] + "px")
                .style("top", 	anchor[1] + "px")
                .classed("hidden", false);
-    for (var annotype of Object.keys(d.annos)) {
-      // arbitrary clipping: parameterize and/or figure out some math for this soon
-      var origLength = d.annos[annotype].length,
+    var annotypes = Object.keys(d.annos);
+    for (var j = 0; j < annotypes.length; j++) {
+      // TODO: arbitrary clipping: parameterize and/or figure out some math for this soon
+      var origLength = d.annos[annotypes[j]].length,
           clipLength = Math.min(origLength, 9 * 3 + 8);
-      dim.tooltip.select("#" + annotype)
-        .text(d.annos[annotype].substring(0, clipLength) + (clipLength < origLength ? "..." : ""));
+      dim.tooltip.select("#" + annotypes[j])
+        .text(d.annos[annotypes[j]].substring(0, clipLength) + (clipLength < origLength ? "..." : ""));
     }
   }
 
@@ -1016,17 +1017,19 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
     // perform final calculations of the stats for each column, and find the totalMin and totalMax
     // of the dataset (this could also be done in the final calculations for the row stats)
-    for (var name of Object.keys(stats.col)) {
-      finalCalculations(stats, "col", name, rownames.length);
+    var cStatNames = Object.keys(stats.col);
+    for (var j = 0; j < cStatNames.length; j++) {
+      finalCalculations(stats, "col", cStatNames[j], rownames.length);
 
       // reassign the min and max as necessary
-      stats.totalMin = Math.min(stats.totalMin, stats.col[name].min);
-      stats.totalMax = Math.max(stats.totalMax, stats.col[name].max);
+      stats.totalMin = Math.min(stats.totalMin, stats.col[cStatNames[j]].min);
+      stats.totalMax = Math.max(stats.totalMax, stats.col[cStatNames[j]].max);
     }
 
     // perform final calculations of the stats for each row
-    for (var name of Object.keys(stats.row)) {
-      finalCalculations(stats, "row", name, colnames.length);
+    var rStatNames = Object.keys(stats.row);
+    for (var j = 0; j < rStatNames.length; j++) {
+      finalCalculations(stats, "row", rStatNames[j], colnames.length);
     }
 
     // find the z-score in the dataset with the largest magnitude
@@ -1114,9 +1117,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
     // each type of annotation will be mapped to a sorted array of all its unique values
     var annotations = {};
-    for (var annotype of annotypes) {
-      annotations[annotype] = [];
-    }
+    for (var j = 0; j < annotypes.length; j++) annotations[annotypes[j]] = [];
 
     // in these nested loops, examine all values for each annotation type and add them to the
     // hashmap of annotation types -> array of unique values
@@ -1145,8 +1146,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     // sort the values for each annotation type. When comparing two values, if both can be parsed as
     // numbers, then they will be compared numerically, otherwise they will be compared
     // lexicographically
-    for (var annotype of annotypes) {
-      annotations[annotype].sort(function(a, b) {
+    for (var j = 0; j < annotypes.length; j++) {
+      annotations[annotypes[j]].sort(function(a, b) {
         if (!isNaN(a) && !isNaN(b)) {
           return (+a) - (+b); // the "+" converts a and b to numbers
         }
@@ -1167,8 +1168,9 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       // reformat the original object so that it's keys contain no periods and it's values are
       // renamed if blank (same convention as when parsing the hashmap)
       var objReformatted = {};
-      for (var key of Object.keys(obj)) {
-        objReformatted[dotsToUnders(key)] = obj[key] === "" ? "{ no data }" : obj[key];
+      var keys = Object.keys(obj);
+      for (var j = 0; j < keys.length; j++) {
+        objReformatted[dotsToUnders(keys[j])] = obj[keys[j]] === "" ? "{ no data }" : obj[keys[j]];
       }
 
       return {
