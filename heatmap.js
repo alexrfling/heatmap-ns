@@ -981,18 +981,17 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
     // traverse the parsed rows to create the matrix (a doubly-nested array) for the heatmap, adding
     // to the rownames array and updating the stats object as we go
-    var matrix = d3.range(parsedRows.length).map(function(j) { // j = index of parsedRows (row index)
+    var matrix = d3.range(parsedRows.length).map(function(j) { // j = index of parsedRows
 
         // grab the row name out of the parsed row. This makes parsedRows[j] the same length as
-        // colnames, with parsedRows[j][k] being the value in the row labeled rowname and the column
-        // labeled colnames[k]
-        var rowname = parsedRows[j].shift(); //
+        // colnames, with parsedRows[j][k] being the value in row 'rowname' and column 'colnames[k]'
+        var rowname = parsedRows[j].shift();
 
         // add the new row name to the list of row names
         rownames.push(rowname);
 
         // traverse the parsed row, reformatting each element (a number) and updating stats
-        return d3.range(colnames.length).map(function(k) { // k = index of colnames (column index)
+        return d3.range(colnames.length).map(function(k) { // k = index of colnames
 
           // the "+" converts parsedRows[j][k] to a number (since it was parsed as a string)
           var value = +parsedRows[j][k];
@@ -1002,10 +1001,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
           updateStats(stats, "row", dotsToUnders(rowname), value);
 
           return {
-            key: j + " " + k,       // useful for d3 data joins
-            row: rowname,      // determines visual attributes of the cell (position, size)
-            col: colnames[k],  // determines visual attributes of the cell (position, size)
-            value: value            // determines visual attributes of the cell (color)
+            key: j + " " + k, // useful for d3 data joins
+            row: rowname,     // determines cell attributes (position (y), size (height))
+            col: colnames[k], // determines cell attributes (position (x), size (width))
+            value: value      // determines cell attributes (fill)
           };
         });
     });
@@ -1083,14 +1082,13 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       matrix: matrix,     // array of arrays of objects (cells have value, row, col, key)
       rownames: rownames, // arrays of strings (list of all row names, assumed to be clustered)
       colnames: colnames, // arrays of strings (list of all column names, assumed to be clustered)
-      stats: stats        // object with 5 fields: row and col are hashmaps from row/column name to
-      										// object of statistics, zMax stores the largest z-score (by magnitude)
-      										// for both row and col, and totalMin/totalMax store the min and max of
-      										// the entire dataset
+      stats: stats        // object with 5 fields: row and col (hashmaps from row/col name to object
+      										// of statistics, zMax stores largest z-score (by magnitude) for both row
+      										// and col, and totalMin/totalMax store min and max of the entire dataset
     };
   }
 
-  // parses the given file (a string) into the data structures used for annotating/sorting the
+  // parses the given string into the data structures used for annotating/sorting the
   // heatmap for one of the dimensions
   function parseAnnotations(file) {
 
@@ -1124,8 +1122,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
         // give the value a readable name if blank
         var value = values[k] === "" ? "{ no data }" : values[k];
 
-        // if this value is not already in the array of unique values for its corresponding
-        // annotation type, then add it in
+        // add this value into the array of unique values for its corresponding annotation type
         if (annotations[annotypes[k]].indexOf(value) < 0) annotations[annotypes[k]].push(value);
       }
     }
