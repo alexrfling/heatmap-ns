@@ -35,7 +35,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       width = parent.clientWidth,
 
   // holds all DOM elements of the heatmap (SVG and divs for the tooltips)
-      container = d3.select("#" + id).append("div").attr("id", "uniqueid");
+      container = d3.select("#" + id).append("div").attr("class", "heatmap");
 
   // margin convention for D3
   var margin = {top: 3, right: 3, bottom: 3, left: 3};
