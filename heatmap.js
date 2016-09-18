@@ -1101,13 +1101,12 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
 
     // parse the file into an array of objects (each dimension (row or column) is grouped with all
-    // its values for each annotation type, with the column names for the file being the keys)
-    var parsedLabels = d3.csvParse(file);
-    // restructure and reformat the elements of the parsed labels so that each object is now a
-    // nested object, with a key field holding the original object's value for the nameKey and an
-    // annos holding the entire original object (reformatted). This allows for easier lookup of the
-    // annotations for a given row/column name, and makes d3 data joins easier
-    var labels = parsedLabels.map(function(obj) {
+    // its values for each annotation type, with the column names for the file being the keys). Then
+    // restructure and reformat the elements so that each object is now a nested object, with a key
+    // field holding the original object's value for the nameKey and an annos holding the entire
+    // original object (reformatted). This allows for easier lookup of the annotations for a given
+    // row/column name, and makes d3 data joins easier
+    var labels = d3.csvParse(file).map(function(obj) {
       // reformat so that keys contain no periods and values are renamed if blank
       var objClean = {}, keys = Object.keys(obj);
       for (var j = 0; j < keys.length; j++) objClean[dotsToUnders(keys[j])] = obj[keys[j]] || "{ no data }";
