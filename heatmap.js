@@ -955,8 +955,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //
   //------------------------------------------------------------------------------------------------
 
-  // parses the given file (a string) into the data structures used for creating the heatmap.
-  // Statistics relevant to determing the colors of the cells are also computed here
+  // parses the given string into the data structures used for generating the heatmap
   function parseDataMatrix(file) {
 
     // parse the file into an array of arrays
@@ -1032,10 +1031,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
         // grab the current value and compute its z-score relative to its row and to its column
         var value = matrix[j][k].value,
-            colZ = (value - stats.col[dotsToUnders(colnames[k])].mean)
-            																					/ stats.col[dotsToUnders(colnames[k])].stdev,
-            rowZ = (value - stats.row[dotsToUnders(rownames[j])].mean)
-            																					/ stats.row[dotsToUnders(rownames[j])].stdev;
+            colZ = (value - stats.col[dotsToUnders(colnames[k])].mean) / stats.col[dotsToUnders(colnames[k])].stdev,
+            rowZ = (value - stats.row[dotsToUnders(rownames[j])].mean) / stats.row[dotsToUnders(rownames[j])].stdev;
 
         // reassign the maxes as necessary
         stats.zMax.col = Math.max(stats.zMax.col, Math.abs(colZ));
@@ -1046,32 +1043,28 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     // updates the stats object for the given dimension at the given name with the given value
     function updateStats(stats, dim, name, value) {
 
-      // if we have not yet seen this dimension name for this dimension, create a new object to keep
-      // track of its stats
+      // if we have not yet seen this name for this dimension, create a new object for its stats
       if (stats[dim][name] === undefined) {
 
         // an stdev field will be added to this object during final calculations
         stats[dim][name] = {
-                min: value,       // helps to find most negative z-score
-                max: value,       // helps to find most positive z-score
-                mean: 0,          // used in calculating standard deviation/z-scores for cell fills
-                meanOfSquares: 0  // used in calculating standard deviation
-              };
+          min: value,       // helps to find most negative z-score
+          max: value,       // helps to find most positive z-score
+          mean: 0,          // used in calculating standard deviation/z-scores for cell fills
+          meanOfSquares: 0  // used in calculating standard deviation
+        };
       }
 
       // reassign min and max if necessary
       if (value < stats[dim][name].min) stats[dim][name].min = value;
       if (value > stats[dim][name].max) stats[dim][name].max = value;
 
-      // add the value and squared value to the mean and meanOfSquares, respectively (these will be
-      // averaged later)
+      // add the value and squared value to the mean and meanOfSquares (they will be averaged later)
       stats[dim][name].mean += value;
       stats[dim][name].meanOfSquares += value * value;
     }
 
-    // performs final calculations on the stats object for the dimension at the given name. The mean
-    // and meanOfSquares are divided by the given numVals and an stdev field is added to
-    // stats[dim][name] based on their values
+    // adds the stdev field to the stats object for the dimension at the given name
     function finalCalculations(stats, dim, name, numVals) {
       stats[dim][name].mean *= (1 / numVals);
       stats[dim][name].meanOfSquares *= (1 / numVals);
@@ -1088,8 +1081,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     };
   }
 
-  // parses the given string into the data structures used for annotating/sorting the
-  // heatmap for one of the dimensions
+  // parses the given string into the data structures used for annotating/sorting the heatmap
   function parseAnnotations(file) {
 
     // parse the file into an array of arrays
@@ -1127,8 +1119,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       }
     }
 
-    // sort the values for each annotation type. When comparing two values, if both can be parsed as
-    // numbers, then compare them numerically, otherwise compare them lexicographically
+    // sort each annotation type's values (numerically if both numbers, otherwise lexicographically)
     for (var j = 0; j < annotypes.length; j++) {
       annotations[annotypes[j]].sort(function(a, b) {
         if (!isNaN(a) && !isNaN(b)) return (+a) - (+b); // the "+" converts a and b to numbers
@@ -1146,8 +1137,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     // annotations for a given row/column name, and makes d3 data joins easier
     var labels = parsedLabels.map(function(obj) {
 
-      // reformat the original object so that it's keys contain no periods and it's values are
-      // renamed if blank (same convention as when parsing the hashmap)
+      // reformat so that keys contain no periods and values are renamed if blank
       var objClean = {}, keys = Object.keys(obj);
       for (var j = 0; j < keys.length; j++) objClean[dotsToUnders(keys[j])] = obj[keys[j]] || "{ no data }";
 
