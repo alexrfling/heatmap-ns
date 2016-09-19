@@ -1,6 +1,6 @@
 .heatmap {
-  margin: 0px;
-  border: 0px;
+  margin: 0px; /* set margin/border/padding to 0 so that the size of the entire widget is just */
+  border: 0px; /* the size of the SVG */
   padding: 0px;
   font-family: sans-serif;
 }
@@ -10,8 +10,7 @@
 }
 
 .heatmap .axis path { /* axis line */
-  stroke: none;
-  stroke-width: 0;
+  stroke: none; /* or, stroke-width: 0 */
 }
 
 .heatmap .axis line { /* tickmarks */
@@ -25,7 +24,7 @@
   fill-opacity: 0.5;
 }
 
-.heatmap .tooltip {
+.heatmap .tooltip { /* all hover-over pop-ups */
   position: absolute;
   width: auto;
   height: auto;
@@ -37,11 +36,11 @@
   pointer-events: none;
   /*-webkit-border-radius: 5px;
   -moz-border-radius: 5px;
-  border-radius: 5px;*/
-  /*word-wrap: break-word;*/
+  border-radius: 5px;*/ /* uncomment to add rounded corners */
+  /*word-wrap: break-word;*/ /* trying to make it so that long words don't stetch tooltip */
 }
 
-.heatmap #settings { /* the control panel is only tooltip to have pointer events */
+.heatmap #settings { /* the settins panel is the only tooltip to have pointer events */
 	pointer-events: all;
 }
 
@@ -54,7 +53,7 @@
   font-size: 14px;
 }
 
-.heatmap .selection { /* sliding window for zoom/pan */
+.heatmap .selection { /* sliding windows for zoom/pan */
 	fill: lightgray;
 	fill-opacity: 0.2;
 	stroke: gray;
@@ -64,7 +63,7 @@
 	font-weight: bold;
 }
 
-.heatmap .tooltip td:nth-child(1) p { /* the row names in the tooltip's table */
+.heatmap .tooltip td:nth-child(1) p { /* the row names in the tooltips' tables */
 	font-weight: bold;
 	text-align: right;
 }
