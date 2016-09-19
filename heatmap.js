@@ -1019,16 +1019,14 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
         var value = matrix[j][k].value,
             colZ = (value - stats.col[dotsToUnders(colnames[k])].mean) / stats.col[dotsToUnders(colnames[k])].stdev,
             rowZ = (value - stats.row[dotsToUnders(rownames[j])].mean) / stats.row[dotsToUnders(rownames[j])].stdev;
-        // reassign the maxes as necessary
-        stats.zMax.col = Math.max(stats.zMax.col, Math.abs(colZ));
-        stats.zMax.row = Math.max(stats.zMax.row, Math.abs(rowZ));
+        stats.zMax.col = Math.max(stats.zMax.col, Math.abs(colZ)); // reassign max if necessary
+        stats.zMax.row = Math.max(stats.zMax.row, Math.abs(rowZ)); // reassign max if necessary
       }
     }
 
     // updates the stats object for the given dimension at the given name with the given value
     function updateStats(stats, dim, name, value) {
-      // if we have not yet seen this name for this dimension, create a new object for its stats
-      if (stats[dim][name] === undefined) {
+      if (stats[dim][name] === undefined) { // if unseen, give it a fresh new stats object
         // an stdev field will be added to this object during final calculations
         stats[dim][name] = {
           min: value,       // helps to find most negative z-score
@@ -1037,12 +1035,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
           meanOfSquares: 0  // used in calculating standard deviation
         };
       }
-      // reassign min and max if necessary
-      if (value < stats[dim][name].min) stats[dim][name].min = value;
-      if (value > stats[dim][name].max) stats[dim][name].max = value;
-      // add the value and squared value to the mean and meanOfSquares (they will be averaged later)
-      stats[dim][name].mean += value;
-      stats[dim][name].meanOfSquares += value * value;
+      if (value < stats[dim][name].min) stats[dim][name].min = value; // reassign min if necessary
+      if (value > stats[dim][name].max) stats[dim][name].max = value; // reassign max if necessary
+      stats[dim][name].mean += value;                   // this will be averaged later
+      stats[dim][name].meanOfSquares += value * value;  // this will be averaged later
     }
 
     // adds the stdev field to the stats object for the dimension at the given name
