@@ -1,11 +1,11 @@
-.heatmap {
-  margin: 0px; /* set margin/border/padding to 0 so that the size of the entire widget is just */
-  border: 0px; /* the size of the SVG */
-  padding: 0px;
+.heatmap { /* div containing the entire widget (SVG and all tooltip divs) */
+  margin: 0px; /* set margin/border/padding to 0 so that */
+  border: 0px; /* the size of the entire widget is just */
+  padding: 0px; /* the size of the SVG */
   font-family: sans-serif;
 }
 
-.heatmap svg {
+.heatmap svg { /* contains all SVG elements */
 	shape-rendering: crispEdges; /* holy grail */
 }
 
@@ -24,7 +24,7 @@
   fill-opacity: 0.5;
 }
 
-.heatmap .tooltip { /* all hover-over pop-ups */
+.heatmap .tooltip { /* divs for all hover-over pop-ups */
   position: absolute;
   width: auto;
   height: auto;
