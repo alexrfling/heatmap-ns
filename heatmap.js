@@ -858,8 +858,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     cellTooltip.select("#col").text(d.col);
   }
 
-  // displays the tooltip for the side color cell (mousedOverRect) with the given data d and the
-  // given dimension
+  // displays the tooltip for the side color cell (mousedOverRect) with data d of the given dim
   function displaySideTooltip(d, mousedOverRect, dim) {
   	var obj = mousedOverRect.getBoundingClientRect(),
         anchor = [obj.left + dim.sideColors.width() + window.pageXOffset,
@@ -869,11 +868,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
                .classed("hidden", false);
     var annotypes = Object.keys(d.annos);
     for (var j = 0; j < annotypes.length; j++) {
-      // TODO: arbitrary clipping: parameterize and/or figure out some math for this soon
-      var origLength = d.annos[annotypes[j]].length,
-          clipLength = Math.min(origLength, 9 * 3 + 8);
-      dim.tooltip.select("#" + annotypes[j])
-        .text(d.annos[annotypes[j]].substring(0, clipLength) + (clipLength < origLength ? "..." : ""));
+      dim.tooltip.select("#" + annotypes[j]).text(d.annos[annotypes[j]]);
     }
   }
 

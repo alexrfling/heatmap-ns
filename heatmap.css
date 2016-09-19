@@ -26,7 +26,7 @@
 
 .heatmap .tooltip { /* divs for all hover-over pop-ups */
   position: absolute;
-  width: auto;
+  max-width: 500px;
   height: auto;
   background-color: white;
   padding: 5px;
@@ -37,7 +37,6 @@
   /*-webkit-border-radius: 5px;
   -moz-border-radius: 5px;
   border-radius: 5px;*/ /* uncomment to add rounded corners */
-  /*word-wrap: break-word;*/ /* trying to make it so that long words don't stetch tooltip */
 }
 
 .heatmap #settings { /* the settins panel is the only tooltip to have pointer events */
@@ -66,10 +65,12 @@
 .heatmap .tooltip td:nth-child(1) p { /* the row names in the tooltips' tables */
 	font-weight: bold;
 	text-align: right;
+  word-break: keep-all; /* prevents words from being broken up */
 }
 
 .heatmap .tooltip td:nth-child(2) { /* values in each row */
 	padding-left: 5px;
+  word-break: break-all; /* breaks up words if they are too long */
 }
 
 .heatmap .tooltip > p { /* title(s) of the tooltip(s) */
