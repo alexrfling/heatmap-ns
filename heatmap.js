@@ -298,8 +298,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
         };
         this.setup(dim.annoTypesAndValues[dim.annotypeAnno]); // initialize
         break;
-      //default:
-      //  this.selection = null; throw exception???
     }
     this.selection.attr("fill", this.fill);
     this.update = function(attributes) {
@@ -771,7 +769,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
         .append("option")
         .attr("value", function(d) { return d; })
         .text(function(d) { return undersToSpaces(d); });
-      //dim.annotypeAnno = Object.keys(dim.annoTypesAndValues)[0];
     }
 
     function selectorSetup(s, dim, update) {
@@ -781,8 +778,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   	return panel;
   }
 
-  // appends the title for the color key of the given dimension and returns a reference to the
-  // selection
+  // appends the title for the color key of the given dim and returns a reference to the selection
   function annoTitleSetup(dim) {
     return svg.append("text").attr("class", "annoTitle").style("font-size", fontSizeCK)
     				.text(undersToSpaces(dim.annotypeAnno));
@@ -836,7 +832,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   function toggleSettingsPanel(clickedRect, widthOffset, heightOffset, tooltip) {
     settingsHidden = !settingsHidden;
     if (!settingsHidden) tooltip.classed("hidden", true);
-    // copied from 'displayCellTooltip'
     var obj = clickedRect.getBoundingClientRect(),
         anchor = [obj.left + widthOffset() + window.pageXOffset,
                   obj.top + heightOffset() + window.pageYOffset];
