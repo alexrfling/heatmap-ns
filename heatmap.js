@@ -1003,9 +1003,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     var cStatNames = Object.keys(stats.col);
     for (var j = 0; j < cStatNames.length; j++) {
       finalCalculations(stats, "col", cStatNames[j], rownames.length);
-      // reassign the min and max as necessary
-      stats.totalMin = Math.min(stats.totalMin, stats.col[cStatNames[j]].min);
-      stats.totalMax = Math.max(stats.totalMax, stats.col[cStatNames[j]].max);
+      stats.totalMin = Math.min(stats.totalMin, stats.col[cStatNames[j]].min); // reassign if needed
+      stats.totalMax = Math.max(stats.totalMax, stats.col[cStatNames[j]].max); // reassign if needed
     }
     // perform final calculations of the stats for each row
     var rStatNames = Object.keys(stats.row);
@@ -1015,8 +1014,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     // find the z-score in the dataset with the largest magnitude
     for (var j = 0; j < matrix.length; j++) {
       for (var k = 0; k < matrix[j].length; k++) {
-        // grab the current value and compute its z-score relative to its row and to its column
-        var value = matrix[j][k].value,
+        var value = matrix[j][k].value, // grab the value and compute its z-score for to its row/col
             colZ = (value - stats.col[dotsToUnders(colnames[k])].mean) / stats.col[dotsToUnders(colnames[k])].stdev,
             rowZ = (value - stats.row[dotsToUnders(rownames[j])].mean) / stats.row[dotsToUnders(rownames[j])].stdev;
         stats.zMax.col = Math.max(stats.zMax.col, Math.abs(colZ)); // reassign max if necessary
@@ -1060,15 +1058,13 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
   // parses the given string into the data structures used for annotating/sorting the heatmap
   function parseAnnotations(file) {
-    // parse the file into an array of arrays
     file = file.charAt(0) === "," ? "Name" + file : file;
-    var parsedRows = d3.csvParseRows(file);
+    var parsedRows = d3.csvParseRows(file); // parse the file into an array of arrays
     // the names of the different kinds of annotations should be stored in the first row of the file
     var annotypes = parsedRows.shift(); // pops off the first element (ACTUALLY modifies parsedRows)
     annotypes = annotypes.map(dotsToUnders); // periods in names of annotypes will mess up JS code
     var nameKey = annotypes.shift(); // trims annotypes down to JUST the actual annotation types
-    // each type of annotation will be mapped to a sorted array of all its unique values
-    var annotations = {};
+    var annotations = {}; // each type of annotation will map to a sorted array of its unique values
     for (var j = 0; j < annotypes.length; j++) annotations[annotypes[j]] = [];
 
     // in these nested loops, examine all values for each annotation type and add them to the
@@ -1081,8 +1077,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       var values = parsedRows[j];
       // associate new unique values with their corresponding annotation types as necessary
       for (var k = 0; k < annotypes.length; k++) {
-        // give the value a readable name if blank
-        var value = values[k] === "" ? "{ no data }" : values[k];
+        var value = values[k] === "" ? "{ no data }" : values[k]; // give a readable name if blank
         // add this value into the array of unique values for its corresponding annotation type
         if (annotations[annotypes[k]].indexOf(value) < 0) annotations[annotypes[k]].push(value);
       }
