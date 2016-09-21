@@ -120,8 +120,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // needing only parameter, the dim, whose "labels", "coordinate", "length", and "sideColors"
   // fields will be used (along with the global reference to the heatmap cells) to determine the
   // visual updates. NOTE: the function that actually does this modifies more variables than just
-  // those that are listed here, and additionally the actual field names may be different than they
-  // are here.
+  // those listed here, and additionally the actual field names may be different than they are here.
   //
   // And that's the concept behind the "dim".
   //
@@ -142,6 +141,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   row.size 	       = "height";
   col.sizeHeatmap  = widthHeatmap;
   row.sizeHeatmap  = heightHeatmap;
+  if (col.annotated) col.annotypeAnno = Object.keys(col.annoTypesAndValues)[0];
+  if (row.annotated) row.annotypeAnno = Object.keys(row.annoTypesAndValues)[0];
 
   //------------------------------------------------------------------------------------------------
   //                                              MARGINS
@@ -151,8 +152,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //------------------------------------------------------------------------------------------------
 
   var marginAnnoColor, marginAnnoLabel, marginAnnoTitle;
-  if (col.annotated) col.annotypeAnno = Object.keys(col.annoTypesAndValues)[0];
-  if (row.annotated) row.annotypeAnno = Object.keys(row.annoTypesAndValues)[0];
   marginsSetup(width, height);
 
   function marginsSetup(w, h) {
@@ -217,13 +216,12 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
   function colorScalesSetup(dim) {
     dim.annoToNum = categorical ?
-                      d3.scaleOrdinal().domain(dim.annoTypesAndValues[dim.annotypeAnno]).range(d3.range(dim.annoTypesAndValues[dim.annotypeAnno].length))
-                    : d3.scalePoint().domain(dim.annoTypesAndValues[dim.annotypeAnno]).range([0, 0.9]); // must be within [0, 1]
+      d3.scaleOrdinal().domain(dim.annoTypesAndValues[dim.annotypeAnno]).range(d3.range(dim.annoTypesAndValues[dim.annotypeAnno].length))
+      : d3.scalePoint().domain(dim.annoTypesAndValues[dim.annotypeAnno]).range([0, 0.9]); // must be within [0, 1]
     dim.numToColor = colors.annoReg;
   }
 
-  // scales for cell dimensions/positioning. These will map row/col names to x/y/width/height based
-  // on the margins in which the cells reside
+  // for cell position/size - map row/col.names to x/y/width/height based on the margins
   col.scaleCell    = d3.scaleBand(); // col.names, widthHeatmap -> x, width of cells
   row.scaleCell    = d3.scaleBand(); // row.names, heightHeatmap -> y, height of cells
   col.scaleCellSub = d3.scaleBand(); // col.names, row.marginBrush -> x, width of cellsRight
@@ -384,7 +382,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       case "top": this.axis = d3.axisTop(this.scale); break;
       case "right": this.axis = d3.axisRight(this.scale); break;
       case "bottom": this.axis = d3.axisBottom(this.scale); break;
-      //default: throw "Invalid orientation: must be one of 'left', 'top', right', or 'bottom'."
     }
     this.group = svg.append("g").attr("class", "axis").style("font-size", fontSize).call(this.axis); // TODO: no call??
     this.update = function() {
@@ -439,7 +436,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
   function anchorsSetup(w, h) { // w not yet used
   	cells.anchor          = [row.marginSideColor, col.marginSideColor]; // TODO: optionalize
-
     col.labels.anchor     = [cells.anchor[0], cells.anchor[1] + heightHeatmap() + axisOffset];
     row.labels.anchor     = [cells.anchor[0] + widthHeatmap() + axisOffset, cells.anchor[1]];
     col.cellsSub.anchor   = [cells.anchor[0], col.labels.anchor[1] + col.marginLabel];
@@ -510,12 +506,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       							[this.inverter.invertExtent(dim.names[dim.currentScope[0]])[0],
       							 this.inverter.invertExtent(dim.names[dim.currentScope[1] - 1])[1] - 1]);
     };
-    this.callBrush = function() {
-      this.group.call(this.brush);
-    };
-    this.clearBrush = function() {
-      this.group.call(this.brush.move, null);
-    }
+    this.callBrush = function() { this.group.call(this.brush); };
+    this.clearBrush = function() { this.group.call(this.brush.move, null); };
     this.extentsSetup = function() {
       this.brush.extent([this.upperLeft(), this.lowerRight()]);
       this.inverter.domain([this.upperLeft()[this.index], this.lowerRight()[this.index]]);
@@ -616,7 +608,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
   }
 
-  // Resets the scope of the given dim only if there is no current selection (i.e., the user clicks
+  // resets the scope of the given dim only if there is no current selection (i.e., the user clicks
   // off of the selected area, otherwise renders the dim's current scope if renderOnBrushEnd is true
   function ended(dim) {
     if (d3.event.selection) {
@@ -867,8 +859,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
   }
 
-  // displays the tooltip for the annotation cell (mouserOverRect) with the given data d and the
-  // given dimension
+  // displays the tooltip for the annotation cell (mouserOverRect) with data d of the given dim
   // TODO: fix scroll bar weirdness for Windows
   function displayAnnoTooltip(d, mousedOverRect, dim) {
   	var obj = mousedOverRect.getBoundingClientRect(),
@@ -929,8 +920,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   function widthHeatmap() { return sizeHeatmap(row) - marginAnnoColor - marginAnnoLabel; }
   function heightHeatmap() { return sizeHeatmap(col); }
 
-  // returns the total length, in pixels, for the main heatmap with respect to the given dim (height
-  // for col, width for row)
+  // returns the size, in pixels, of the heatmap along the given dim (height - col, width - row)
   function sizeHeatmap(dim) {
     return dim.marginTotal - dim.marginSideColor - (2 * dim.marginLabel) - dim.marginBrush;
   }
