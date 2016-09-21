@@ -157,7 +157,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   function marginsSetup(w, h) {
     marginAnnoColor = col.annotated || row.annotated ? Math.floor(h / 20) : 0;
     marginAnnoLabel = col.annotated || row.annotated ? // TODO: font width estimation
-              Math.min(Math.floor(w / 4), Math.floor(axisOffset + annoMax() * 0.78 * fontSize)) : 0;
+              Math.min(Math.floor(w / 4), Math.floor(axisOffset + annoMax())) : 0;
     marginAnnoTitle = col.annotated || row.annotated ? fontSizeCK + 2 * annoTitlePadding : 0;
     col.marginTotal = h;
     row.marginTotal = w;
@@ -177,9 +177,11 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
 
     function annoMax() {
-      var mCol = col.annotated ? lengthOfLongest(col.annoTypesAndValues[col.annotypeAnno]) : 0,
-          mRow = row.annotated ? lengthOfLongest(row.annoTypesAndValues[row.annotypeAnno]) : 0;
-      return Math.max(mCol, mRow);
+      var mCol = col.annotated ? lengthOfLongest(col.annoTypesAndValues[col.annotypeAnno]) * 0.78 * fontSize : 0,
+          mRow = row.annotated ? lengthOfLongest(row.annoTypesAndValues[row.annotypeAnno]) * 0.78 * fontSize : 0,
+          mCol2 = col.annotated ? col.annotypeAnno.length * 0.78 * fontSizeCK : 0,
+          mRow2 = row.annotated ? row.annotypeAnno.length * 0.78 * fontSizeCK : 0;
+      return Math.max(mCol, mRow, mCol2, mRow2);
     }
   }
 
