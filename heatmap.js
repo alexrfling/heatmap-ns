@@ -161,17 +161,18 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
   function marginsSetup(w, h) {
     marginAnnoColor = col.annotated || row.annotated ? Math.floor(h / 20) : 0;
-    marginAnnoLabel = col.annotated || row.annotated ?
-              Math.min(Math.floor(w / 4), Math.floor(annoMax())) : 0;
+    marginAnnoLabel = col.annotated || row.annotated ? Math.min(Math.floor(w / 4), Math.floor(annoMax())) : 0;
     marginAnnoTitle = col.annotated || row.annotated ? fontSizeCK + 2 * annoTitlePadding : 0;
     col.marginTotal = h;
     row.marginTotal = w;
-    col.marginLabel = col.labelsSub ? Math.ceil(col.labelsSub.getBox().height + 2 * axisOffset)
-                      : Math.min(Math.floor(w / 8),                         // estimate of font width
-                            Math.floor(axisOffset + lengthOfLongest(col.names) * 0.56 * fontSize));
-    row.marginLabel = row.labelsSub ? Math.ceil(row.labelsSub.getBox().width + 2 * axisOffset)
-                      : Math.min(Math.floor(w / 8),                         // estimate of font width
-                            Math.floor(axisOffset + lengthOfLongest(row.names) * 0.78 * fontSize));
+    col.marginLabel = col.labels ? Math.ceil(col.labels.getBox().height + 2 * axisOffset)
+                      : Math.min(Math.floor(w / 8), Math.floor(axisOffset + lengthOfLongest(col.names) * 0.56 * fontSize)); // estimate of font width
+    row.marginLabel = row.labels ? Math.ceil(row.labels.getBox().width + 2 * axisOffset)
+                      : Math.min(Math.floor(w / 8), Math.floor(axisOffset + lengthOfLongest(row.names) * 0.78 * fontSize)); // estimate of font width
+    col.marginLabelSub = col.labelsSub ? Math.ceil(col.labelsSub.getBox().height + 2 * axisOffset)
+                      : Math.min(Math.floor(w / 8), Math.floor(axisOffset + lengthOfLongest(col.names) * 0.56 * fontSize)); // estimate of font width
+    row.marginLabelSub = row.labelsSub ? Math.ceil(row.labelsSub.getBox().width + 2 * axisOffset)
+                      : Math.min(Math.floor(w / 8), Math.floor(axisOffset + lengthOfLongest(row.names) * 0.78 * fontSize)); // estimate of font width
     col.marginBrush = Math.floor(h / 10);
     row.marginBrush = Math.floor(h / 10);
     sideAndAnnoMarginsSetup(col);
@@ -456,14 +457,14 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
     if (col.annotated) {
       col.sideColors.anchor = [cells.anchor[0], 0];
-      col.annoColors.anchor = [row.labelsSub.anchor[0] + row.marginLabel, marginAnnoTitle];
+      col.annoColors.anchor = [row.labelsSub.anchor[0] + row.marginLabelSub, marginAnnoTitle];
       col.anchorAnnoTitle   = [col.annoColors.anchor[0], col.annoColors.anchor[1] - annoTitlePadding];
       col.labelsAnno.anchor = [col.annoColors.anchor[0] + marginAnnoColor + axisOffset,
       																																				col.annoColors.anchor[1]];
     }
     if (row.annotated) {
       row.sideColors.anchor = [0, cells.anchor[1]];
-      row.annoColors.anchor = [row.labelsSub.anchor[0] + row.marginLabel, col.marginAnnoTotal + marginAnnoTitle];
+      row.annoColors.anchor = [row.labelsSub.anchor[0] + row.marginLabelSub, col.marginAnnoTotal + marginAnnoTitle];
       row.anchorAnnoTitle   = [row.annoColors.anchor[0], row.annoColors.anchor[1] - annoTitlePadding];
       row.labelsAnno.anchor = [row.annoColors.anchor[0] + marginAnnoColor + axisOffset,
       																																				row.annoColors.anchor[1]];
@@ -931,7 +932,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
   // returns the size, in pixels, of the heatmap along the given dim (height - col, width - row)
   function sizeHeatmap(dim) {
-    return dim.marginTotal - dim.marginSideColor - (2 * dim.marginLabel) - dim.marginBrush;
+    return dim.marginTotal - dim.marginSideColor - dim.marginLabel - dim.marginBrush - dim.marginLabelSub;
   }
 
   // returns the key field of the given object
