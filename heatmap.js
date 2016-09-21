@@ -892,6 +892,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   function getColors() {
   	var heatmapColors = interpolateColors(lowColor, midColor, highColor, numColors),
 	  		categoricalSchemes = {
+          ns:       ["#7fff00", "#eead0e", "#00b2ee", "#ee2c2c", "#bf3eff",
+                     "#d2b48c", "#6959cd", "#228b22", "#ff7f50", "#7a7a7a"],
 				  google: 	["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099",
 				    				 "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395",
 				             "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300",
