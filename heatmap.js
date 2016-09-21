@@ -127,8 +127,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //------------------------------------------------------------------------------------------------
 
   // set the current scope for each dimension (these get modified by interactivity functions)
-  col.currentScope = [Math.floor(col.names.length / 32), Math.ceil(5 * col.names.length / 32)];
-  row.currentScope = [Math.floor(row.names.length / 4), Math.ceil(7 * row.names.length / 8)];
+  col.currentScope = [0, col.names.length];
+  row.currentScope = [0, row.names.length];
   col.other        = row;
   row.other        = col;
   col.self         = "col";
@@ -529,15 +529,13 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   col.brusher = new Brush(col, function() { return col.cellsSub.anchor; }, function() { return [col.cellsSub.anchor[0] + widthHeatmap(), col.cellsSub.anchor[1] + col.marginBrush]; });
   row.brusher = new Brush(row, function() { return row.cellsSub.anchor; }, function() { return [row.cellsSub.anchor[0] + row.marginBrush, row.cellsSub.anchor[1] + heightHeatmap()]; });
 
-  positionElements();
-  col.brusher.brushToScope();
-  row.brusher.brushToScope();
+  resizeSVG();
 
   function positionElements() {
     row.labels.position();
-  	//row.labels.updateNT(); // unnecessary??? cuz brush???
+  	row.labels.updateNT();
     col.labels.position();
-    //col.labels.updateNT(); // unnecessary??? cuz brush???
+    col.labels.updateNT();
     row.labelsSub.position();
     row.labelsSub.updateNT();
     col.labelsSub.position();
