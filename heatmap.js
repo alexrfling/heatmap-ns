@@ -741,6 +741,11 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   	var panel = container.append("div").attr("id", "settings")
   								.attr("class", "tooltip").classed("hidden", true);
     panel.append("p").text("Settings");
+    panel.append("button").text("Fit to Labels").on("click", resizeSVG);
+    panel.append("button").text("Close Settings").on("click", function() {
+      settingsHidden = !settingsHidden;
+      panel.classed("hidden", settingsHidden);
+    });
   	var table = panel.append("table"),
   			row1 = table.append("tr");
     row1.append("td").append("p").text("Scale by");
