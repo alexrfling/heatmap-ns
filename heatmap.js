@@ -11,9 +11,9 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       					 fontSize, fontSizeCK, lowColor, midColor, highColor, numColors) {
 
   // assign parameters to defaults if not given
-  height            = height || 600;
-  renderOnBrushEnd  = renderOnBrushEnd || false;
-  //categorical       = categorical || true;
+  height               = height || 600;
+  renderOnBrushEnd     = renderOnBrushEnd || false;
+  //categorical          = categorical || true;
   colCategoricalScheme = colCategoricalScheme || "google";
   colContinuousScheme  = colContinuousScheme || "rainbow";
   colAnnoHeatScheme    = colAnnoHeatScheme || "plasma";
@@ -22,16 +22,16 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   rowAnnoHeatScheme    = rowAnnoHeatScheme || "magma";
   bucketDividers       = bucketDividers || [25, 50, 100, 500];
   bucketColors         = bucketColors || ["red", "orange", "yellow", "gray", "cornflowerblue"];
-  animDuration      = animDuration || 1200;
-  sideColorPadding  = sideColorPadding || 3;
-  annoTitlePadding  = annoTitlePadding || 7;
-  axisOffset        = axisOffset || 5;
-  fontSize          = fontSize || 9;
-  fontSizeCK        = fontSizeCK || 11;
-  lowColor          = lowColor || "cornflowerblue";
-  midColor          = midColor || "black";
-  highColor         = highColor || "orange";
-  numColors         = numColors || 256;
+  animDuration         = animDuration || 1200;
+  sideColorPadding     = sideColorPadding || 3;
+  annoTitlePadding     = annoTitlePadding || 7;
+  axisOffset           = axisOffset || 5;
+  fontSize             = fontSize || 9;
+  fontSizeCK           = fontSizeCK || 11;
+  lowColor             = lowColor || "cornflowerblue";
+  midColor             = midColor || "black";
+  highColor            = highColor || "orange";
+  numColors            = numColors || 256;
 
   // contains all colors used for the heatmap, side colors, and color keys
   var heatmapColors = interpolateColors(lowColor, midColor, highColor, numColors),
@@ -482,7 +482,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // by its anchor at index 1. Anchors are determined by the margins.
   //
   //------------------------------------------------------------------------------------------------
-
+  var bucketKeyTitleAnchor;
   anchorsSetup(width, height);
 
   function anchorsSetup(w, h) { // w not yet used
@@ -510,6 +510,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
     bucketKeyCells.anchor = [row.labelsSub.anchor[0] + row.marginLabelSub, col.marginAnnoTotal + row.marginAnnoTotal + marginAnnoTitle];
     bucketKeyLabels.anchor = [bucketKeyCells.anchor[0] + marginAnnoColor + axisOffset, bucketKeyCells.anchor[1]];
+    bucketKeyTitleAnchor = [bucketKeyCells.anchor[0], bucketKeyCells.anchor[1] - annoTitlePadding];
   }
 
   //------------------------------------------------------------------------------------------------
@@ -527,6 +528,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
   if (col.annotated) col.annoTitle = annoTitleSetup(col);
   if (row.annotated) row.annoTitle = annoTitleSetup(row);
+  var bucketKeyTitle = svg.append("text").attr("class", "annoTitle").attr("id", "bucketAnnoTitle").style("font-size", fontSizeCK)
+                        .text("Buckets");
 
   //------------------------------------------------------------------------------------------------
   //                                           BRUSHES
@@ -572,6 +575,11 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   row.brusher = new Brush(row, function() { return row.cellsSub.anchor; }, function() { return [row.cellsSub.anchor[0] + row.marginBrush, row.cellsSub.anchor[1] + heightHeatmap()]; });
 
   resizeSVG();
+  if (scalingDim != "bucket") {
+    bucketKeyCells.group.classed("hidden", true);
+    bucketKeyTitle.classed("hidden", true);
+    bucketKeyLabels.group.classed("hidden", true);
+  }
 
   function positionElements() {
     row.labels.position();
@@ -612,6 +620,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     bucketKeyCells.position();
     bucketKeyLabels.position();
     bucketKeyLabels.updateNT();
+    positionElement(bucketKeyTitle, bucketKeyTitleAnchor);
   }
 
   function svgSetup(w, h) {
@@ -765,6 +774,9 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       mainColorScale.domain(scalingDim === "none" ? [dataset.stats.totalMin, dataset.stats.totalMax]
                               : [-dataset.stats.zMax[scalingDim], dataset.stats.zMax[scalingDim]]);
     }
+    bucketKeyCells.group.classed("hidden", scalingDim != "bucket");
+    bucketKeyTitle.classed("hidden", scalingDim != "bucket");
+    bucketKeyLabels.group.classed("hidden", scalingDim != "bucket");
     cells.update(["fill"]);
     col.cellsSub.update(["fill"]);
     row.cellsSub.update(["fill"]);
