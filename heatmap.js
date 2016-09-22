@@ -7,7 +7,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
                  colCategoricalScheme, colContinuousScheme, colAnnoHeatScheme,
                  rowCategoricalScheme, rowContinuousScheme, rowAnnoHeatScheme,
                  bucketDividers, bucketColors,
-                 animDuration, sideColorPadding, annoTitlePadding, axisOffset,
+                 animDuration, sideColorPad, annoTitlePad, axisOffset,
       					 fontSize, fontSizeCK, lowColor, midColor, highColor, numColors) {
 
   // assign parameters to defaults if not given
@@ -23,8 +23,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   bucketDividers       = bucketDividers || [25, 50, 100, 500];
   bucketColors         = bucketColors || ["red", "orange", "yellow", "gray", "cornflowerblue"];
   animDuration         = animDuration || 1200;
-  sideColorPadding     = sideColorPadding || 3;
-  annoTitlePadding     = annoTitlePadding || 7;
+  sideColorPad         = sideColorPad || 3;
+  annoTitlePad         = annoTitlePad || 7;
   axisOffset           = axisOffset || 5;
   fontSize             = fontSize || 9;
   fontSizeCK           = fontSizeCK || 11;
@@ -172,7 +172,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   function marginsSetup(w, h) {
     marginAnnoColor = col.annotated || row.annotated ? Math.floor(h / 20) : 0;
     marginAnnoLabel = col.annotated || row.annotated ? Math.min(Math.floor(w / 4), Math.floor(annoMax() + axisOffset)) : 0;
-    marginAnnoTitle = col.annotated || row.annotated ? fontSizeCK + 2 * annoTitlePadding : 0;
+    marginAnnoTitle = col.annotated || row.annotated ? fontSizeCK + 2 * annoTitlePad : 0;
     col.marginTotal = h;
     row.marginTotal = w;
     col.marginLabel = col.labels ? Math.ceil(col.labels.getBox().height + 2 * axisOffset)
@@ -238,8 +238,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
   function colorScalesSetup(dim) {
     dim.annoToNum = categorical ?
-      d3.scaleOrdinal().domain(dim.annotations[dim.annoBy]).range(d3.range(dim.annotations[dim.annoBy].length))
-      : d3.scalePoint().domain(dim.annotations[dim.annoBy]).range([0, 0.9]); // must be within [0, 1]
+      d3.scaleOrdinal().domain(dim.annotations[dim.annoBy])
+                       .range(d3.range(dim.annotations[dim.annoBy].length))
+      : d3.scalePoint().domain(dim.annotations[dim.annoBy])
+                       .range([0, 0.9]); // must be within [0, 1]
     dim.numToColor = dim.annoReg;
   }
 
@@ -287,55 +289,55 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
           .selectAll("rect")        	        // then, we add the cells in (visible)
           .data(function(d) { return d; }, key) // in the key function, "d" is now a cell
           .enter()										        // from here on, "d" refers to an individual cell
-          .append("rect");           	        // the cells have now been added, but still not visible
+          .append("rect");           	        // the cells have now been added, but still invisible
         if (!dim) this.selection.on("mouseover", function(d) { displayCellTooltip(d, this); })
-                    .on("mouseout", function() { cellTooltip.classed("hidden", true); })
-                    .on("click", function() { toggleSettingsPanel(this, width, height, cellTooltip) });
+                .on("mouseout", function() { cellTooltip.classed("hidden", true); })
+                .on("click", function() { toggleSettingsPanel(this, width, height, cellTooltip); });
         break;
       case "sideColors":
         this.selection = this.group.selectAll("rect")
-                  .data(dim.labelsAnnotated, key)
-                  .enter()
-                  .append("rect")
-                  .on("mouseover", function(d) { displaySideTooltip(d, this, dim); })
-                  .on("mouseout", function() { dim.tooltip.classed("hidden", true); })
-                  .on("click", function() { toggleSettingsPanel(this, width, height, dim.tooltip) });
+              .data(dim.labelsAnnotated, key)
+              .enter()
+              .append("rect")
+              .on("mouseover", function(d) { displaySideTooltip(d, this, dim); })
+              .on("mouseout", function() { dim.tooltip.classed("hidden", true); })
+              .on("click", function() { toggleSettingsPanel(this, width, height, dim.tooltip); });
         break;
       case "annoColors":
         if (!dim.self) {
           this.selection = this.group.selectAll("rect")
-      			      .data(dim, function(d) { return d; })
-      			      .enter()
-      			      .append("rect")
-                  .attr("x", this.x)
-                  .attr("y", this.y)
-                  .attr("width", this.width)
-                  .attr("height", this.height)
-                  .attr("fill", this.fill);
-      			      //.on("mouseover", function(d) { displayAnnoTooltip(d, this, dim); })
-      			      //.on("mouseout", function() { annoTooltip.classed("hidden", true); });
+      		      .data(dim, function(d) { return d; })
+      			    .enter()
+      			    .append("rect")
+                .attr("x", this.x)
+                .attr("y", this.y)
+                .attr("width", this.width)
+                .attr("height", this.height)
+                .attr("fill", this.fill);
+      			    //.on("mouseover", function(d) { displayAnnoTooltip(d, this, dim); })
+      			    //.on("mouseout", function() { annoTooltip.classed("hidden", true); });
         } else {
           this.setup = function(data) {
             this.group.selectAll("rect").remove();
             this.selection = this.group.selectAll("rect")
-        			      .data(data, function(d) { return d; })
-        			      .enter()
-        			      .append("rect")
-                    .attr("x", this.x)
-                    .attr("y", this.y)
-                    .attr("width", this.width)
-                    .attr("height", this.height)
-                    .attr("fill", this.fill)
-        			      .on("mouseover", function(d) { displayAnnoTooltip(d, this, dim); })
-        			      .on("mouseout", function() { annoTooltip.classed("hidden", true); });
+        		      .data(data, function(d) { return d; })
+        			    .enter()
+        			    .append("rect")
+                  .attr("x", this.x)
+                  .attr("y", this.y)
+                  .attr("width", this.width)
+                  .attr("height", this.height)
+                  .attr("fill", this.fill)
+        			    .on("mouseover", function(d) { displayAnnoTooltip(d, this, dim); })
+        			    .on("mouseout", function() { annoTooltip.classed("hidden", true); });
           };
           this.setup(dim.annotations[dim.annoBy]); // initialize
         }
         break;
     }
     this.selection.attr("fill", this.fill);
-    this.update = function(attributes) {
-      for (var j = 0; j < attributes.length; j++) this.selection.attr(attributes[j], this[attributes[j]]);
+    this.update = function(attrs) {
+      for (var j = 0; j < attrs.length; j++) this.selection.attr(attrs[j], this[attrs[j]]);
     };
     this.position = function() { positionElement(this.group, this.anchor); };
   }
@@ -376,8 +378,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     dim.sideColors = new Cells(null, "sideColors", dim,
       dim.self === "col" ? function(d) { return col.scaleCell(d.key); } : function() { return 0; },
       dim.self === "row" ? function(d) { return row.scaleCell(d.key); } : function() { return 0; },
-      dim.self === "col" ? cells.width : function() { return row.marginSideColor - sideColorPadding; },
-      dim.self === "row" ? cells.height : function() { return col.marginSideColor - sideColorPadding; },
+      dim.self === "col" ? cells.width : function() { return row.marginSideColor - sideColorPad; },
+      dim.self === "row" ? cells.height : function() { return col.marginSideColor - sideColorPad; },
       function(d) { return dim.numToColor(dim.annoToNum(d.annos[dim.annoBy])); });
     dim.annoColors = new Cells(null, "annoColors", dim,
       function() { return 0; },
@@ -387,7 +389,9 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       function(d) { return dim.numToColor(dim.annoToNum(d)); });
   }
   bucketDividers.push(bucketDividers[bucketDividers.length - 1]);
-  var bucketLabels = bucketDividers.map(function(d, i) { return i < bucketDividers.length - 1 ? "< " + d : ">= " + d; });
+  var bucketLabels = bucketDividers.map(function(d, i) {
+    return i < bucketDividers.length - 1 ? "< " + d : ">= " + d;
+  });
   var scaleBucket = d3.scaleBand().domain(bucketLabels).range([0, marginBucketKey]),
       scaleBucketColors = d3.scaleOrdinal().domain(bucketLabels).range(bucketColors);
   var bucketKeyCells = new Cells(null, "annoColors", bucketLabels,
@@ -432,7 +436,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       case "right": this.axis = d3.axisRight(this.scale); break;
       case "bottom": this.axis = d3.axisBottom(this.scale); break;
     }
-    this.group = svg.append("g").attr("class", "axis").attr("id", id).style("font-size", fontSize).call(this.axis); // TODO: no call??
+    this.group = svg.append("g").attr("class", "axis").attr("id", id).style("font-size", fontSize);
     this.update = function() {
       this.updateScale(this.names);
       if (this.angled) {
@@ -464,13 +468,16 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     this.getBox = function() { return document.getElementById(this.id).getBoundingClientRect(); };
   }
 
-  row.labels = new Labels("rowLabels", row.names, heightHeatmap, cells.height, "right", null, false);
-  col.labels = new Labels("colLabels", col.names, widthHeatmap, cells.width, "bottom", null, true);
-  row.labelsSub = new Labels("rowLabelsSub", row.names, heightHeatmap, cells.height, "right", null, false);
-  col.labelsSub = new Labels("colLabelsSub", col.names, widthHeatmap, cells.width, "bottom", null, true);
-  if (row.annotated) row.labelsAnno = new Labels("rowLabelsAnno", row.annotations[row.annoBy], function() { return row.marginAnnoHeight; }, row.annoColors.height, "right", null, false);
-  if (col.annotated) col.labelsAnno = new Labels("colLabelsAnno", col.annotations[col.annoBy], function() { return col.marginAnnoHeight; }, col.annoColors.height, "right", null, false);
-  var bucketKeyLabels = new Labels("bucketKeyLabels", bucketLabels, function() { return marginBucketKey; }, bucketKeyCells.height, "right", null, false);
+  row.labels = new Labels("rLabs", row.names, heightHeatmap, cells.height, "right", null, false);
+  col.labels = new Labels("cLabs", col.names, widthHeatmap, cells.width, "bottom", null, true);
+  row.labelsSub = new Labels("rSubs", row.names, heightHeatmap, cells.height, "right", null, false);
+  col.labelsSub = new Labels("cSubs", col.names, widthHeatmap, cells.width, "bottom", null, true);
+  if (row.annotated) row.labelsAnno = new Labels("rAnnos", row.annotations[row.annoBy],
+          function() { return row.marginAnnoHeight; }, row.annoColors.height, "right", null, false);
+  if (col.annotated) col.labelsAnno = new Labels("cAnnos", col.annotations[col.annoBy],
+          function() { return col.marginAnnoHeight; }, col.annoColors.height, "right", null, false);
+  var bucketKeyLabels = new Labels("bLabs", bucketLabels, function() { return marginBucketKey; },
+                                   bucketKeyCells.height, "right", null, false);
 
   //------------------------------------------------------------------------------------------------
   //                                             ANCHORS
@@ -497,7 +504,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     if (col.annotated) {
       col.sideColors.anchor = [cells.anchor[0], 0];
       col.annoColors.anchor = [row.labelsSub.anchor[0] + row.marginLabelSub, marginAnnoTitle];
-      col.anchorAnnoTitle = [col.annoColors.anchor[0], col.annoColors.anchor[1] - annoTitlePadding];
+      col.anchorAnnoTitle = [col.annoColors.anchor[0], col.annoColors.anchor[1] - annoTitlePad];
       col.labelsAnno.anchor = [col.annoColors.anchor[0] + marginAnnoColor + axisOffset,
       																																		col.annoColors.anchor[1]];
     }
@@ -505,7 +512,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       row.sideColors.anchor = [0, cells.anchor[1]];
       row.annoColors.anchor = [row.labelsSub.anchor[0] + row.marginLabelSub,
                                col.marginAnnoTotal + marginAnnoTitle];
-      row.anchorAnnoTitle = [row.annoColors.anchor[0], row.annoColors.anchor[1] - annoTitlePadding];
+      row.anchorAnnoTitle = [row.annoColors.anchor[0], row.annoColors.anchor[1] - annoTitlePad];
       row.labelsAnno.anchor = [row.annoColors.anchor[0] + marginAnnoColor + axisOffset,
       																																		row.annoColors.anchor[1]];
     }
@@ -513,7 +520,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
                              col.marginAnnoTotal + row.marginAnnoTotal + marginAnnoTitle];
     bucketKeyLabels.anchor = [bucketKeyCells.anchor[0] + marginAnnoColor + axisOffset,
                               bucketKeyCells.anchor[1]];
-    bucketKeyTitleAnchor = [bucketKeyCells.anchor[0], bucketKeyCells.anchor[1] - annoTitlePadding];
+    bucketKeyTitleAnchor = [bucketKeyCells.anchor[0], bucketKeyCells.anchor[1] - annoTitlePad];
   }
 
   //------------------------------------------------------------------------------------------------
