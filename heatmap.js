@@ -7,7 +7,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
                  colCategoricalScheme, colContinuousScheme, colAnnoHeatScheme,
                  rowCategoricalScheme, rowContinuousScheme, rowAnnoHeatScheme,
                  bucketDividers, bucketColors,
-                 animDuration, sideColorPad, annoTitlePad, axisOffset,
+                 animDuration, sideColorPad, annoTitlePad, axisPad,
       					 fontSize, fontSizeCK, lowColor, midColor, highColor, numColors) {
 
   // assign parameters to defaults if not given
@@ -25,7 +25,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   animDuration         = animDuration || 1200;
   sideColorPad         = sideColorPad || 3;
   annoTitlePad         = annoTitlePad || 7;
-  axisOffset           = axisOffset || 5;
+  axisPad              = axisPad || 5;
   fontSize             = fontSize || 9;
   fontSizeCK           = fontSizeCK || 11;
   lowColor             = lowColor || "cornflowerblue";
@@ -79,13 +79,15 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   row.annotated  = rowAnnoFile ? true : false;
   if (col.annotated) annoSetup(col, colAnnoFile);
   if (row.annotated) annoSetup(row, rowAnnoFile);
-  if (col.annotated) colorsSetup(col, categorical, colCategoricalScheme, colContinuousScheme, colAnnoHeatScheme);
-  if (row.annotated) colorsSetup(row, categorical, rowCategoricalScheme, rowContinuousScheme, rowAnnoHeatScheme);
+  if (col.annotated) colorsSetup(col, categorical, colCategoricalScheme, colContinuousScheme,
+                                                                                colAnnoHeatScheme);
+  if (row.annotated) colorsSetup(row, categorical, rowCategoricalScheme, rowContinuousScheme,
+                                                                                rowAnnoHeatScheme);
 
   function annoSetup(dim, annoFile) {
-    var annosParsed        = parseAnnotations(annoFile);
+    var annosParsed = parseAnnotations(annoFile);
     dim.annotations = annosParsed.annotations;
-    dim.labelsAnnotated    = annosParsed.labels;
+    dim.labelsAnnotated = annosParsed.labels;
   }
 
   //------------------------------------------------------------------------------------------------
@@ -155,7 +157,9 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   if (row.annotated) annotypesSetup(row);
 
   function annotypesSetup(dim) {
-    dim.annotypes = Object.keys(dim.annotations).sort(function(a, b) { return a.localeCompare(b); });
+    dim.annotypes = Object.keys(dim.annotations).sort(function(a, b) {
+      return a.localeCompare(b);
+    });
     dim.annoBy = dim.annotypes[0];
   }
 
@@ -170,15 +174,16 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   marginsSetup(width, height);
 
   function marginsSetup(w, h) {
-    marginAnnoColor = col.annotated || row.annotated ? Math.floor(h / 20) : 0;
-    marginAnnoLabel = col.annotated || row.annotated ? Math.min(Math.floor(w / 4), Math.floor(annoMax() + axisOffset)) : 0;
-    marginAnnoTitle = col.annotated || row.annotated ? fontSizeCK + 2 * annoTitlePad : 0;
+    var annotated = col.annotated || row.annotated;
+    marginAnnoColor = annotated ? Math.floor(h / 20) : 0;
+    marginAnnoLabel = annotated ? Math.min(Math.floor(w / 4), Math.floor(annoMax() + axisPad)) : 0;
+    marginAnnoTitle = annotated ? fontSizeCK + 2 * annoTitlePad : 0;
     col.marginTotal = h;
     row.marginTotal = w;
-    col.marginLabel = col.labels ? Math.min(Math.floor(w / 8), Math.ceil(col.labels.getBox().height + 2 * axisOffset)) : 0;
-    row.marginLabel = row.labels ? Math.min(Math.floor(w / 8), Math.ceil(row.labels.getBox().width + 2 * axisOffset)) : 0;
-    col.marginLabelSub = col.labelsSub ? Math.min(Math.floor(w / 8), Math.ceil(col.labelsSub.getBox().height + 2 * axisOffset)) : 0;
-    row.marginLabelSub = row.labelsSub ? Math.min(Math.floor(w / 8), Math.ceil(row.labelsSub.getBox().width + 2 * axisOffset)) : 0;
+    col.marginLabel = col.labels ? Math.ceil(col.labels.getBox().height + 2 * axisPad) : 0;
+    row.marginLabel = row.labels ? Math.ceil(row.labels.getBox().width + 2 * axisPad) : 0;
+    col.marginLabelSub = col.labelsSub ? Math.ceil(col.labelsSub.getBox().height + 2 * axisPad) : 0;
+    row.marginLabelSub = row.labelsSub ? Math.ceil(row.labelsSub.getBox().width + 2 * axisPad) : 0;
     col.marginBrush = Math.floor(h / 10);
     row.marginBrush = Math.floor(h / 10);
     marginBucketKey = Math.floor(h / 3) - marginAnnoTitle;
@@ -192,11 +197,11 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
 
     function annoMax() {
-      var mCol = col.annotated ? ((col.labelsAnno ? col.labelsAnno.getBox().width : 0) + 2 * axisOffset) : 0,
-          mRow = row.annotated ? ((row.labelsAnno ? row.labelsAnno.getBox().width : 0) + 2 * axisOffset) : 0,
-          mCol2 = col.annotated ? (col.annoTitle ? document.getElementById("colAnnoTitle").getBoundingClientRect().width : 0) : 0,
-          mRow2 = row.annotated ? (row.annoTitle ? document.getElementById("rowAnnoTitle").getBoundingClientRect().width : 0) : 0;
-      return Math.max(mCol, mRow, mCol2, mRow2);
+      var cM1 = col.labelsAnno ? col.labelsAnno.getBox().width + 2 * axisPad : 0,
+          rM1 = row.labelsAnno ? row.labelsAnno.getBox().width + 2 * axisPad : 0,
+          cM2 = col.annoTitle ? document.getElementById("cTitle").getBoundingClientRect().width : 0,
+          rM2 = row.annoTitle ? document.getElementById("rTitle").getBoundingClientRect().width : 0;
+      return Math.max(cM1, rM1, cM2, rM2);
     }
   }
 
@@ -490,18 +495,18 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
   function anchorsSetup(w, h) { // w not yet used
   	cells.anchor         = [row.marginSideColor, col.marginSideColor];
-    col.labels.anchor    = [cells.anchor[0], cells.anchor[1] + heightHeatmap() + axisOffset];
-    row.labels.anchor    = [cells.anchor[0] + widthHeatmap() + axisOffset, cells.anchor[1]];
+    col.labels.anchor    = [cells.anchor[0], cells.anchor[1] + heightHeatmap() + axisPad];
+    row.labels.anchor    = [cells.anchor[0] + widthHeatmap() + axisPad, cells.anchor[1]];
     col.cellsSub.anchor  = [cells.anchor[0], col.labels.anchor[1] + col.marginLabel];
     row.cellsSub.anchor  = [row.labels.anchor[0] + row.marginLabel, cells.anchor[1]];
-    col.labelsSub.anchor = [cells.anchor[0], col.cellsSub.anchor[1] + col.marginBrush + axisOffset];
-    row.labelsSub.anchor = [row.cellsSub.anchor[0] + row.marginBrush + axisOffset, cells.anchor[1]];
+    col.labelsSub.anchor = [cells.anchor[0], col.cellsSub.anchor[1] + col.marginBrush + axisPad];
+    row.labelsSub.anchor = [row.cellsSub.anchor[0] + row.marginBrush + axisPad, cells.anchor[1]];
 
     if (col.annotated) {
       col.sideColors.anchor = [cells.anchor[0], 0];
       col.annoColors.anchor = [row.labelsSub.anchor[0] + row.marginLabelSub, marginAnnoTitle];
       col.anchorAnnoTitle = [col.annoColors.anchor[0], col.annoColors.anchor[1] - annoTitlePad];
-      col.labelsAnno.anchor = [col.annoColors.anchor[0] + marginAnnoColor + axisOffset,
+      col.labelsAnno.anchor = [col.annoColors.anchor[0] + marginAnnoColor + axisPad,
       																																		col.annoColors.anchor[1]];
     }
     if (row.annotated) {
@@ -509,12 +514,12 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       row.annoColors.anchor = [row.labelsSub.anchor[0] + row.marginLabelSub,
                                col.marginAnnoTotal + marginAnnoTitle];
       row.anchorAnnoTitle = [row.annoColors.anchor[0], row.annoColors.anchor[1] - annoTitlePad];
-      row.labelsAnno.anchor = [row.annoColors.anchor[0] + marginAnnoColor + axisOffset,
+      row.labelsAnno.anchor = [row.annoColors.anchor[0] + marginAnnoColor + axisPad,
       																																		row.annoColors.anchor[1]];
     }
     bucketKeyCells.anchor = [row.labelsSub.anchor[0] + row.marginLabelSub,
                              col.marginAnnoTotal + row.marginAnnoTotal + marginAnnoTitle];
-    bucketKeyLabels.anchor = [bucketKeyCells.anchor[0] + marginAnnoColor + axisOffset,
+    bucketKeyLabels.anchor = [bucketKeyCells.anchor[0] + marginAnnoColor + axisPad,
                               bucketKeyCells.anchor[1]];
     bucketKeyTitleAnchor = [bucketKeyCells.anchor[0], bucketKeyCells.anchor[1] - annoTitlePad];
   }
@@ -856,7 +861,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
   // appends the title for the color key of the given dim and returns a reference to the selection
   function annoTitleSetup(dim) {
-    return svg.append("text").attr("class", "annoTitle").attr("id", dim.self + "AnnoTitle")
+    return svg.append("text").attr("class", "annoTitle").attr("id", dim.self.charAt(0) + "Title")
             .style("font-size", fontSizeCK).text(undersToSpaces(dim.annoBy));
   }
 
