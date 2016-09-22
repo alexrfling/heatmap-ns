@@ -43,3 +43,14 @@ function lengthOfLongest(array) {
   }
   return max;
 }
+
+function Bucketizer(dividers, colors) {
+  this.domain = dividers;
+  this.range = colors;
+  this.bucketize = function(value) {
+    for (var j = 0; j < this.domain.length - 1; j++) {
+      if (value < this.domain[j] && value < this.domain[j + 1]) return this.range[j];
+    }
+    return this.range[this.range.length - 1];
+  }
+}

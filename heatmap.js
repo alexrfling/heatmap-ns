@@ -224,6 +224,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //
   //------------------------------------------------------------------------------------------------
 
+  var bucketizer = new Bucketizer([25, 50, 100, 500, Number.POSITIVE_INFINITY], ["red", "orange", "yellow", "gray", "blue"]);
   // scales for determining cell color
   var mainColorScale = d3.scaleQuantize()
                         .domain([-dataset.stats.zMax[scalingDim], dataset.stats.zMax[scalingDim]])
@@ -329,6 +330,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     function(d) {
       if (scalingDim === "none") {
         return mainColorScale(d.value);
+      } else if (scalingDim === "bucket") {
+        return bucketizer.bucketize(d.value);
       } else {
         var ref = dataset.stats[scalingDim][dotsToUnders(d[scalingDim])];
         return mainColorScale((d.value - ref.mean) / ref.stdev);
@@ -723,8 +726,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // updates the fill of the heatmap cells based on the currently selected scaling option
   function updateColorScaling(newScalingDim) {
     scalingDim = newScalingDim;
+    if (scalingDim != "bucket") {
     mainColorScale.domain(scalingDim === "none" ? [dataset.stats.totalMin, dataset.stats.totalMax]
                               : [-dataset.stats.zMax[scalingDim], dataset.stats.zMax[scalingDim]]);
+    }
     cells.update(["fill"]);
     col.cellsSub.update(["fill"]);
     row.cellsSub.update(["fill"]);
@@ -754,7 +759,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   	scaleBy.selectAll("option")
       .data([{ value: col.self, text: col.title },
           	 { value: row.self, text: row.title },
-          	 { value: "none", text: "None" }])
+          	 { value: "none", text: "None" },
+             { value: "bucket", text: "Buckets" }])
       .enter()
       .append("option")
       .attr("value", function(d) { return d.value; })
