@@ -175,14 +175,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     marginAnnoTitle = col.annotated || row.annotated ? fontSizeCK + 2 * annoTitlePad : 0;
     col.marginTotal = h;
     row.marginTotal = w;
-    col.marginLabel = col.labels ? Math.ceil(col.labels.getBox().height + 2 * axisOffset)
-                      : Math.min(Math.floor(w / 8), Math.floor(axisOffset + lengthOfLongest(col.names) * 0.56 * fontSize)); // estimate of font width
-    row.marginLabel = row.labels ? Math.ceil(row.labels.getBox().width + 2 * axisOffset)
-                      : Math.min(Math.floor(w / 8), Math.floor(axisOffset + lengthOfLongest(row.names) * 0.78 * fontSize)); // estimate of font width
-    col.marginLabelSub = col.labelsSub ? Math.ceil(col.labelsSub.getBox().height + 2 * axisOffset)
-                      : Math.min(Math.floor(w / 8), Math.floor(axisOffset + lengthOfLongest(col.names) * 0.56 * fontSize)); // estimate of font width
-    row.marginLabelSub = row.labelsSub ? Math.ceil(row.labelsSub.getBox().width + 2 * axisOffset)
-                      : Math.min(Math.floor(w / 8), Math.floor(axisOffset + lengthOfLongest(row.names) * 0.78 * fontSize)); // estimate of font width
+    col.marginLabel = col.labels ? Math.min(Math.floor(w / 8), Math.ceil(col.labels.getBox().height + 2 * axisOffset)) : 0;
+    row.marginLabel = row.labels ? Math.min(Math.floor(w / 8), Math.ceil(row.labels.getBox().width + 2 * axisOffset)) : 0;
+    col.marginLabelSub = col.labelsSub ? Math.min(Math.floor(w / 8), Math.ceil(col.labelsSub.getBox().height + 2 * axisOffset)) : 0;
+    row.marginLabelSub = row.labelsSub ? Math.min(Math.floor(w / 8), Math.ceil(row.labelsSub.getBox().width + 2 * axisOffset)) : 0;
     col.marginBrush = Math.floor(h / 10);
     row.marginBrush = Math.floor(h / 10);
     marginBucketKey = Math.floor(h / 3) - marginAnnoTitle;
@@ -196,10 +192,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
 
     function annoMax() {
-      var mCol = col.annotated ? ((col.labelsAnno ? col.labelsAnno.getBox().width : lengthOfLongest(col.annotations[col.annoBy]) * 0.78 * fontSize) + 2 * axisOffset) : 0,
-          mRow = row.annotated ? ((row.labelsAnno ? row.labelsAnno.getBox().width : lengthOfLongest(row.annotations[row.annoBy]) * 0.78 * fontSize) + 2 * axisOffset) : 0,
-          mCol2 = col.annotated ? (col.annoTitle ? document.getElementById("colAnnoTitle").getBoundingClientRect().width : col.annoBy.length * 0.78 * fontSizeCK) : 0,
-          mRow2 = row.annotated ? (row.annoTitle ? document.getElementById("rowAnnoTitle").getBoundingClientRect().width : row.annoBy.length * 0.78 * fontSizeCK) : 0;
+      var mCol = col.annotated ? ((col.labelsAnno ? col.labelsAnno.getBox().width : 0) + 2 * axisOffset) : 0,
+          mRow = row.annotated ? ((row.labelsAnno ? row.labelsAnno.getBox().width : 0) + 2 * axisOffset) : 0,
+          mCol2 = col.annotated ? (col.annoTitle ? document.getElementById("colAnnoTitle").getBoundingClientRect().width : 0) : 0,
+          mRow2 = row.annotated ? (row.annoTitle ? document.getElementById("rowAnnoTitle").getBoundingClientRect().width : 0) : 0;
       return Math.max(mCol, mRow, mCol2, mRow2);
     }
   }
