@@ -90,7 +90,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     dim.labelsAnnotated = annosParsed.labels;
   }
 
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
   //                                 				REFERENCES BY DIM
   //
   // Note that the row and col objects are mirror images of each other; every field that col has,
@@ -136,7 +136,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //
   // And that's the concept behind the "dim".
   //
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
 
   // set the current scope for each dimension (these get modified by interactivity functions)
   col.currentScope = [0, col.names.length];
@@ -163,21 +163,18 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     dim.annoBy = dim.annotypes[0];
   }
 
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
   //                                              MARGINS
-  //
   // A margin describes a visual element's length in pixels along one axis/dimension.
-  //
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
 
-  var marginAnnoColor, marginAnnoLabel, marginAnnoTitle, marginBucketKey;
+  var marginAnnoColor, marginAnnoLabel, marginAnnoTitle, marginColorKey;
   marginsSetup(width, height);
 
   function marginsSetup(w, h) {
-    var annotated = col.annotated || row.annotated;
-    marginAnnoColor = annotated ? Math.floor(h / 20) : 0;
-    marginAnnoLabel = annotated ? Math.min(Math.floor(w / 4), Math.floor(annoMax() + axisPad)) : 0;
-    marginAnnoTitle = annotated ? fontSizeCK + 2 * annoTitlePad : 0;
+    marginAnnoColor = Math.floor(h / 20);
+    marginAnnoLabel = Math.min(Math.floor(w / 4), Math.floor(annoMax() + axisPad));
+    marginAnnoTitle = fontSizeCK + 2 * annoTitlePad;
     col.marginTotal = h;
     row.marginTotal = w;
     col.marginLabel = col.labels ? Math.ceil(col.labels.getBox().height + 2 * axisPad) : 0;
@@ -186,13 +183,13 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     row.marginLabelSub = row.labelsSub ? Math.ceil(row.labelsSub.getBox().width + 2 * axisPad) : 0;
     col.marginBrush = Math.floor(h / 10);
     row.marginBrush = Math.floor(h / 10);
-    marginBucketKey = Math.floor(h / 3) - marginAnnoTitle;
+    marginColorKey = Math.floor(h / 4) - marginAnnoTitle;
     sideAndAnnoMarginsSetup(col);
     sideAndAnnoMarginsSetup(row);
 
     function sideAndAnnoMarginsSetup(dim) {
       dim.marginSideColor = dim.annotated ? Math.floor(h / 40) : 0;
-      dim.marginAnnoTotal = dim.annotated ? Math.floor(h / 3) : 0;
+      dim.marginAnnoTotal = dim.annotated ? Math.floor(3 * h / 8) : 0;
       dim.marginAnnoHeight = dim.annotated ? dim.marginAnnoTotal - marginAnnoTitle : 0;
     }
 
@@ -205,13 +202,11 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
   }
 
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
   //                                      TOOLTIPS/SETTINGS PANEL
-  //
   // Tooltips provide information for rows, columns, matrix data, and annotations when hovering over
   // the side colors, heatmap cells, and color key.
-  //
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
 
   var scaleBy, scalingDim, settingsHidden = true,
       settingsPanel              = settingsPanelSetup(),
@@ -220,14 +215,12 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   if (col.annotated) col.tooltip = sideTooltipSetup(col);
   if (row.annotated) row.tooltip = sideTooltipSetup(row);
 
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
   //                                             	SCALES
-  //
   // Scales are very useful for determining where visual elements should be placed relative to each
   // other. For example, to determine the sizes and positions of the cells that make up the heatmap,
   // a scale can map an array of row or column names to a continuous range of pixels.
-  //
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
 
   // scales for determining cell color
   var mainColorScale = d3.scaleQuantize()
@@ -265,12 +258,18 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     if (row.annotated) row.scaleAnnoColor.range([0, row.marginAnnoHeight]);
   }
 
-  //------------------------------------------------------------------------------------------------
-  //                                     ATTRIBUTE FUNCTIONS
+  //================================================================================================
+  //                                          CELlS
+  // These represent groupings of colorful rectangles (row side colors, color keys, heatmap itself).
   //
-  //
-  //
-  //------------------------------------------------------------------------------------------------
+  // In combination with the axes, these make up all the SVG elements. With the exception of the
+  // annotation titles and axes, every visual component can be decomposed into 2 parts:
+  //		* group - a g element which gets positioned at an anchor point
+  //		* cells - rect elements which live inside the group
+  // When a group is tranlated to a new position, all the elements inside of it move as well, and
+  // this makes it so that the coordinates (x and y) of cells are relative their group, not to the
+  // SVG as a whole.
+  //================================================================================================
 
   function Cells(anchor, type, dim, x, y, width, height, fill) {
     this.anchor = anchor;
@@ -389,21 +388,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       function() { return dim.scaleAnnoColor.bandwidth(); },
       function(d) { return dim.numToColor(dim.annoToNum(d)); });
   }
-  bucketDividers.push(bucketDividers[bucketDividers.length - 1]);
-  var bucketLabels = bucketDividers.map(function(d, i) {
-    return i < bucketDividers.length - 1 ? "< " + d : ">= " + d;
-  });
-  var scaleBucket = d3.scaleBand().domain(bucketLabels).range([0, marginBucketKey]),
-      scaleBucketColors = d3.scaleOrdinal().domain(bucketLabels).range(bucketColors);
-  var bucketKeyCells = new Cells(null, "annoColors", bucketLabels,
-    function() { return 0; },
-    function(d) { return scaleBucket(d); },
-    function() { return marginAnnoColor; },
-    function() { return scaleBucket.bandwidth(); },
-    function(d) { return scaleBucketColors(d); });
 
-  //------------------------------------------------------------------------------------------------
-  //                                             	AXES
+  //================================================================================================
+  //                                             	LABELS
+  // These make up all the tickmark-prefaced pieces of text next to cells.
   //
   // The axes provide a visualization for the labels of rows, columns, and annotations. There are 3
   // parts that go into making a visible axis:
@@ -413,8 +401,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //		* SVG element - a g element which makes the axis visible
   // When an axis is to be visually updated, first update its scale, then call its axis component on
   // its SVG element.
-  //
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
 
   function Labels(id, names, room, offset, orientation, anchor, angled) {
     this.id = id;
@@ -477,20 +464,92 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
           function() { return row.marginAnnoHeight; }, row.annoColors.height, "right", null, false);
   if (col.annotated) col.labelsAnno = new Labels("cAnnos", col.annotations[col.annoBy],
           function() { return col.marginAnnoHeight; }, col.annoColors.height, "right", null, false);
-  var bucketKeyLabels = new Labels("bLabs", bucketLabels, function() { return marginBucketKey; },
-                                   bucketKeyCells.height, "right", null, false);
 
-  //------------------------------------------------------------------------------------------------
+  bucketDividers.push(bucketDividers[bucketDividers.length - 1]);
+  var bucketLabels = bucketDividers.map(function(d, i) {
+    return i < bucketDividers.length - 1 ? "< " + d : ">= " + d;
+  });
+  var scaleBucket = d3.scaleBand().domain(bucketColors).range([0, marginColorKey]),
+      scaleGradient = d3.scaleBand().domain(heatmapColors).range([0, marginColorKey]);
+  var colorKey = {
+    cells: {},
+    labels: {},
+    titles: {},
+    updateCells: function(attrs) {
+      var names = Object.keys(this.cells);
+      for (var j = 0; j < names.length; j++) this.cells[names[j]].update(attrs);
+    },
+    positionCells: function() {
+      var names = Object.keys(this.cells);
+      for (var j = 0; j < names.length; j++) positionElement(this.cells[names[j]].group, this.cellsAnchor);
+    },
+    updateNTLabels: function() {
+      var names = Object.keys(this.labels);
+      for (var j = 0; j < names.length; j++) this.labels[names[j]].updateNT();
+    },
+    positionLabels: function() {
+      var names = Object.keys(this.labels);
+      for (var j = 0; j < names.length; j++) positionElement(this.labels[names[j]].group, this.labelsAnchor);
+    },
+    positionTitles: function() {
+      var names = Object.keys(this.titles);
+      for (var j = 0; j < names.length; j++) positionElement(this.titles[names[j]], this.titleAnchor);
+    },
+    addTitle: function(name, text) {
+      this.titles[name] = svg.append("text").attr("class", "annoTitle").attr("id", name + "CKTitle")
+                            .style("font-size", fontSizeCK).text(text);
+    },
+    addLabels: function(name, labels) {
+      this.labels[name] = new Labels(name + "CKLabels", labels, function() { return marginColorKey; },
+                                       this.cells[name].height, "right", null, false);
+    },
+    change: function(type) {
+      var names = Object.keys(this.titles);
+      for (var j = 0; j < names.length; j++) {
+        this.cells[names[j]].group.classed("hidden", names[j] !== type);
+        this.labels[names[j]].group.classed("hidden", names[j] !== type);
+        this.titles[names[j]].classed("hidden", names[j] !== type);
+      }
+    }
+  };
+  colorKey.cells.none = new Cells(null, "annoColors", heatmapColors,
+    function() { return 0; },
+    function(d) { return scaleGradient(d); },
+    function() { return marginAnnoColor; },
+    function() { return scaleGradient.bandwidth(); },
+    function(d) { return d; });
+  colorKey.cells.col = new Cells(null, "annoColors", heatmapColors, // same as none
+    function() { return 0; },
+    function(d) { return scaleGradient(d); },
+    function() { return marginAnnoColor; },
+    function() { return scaleGradient.bandwidth(); },
+    function(d) { return d; });
+  colorKey.cells.row = new Cells(null, "annoColors", heatmapColors, // same as none
+    function() { return 0; },
+    function(d) { return scaleGradient(d); },
+    function() { return marginAnnoColor; },
+    function() { return scaleGradient.bandwidth(); },
+    function(d) { return d; });
+  colorKey.cells.bucket = new Cells(null, "annoColors", bucketColors,
+    function() { return 0; },
+    function(d) { return scaleBucket(d); },
+    function() { return marginAnnoColor; },
+    function() { return scaleBucket.bandwidth(); },
+    function(d) { return d; });
+  colorKey.addLabels("bucket", bucketLabels);
+  colorKey.addLabels("none", [dataset.stats.totalMin, (dataset.stats.totalMin + dataset.stats.totalMax ) / 2, dataset.stats.totalMax]);
+  colorKey.addLabels("row", [-dataset.stats.zMax.row + dataset.stats.zMax.row % 0.01, 0, dataset.stats.zMax.row - dataset.stats.zMax.row % 0.01]);
+  colorKey.addLabels("col", [-dataset.stats.zMax.col + dataset.stats.zMax.col % 0.01, 0, dataset.stats.zMax.col - dataset.stats.zMax.col % 0.01]);
+
+  //================================================================================================
   //                                             ANCHORS
-  //
   // An anchor is a 2-element array describing the pixel coordinates (relative to the SVG, not the
   // webpage as a whole) of the upper-left corner of a visual element. Using the "transform"
   // attribute of SVG elements, we can position each group of visual elements (for example, all the
   // cells of the heatmap) by simply translating it to the right by its anchor at index 0, and down
   // by its anchor at index 1. Anchors are determined by the margins.
-  //
-  //------------------------------------------------------------------------------------------------
-  var bucketKeyTitleAnchor;
+  //================================================================================================
+
   anchorsSetup(width, height);
 
   function anchorsSetup(w, h) { // w not yet used
@@ -517,34 +576,28 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       row.labelsAnno.anchor = [row.annoColors.anchor[0] + marginAnnoColor + axisPad,
       																																		row.annoColors.anchor[1]];
     }
-    bucketKeyCells.anchor = [row.labelsSub.anchor[0] + row.marginLabelSub,
-                             col.marginAnnoTotal + row.marginAnnoTotal + marginAnnoTitle];
-    bucketKeyLabels.anchor = [bucketKeyCells.anchor[0] + marginAnnoColor + axisPad,
-                              bucketKeyCells.anchor[1]];
-    bucketKeyTitleAnchor = [bucketKeyCells.anchor[0], bucketKeyCells.anchor[1] - annoTitlePad];
+    colorKey.cellsAnchor = [row.labelsSub.anchor[0] + row.marginLabelSub,
+                            col.marginAnnoTotal + row.marginAnnoTotal + marginAnnoTitle];
+    colorKey.labelsAnchor = [colorKey.cellsAnchor[0] + marginAnnoColor + axisPad,
+                             colorKey.cellsAnchor[1]];
+    colorKey.titleAnchor = [colorKey.cellsAnchor[0],
+                            colorKey.cellsAnchor[1] - annoTitlePad];
   }
 
-  //------------------------------------------------------------------------------------------------
-  //                                         	CELLS AND TITLES
-  //
-  // In combination with the axes, these make up all the SVG elements. With the exception of the
-  // annotation titles and axes, every visual component can be decomposed into 2 parts:
-  //		* group - a g element which gets positioned at an anchor point
-  //		* cells - rect elements which live inside the group
-  // When a group is tranlated to a new position, all the elements inside of it move as well, and
-  // this makes it so that the coordinates (x and y) of cells are relative their group, not to the
-  // SVG as a whole.
-  //
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
+  //                                         	  TITLES
+  // These represent the titles on the columns of cells at the right.
+  //================================================================================================
 
   if (col.annotated) col.annoTitle = annoTitleSetup(col);
   if (row.annotated) row.annoTitle = annoTitleSetup(row);
-  var bucketKeyTitle = svg.append("text").attr("class", "annoTitle").attr("id", "bucketAnnoTitle")
-                        .style("font-size", fontSizeCK).text("Buckets");
+  colorKey.addTitle("bucket", "Buckets");
+  colorKey.addTitle("none", "Linear Gradient");
+  colorKey.addTitle("row", "Row Z-Score");
+  colorKey.addTitle("col", "Column Z-Score");
 
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
   //                                           BRUSHES
-  //
   // The brushes provide a way to zoom and pan on the main heatmap by selecting regions on brushable
   // heatmaps, and they are made up of 2 parts:
   //		* brush component - a d3.brush object (brushX of col, brushY for row) which defines
@@ -556,8 +609,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //										selection which is draggable, and 2 "handles" on either side of the
   //										selection which allow it to be resized. The attributes of these elements
   //										can be programmatically controlled with CSS and JS
-  //
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
 
   function Brush(dim, upperLeft, lowerRight) {
     this.brush = dim.self === "col" ? d3.brushX() : d3.brushY();
@@ -589,10 +641,12 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
                                function() { return [row.cellsSub.anchor[0] + row.marginBrush,
                                                     row.cellsSub.anchor[1] + heightHeatmap()]; });
 
-  resizeSVG();
-  bucketKeyCells.group.classed("hidden", scalingDim != "bucket");
-  bucketKeyTitle.classed("hidden", scalingDim != "bucket");
-  bucketKeyLabels.group.classed("hidden", scalingDim != "bucket");
+  //================================================================================================
+  //                                           INITIALIZATION
+  // Get ready for everything to properly situated.
+  //================================================================================================
+
+  resizeSVG(); // initial setup of everything
 
   function positionElements() {
     row.labels.position();
@@ -629,11 +683,12 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       row.annoColors.update(["x", "y", "width", "height"]);
       positionElement(row.annoTitle, row.anchorAnnoTitle);
     }
-    bucketKeyCells.update(["x", "y", "width", "height"]);
-    bucketKeyCells.position();
-    bucketKeyLabels.position();
-    bucketKeyLabels.updateNT();
-    positionElement(bucketKeyTitle, bucketKeyTitleAnchor);
+    colorKey.updateCells(["x", "y", "width", "height"]);
+    colorKey.positionCells();
+    colorKey.positionLabels();
+    colorKey.updateNTLabels();
+    colorKey.positionTitles();
+    colorKey.change(scalingDim);
   }
 
   function svgSetup(w, h) {
@@ -660,9 +715,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // places the given element (e) at the anchor point (a)
   function positionElement(e, a) { e.attr("transform", "translate(" + a[0] + "," + a[1] + ")"); }
 
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
   //                                   INTERACTIVITY FUNCTIONS
-  //
   // These functions determine all the things that can happen after the heatmap is initially
   // rendered (TODO: include resizeSVG in this section?).
   //
@@ -672,8 +726,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //
   // For the dropdowns in the settings panel, there are 3 functions, annoUpdate, sortUpdate, and
   // updateColorScaling.
-  //
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
 
   // updates the current scope of the given dimension and, if renderOnBrushEnd is false, performs
   // visual updates on the main heatmap and side colors
@@ -790,18 +843,16 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       mainColorScale.domain(scalingDim === "none" ? [dataset.stats.totalMin, dataset.stats.totalMax]
                               : [-dataset.stats.zMax[scalingDim], dataset.stats.zMax[scalingDim]]);
     }
-    bucketKeyCells.group.classed("hidden", scalingDim != "bucket");
-    bucketKeyTitle.classed("hidden", scalingDim != "bucket");
-    bucketKeyLabels.group.classed("hidden", scalingDim != "bucket");
+    colorKey.change(scalingDim);
     cells.update(["fill"]);
     col.cellsSub.update(["fill"]);
     row.cellsSub.update(["fill"]);
   }
 
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
   //                             ELEMENT GENERATING/DISPLAYING FUNCTIONS
   // These handle the setup and displaying of various visual/interactive elements in the heatmap.
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
 
   function settingsPanelSetup() {
   	var panel = container.append("div").attr("id", "settings")
@@ -964,9 +1015,9 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 		annoTooltip.select("#value").text(d);
   }
 
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
   //                                     OTHER HELPER FUNCTIONS
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
 
   function colorsSetup(dim, cat, categoricalScheme, continuousScheme, annoHeatScheme) {
   	var categoricalSchemes = {
@@ -1017,10 +1068,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // returns the key field of the given object
   function key(d) { return d.key; }
 
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
   //                                         PARSING FUNCTIONS
   // These take strings in CSV format and turn them into the data structures needed for the heatmap.
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
 
   // parses the given string into the data structures used for generating the heatmap
   function parseDataMatrix(file) {
