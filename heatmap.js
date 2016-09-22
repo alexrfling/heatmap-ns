@@ -6,6 +6,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
                  height, renderOnBrushEnd, categorical,
                  colCategoricalScheme, colContinuousScheme, colAnnoHeatScheme,
                  rowCategoricalScheme, rowContinuousScheme, rowAnnoHeatScheme,
+                 bucketDividers, bucketColors,
                  animDuration, sideColorPadding, annoTitlePadding, axisOffset,
       					 fontSize, fontSizeCK, lowColor, midColor, highColor, numColors) {
 
@@ -19,6 +20,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   rowCategoricalScheme = rowCategoricalScheme || "ns";
   rowContinuousScheme  = rowContinuousScheme || "cubehelix";
   rowAnnoHeatScheme    = rowAnnoHeatScheme || "magma";
+  bucketDividers       = bucketDividers || [25, 50, 100, 500];
+  bucketColors         = bucketColors || ["red", "orange", "yellow", "gray", "cornflowerblue"];
   animDuration      = animDuration || 1200;
   sideColorPadding  = sideColorPadding || 3;
   annoTitlePadding  = annoTitlePadding || 7;
@@ -163,7 +166,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //
   //------------------------------------------------------------------------------------------------
 
-  var marginAnnoColor, marginAnnoLabel, marginAnnoTitle;
+  var marginAnnoColor, marginAnnoLabel, marginAnnoTitle, marginBucketKey;
   marginsSetup(width, height);
 
   function marginsSetup(w, h) {
@@ -182,12 +185,13 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
                       : Math.min(Math.floor(w / 8), Math.floor(axisOffset + lengthOfLongest(row.names) * 0.78 * fontSize)); // estimate of font width
     col.marginBrush = Math.floor(h / 10);
     row.marginBrush = Math.floor(h / 10);
+    marginBucketKey = Math.floor(h / 3) - marginAnnoTitle;
     sideAndAnnoMarginsSetup(col);
     sideAndAnnoMarginsSetup(row);
 
     function sideAndAnnoMarginsSetup(dim) {
       dim.marginSideColor = dim.annotated ? Math.floor(h / 40) : 0;
-      dim.marginAnnoTotal = dim.annotated ? Math.floor(3 * h / 8) : 0;
+      dim.marginAnnoTotal = dim.annotated ? Math.floor(h / 3) : 0;
       dim.marginAnnoHeight = dim.annotated ? dim.marginAnnoTotal - marginAnnoTitle : 0;
     }
 
@@ -224,7 +228,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //
   //------------------------------------------------------------------------------------------------
 
-  var bucketizer = new Bucketizer([25, 50, 100, 500, Number.POSITIVE_INFINITY], ["red", "orange", "yellow", "gray", "blue"]);
+  var bucketizer = new Bucketizer(bucketDividers, bucketColors);
   // scales for determining cell color
   var mainColorScale = d3.scaleQuantize()
                         .domain([-dataset.stats.zMax[scalingDim], dataset.stats.zMax[scalingDim]])
@@ -298,21 +302,35 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
                   .on("click", function() { toggleSettingsPanel(this, width, height, dim.tooltip) });
         break;
       case "annoColors":
-        this.setup = function(data) {
-          this.group.selectAll("rect").remove();
+        if (!dim.self) {
           this.selection = this.group.selectAll("rect")
-      			      .data(data, function(d) { return d; })
+      			      .data(dim, function(d) { return d; })
       			      .enter()
       			      .append("rect")
                   .attr("x", this.x)
                   .attr("y", this.y)
                   .attr("width", this.width)
                   .attr("height", this.height)
-                  .attr("fill", this.fill)
-      			      .on("mouseover", function(d) { displayAnnoTooltip(d, this, dim); })
-      			      .on("mouseout", function() { annoTooltip.classed("hidden", true); });
-        };
-        this.setup(dim.annoTypesAndValues[dim.annotypeAnno]); // initialize
+                  .attr("fill", this.fill);
+      			      //.on("mouseover", function(d) { displayAnnoTooltip(d, this, dim); })
+      			      //.on("mouseout", function() { annoTooltip.classed("hidden", true); });
+        } else {
+          this.setup = function(data) {
+            this.group.selectAll("rect").remove();
+            this.selection = this.group.selectAll("rect")
+        			      .data(data, function(d) { return d; })
+        			      .enter()
+        			      .append("rect")
+                    .attr("x", this.x)
+                    .attr("y", this.y)
+                    .attr("width", this.width)
+                    .attr("height", this.height)
+                    .attr("fill", this.fill)
+        			      .on("mouseover", function(d) { displayAnnoTooltip(d, this, dim); })
+        			      .on("mouseout", function() { annoTooltip.classed("hidden", true); });
+          };
+          this.setup(dim.annoTypesAndValues[dim.annotypeAnno]); // initialize
+        }
         break;
     }
     this.selection.attr("fill", this.fill);
@@ -368,6 +386,16 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       function() { return dim.scaleAnnoColor.bandwidth(); },
       function(d) { return dim.numToColor(dim.annoToNum(d)); });
   }
+  bucketDividers.push(bucketDividers[bucketDividers.length - 1]);
+  var bucketLabels = bucketDividers.map(function(d, i) { return i < bucketDividers.length - 1 ? "< " + d : ">= " + d; });
+  var scaleBucket = d3.scaleBand().domain(bucketLabels).range([0, marginBucketKey]),
+      scaleBucketColors = d3.scaleOrdinal().domain(bucketLabels).range(bucketColors);
+  var bucketKeyCells = new Cells(null, "annoColors", bucketLabels,
+    function() { return 0; },
+    function(d) { return scaleBucket(d); },
+    function() { return marginAnnoColor; },
+    function() { return scaleBucket.bandwidth(); },
+    function(d) { return scaleBucketColors(d); });
 
   //------------------------------------------------------------------------------------------------
   //                                             	AXES
@@ -442,6 +470,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   col.labelsSub = new Labels("colLabelsSub", col.names, widthHeatmap, cells.width, "bottom", null, true);
   if (row.annotated) row.labelsAnno = new Labels("rowLabelsAnno", row.annoTypesAndValues[row.annotypeAnno], function() { return row.marginAnnoHeight; }, row.annoColors.height, "right", null, false);
   if (col.annotated) col.labelsAnno = new Labels("colLabelsAnno", col.annoTypesAndValues[col.annotypeAnno], function() { return col.marginAnnoHeight; }, col.annoColors.height, "right", null, false);
+  var bucketKeyLabels = new Labels("bucketKeyLabels", bucketLabels, function() { return marginBucketKey; }, bucketKeyCells.height, "right", null, false);
 
   //------------------------------------------------------------------------------------------------
   //                                             ANCHORS
@@ -479,6 +508,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       row.labelsAnno.anchor = [row.annoColors.anchor[0] + marginAnnoColor + axisOffset,
       																																				row.annoColors.anchor[1]];
     }
+    bucketKeyCells.anchor = [row.labelsSub.anchor[0] + row.marginLabelSub, col.marginAnnoTotal + row.marginAnnoTotal + marginAnnoTitle];
+    bucketKeyLabels.anchor = [bucketKeyCells.anchor[0] + marginAnnoColor + axisOffset, bucketKeyCells.anchor[1]];
   }
 
   //------------------------------------------------------------------------------------------------
@@ -577,6 +608,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       row.annoColors.update(["x", "y", "width", "height"]);
       positionElement(row.annoTitle, row.anchorAnnoTitle);
     }
+    bucketKeyCells.update(["x", "y", "width", "height"]);
+    bucketKeyCells.position();
+    bucketKeyLabels.position();
+    bucketKeyLabels.updateNT();
   }
 
   function svgSetup(w, h) {
@@ -727,7 +762,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   function updateColorScaling(newScalingDim) {
     scalingDim = newScalingDim;
     if (scalingDim != "bucket") {
-    mainColorScale.domain(scalingDim === "none" ? [dataset.stats.totalMin, dataset.stats.totalMax]
+      mainColorScale.domain(scalingDim === "none" ? [dataset.stats.totalMin, dataset.stats.totalMax]
                               : [-dataset.stats.zMax[scalingDim], dataset.stats.zMax[scalingDim]]);
     }
     cells.update(["fill"]);
