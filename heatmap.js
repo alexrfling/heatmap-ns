@@ -462,7 +462,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     },
     positionCells: function() {
       var names = Object.keys(this.cells);
-      for (var j = 0; j < names.length; j++) positionElement(this.cells[names[j]].group, this.cellsAnchor);
+      for (var j = 0; j < names.length; j++)
+        positionElement(this.cells[names[j]].group, this.cellsAnchor);
     },
     updateNTLabels: function() {
       var names = Object.keys(this.labels);
@@ -470,15 +471,16 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     },
     positionLabels: function() {
       var names = Object.keys(this.labels);
-      for (var j = 0; j < names.length; j++) positionElement(this.labels[names[j]].group, this.labelsAnchor);
+      for (var j = 0; j < names.length; j++)
+        positionElement(this.labels[names[j]].group, this.labelsAnchor);
     },
     positionTitles: function() {
       var names = Object.keys(this.titles);
-      for (var j = 0; j < names.length; j++) positionElement(this.titles[names[j]], this.titleAnchor);
+      for (var j = 0; j < names.length; j++)
+        positionElement(this.titles[names[j]].selection, this.titleAnchor);
     },
     addTitle: function(name, text) {
-      this.titles[name] = svg.append("text").attr("class", "annoTitle").attr("id", name + "CKTitle")
-                            .style("font-size", fontSizeCK).text(text);
+      this.titles[name] = new Title(name + "CKTitle", text);
     },
     addLabels: function(name, labels) {
       this.labels[name] = new Labels(name + "CKLabels", labels, function() { return marginColorKey; },
@@ -489,7 +491,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       for (var j = 0; j < names.length; j++) {
         this.cells[names[j]].group.classed("hidden", names[j] !== type);
         this.labels[names[j]].group.classed("hidden", names[j] !== type);
-        this.titles[names[j]].classed("hidden", names[j] !== type);
+        this.titles[names[j]].selection.classed("hidden", names[j] !== type);
       }
     }
   };
@@ -853,12 +855,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
 
   	return panel;
-  }
-
-  // appends the title for the color key of the given dim and returns a reference to the selection
-  function annoTitleSetup(dim) {
-    return svg.append("text").attr("class", "annoTitle").attr("id", dim.self.charAt(0) + "Title")
-            .style("font-size", fontSizeCK).text(undersToSpaces(dim.annoBy));
   }
 
   // sets up the tooltip for hovering over the cells of the main heatmap
