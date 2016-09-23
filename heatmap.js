@@ -4,69 +4,59 @@
 
 function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowClustOrder,
                  height, renderOnBrushEnd, categorical,
-                 colCategoricalScheme, colContinuousScheme, colAnnoHeatScheme,
-                 rowCategoricalScheme, rowContinuousScheme, rowAnnoHeatScheme,
+                 colCatScheme, colConScheme, colAnnoHeatScheme,
+                 rowCatScheme, rowConScheme, rowAnnoHeatScheme,
                  bucketDividers, bucketColors,
                  animDuration, sideColorPad, annoTitlePad, axisPad,
       					 fontSize, fontSizeCK, lowColor, midColor, highColor, numColors) {
 
   // assign parameters to defaults if not given
-  height               = height || 600;
-  renderOnBrushEnd     = renderOnBrushEnd || false;
-  //categorical          = categorical || true;
-  colCategoricalScheme = colCategoricalScheme || "google";
-  colContinuousScheme  = colContinuousScheme || "rainbow";
-  colAnnoHeatScheme    = colAnnoHeatScheme || "plasma";
-  rowCategoricalScheme = rowCategoricalScheme || "ns";
-  rowContinuousScheme  = rowContinuousScheme || "cubehelix";
-  rowAnnoHeatScheme    = rowAnnoHeatScheme || "magma";
-  bucketDividers       = bucketDividers || [25, 50, 100, 500];
-  bucketColors         = bucketColors || ["red", "orange", "yellow", "gray", "cornflowerblue"];
-  animDuration         = animDuration || 1200;
-  sideColorPad         = sideColorPad || 3;
-  annoTitlePad         = annoTitlePad || 7;
-  axisPad              = axisPad || 5;
-  fontSize             = fontSize || 9;
-  fontSizeCK           = fontSizeCK || 11;
-  lowColor             = lowColor || "cornflowerblue";
-  midColor             = midColor || "black";
-  highColor            = highColor || "orange";
-  numColors            = numColors || 256;
+  height            = height || 600;
+  colCatScheme      = colCatScheme || "google";
+  colConScheme      = colConScheme || "rainbow";
+  colAnnoHeatScheme = colAnnoHeatScheme || "plasma";
+  rowCatScheme      = rowCatScheme || "ns";
+  rowConScheme      = rowConScheme || "cubehelix";
+  rowAnnoHeatScheme = rowAnnoHeatScheme || "magma";
+  bucketDividers    = bucketDividers || [25, 50, 100, 500];
+  bucketColors      = bucketColors || ["red", "orange", "yellow", "gray", "cornflowerblue"];
+  animDuration      = animDuration || 1200;
+  sideColorPad      = sideColorPad || 3;
+  annoTitlePad      = annoTitlePad || 7;
+  axisPad           = axisPad || 5;
+  fontSize          = fontSize || 9;
+  fontSizeCK        = fontSizeCK || 11;
+  lowColor          = lowColor || "cornflowerblue";
+  midColor          = midColor || "black";
+  highColor         = highColor || "orange";
+  numColors         = numColors || 256;
 
-  // contains all colors used for the heatmap, side colors, and color keys
-  var heatmapColors = interpolateColors(lowColor, midColor, highColor, numColors),
+  // the array of colors used for the heatmap
+  var heatmapColors = interpolateColors(lowColor, midColor, highColor, numColors);
 
   // the DOM element passed in
-      parent = document.getElementById(id),
-
+  var parent = document.getElementById(id),
   // the width of the SVG will be the same as the parent
       width = parent.clientWidth,
-
   // holds all DOM elements of the heatmap (SVG and divs for the tooltips)
       container = d3.select("#" + id).append("div").attr("class", "heatmap");
 
   // margin convention for D3
   var margin = {top: 3, right: 3, bottom: 3, left: 3};
-
   // width and height will refer to the 'inner' width/height of the widget, with margins applied
   width = width - margin.left - margin.right;
   height = height - margin.top - margin.bottom;
 
   // the actual SVG, whose width is the same as the parent
-  var SVG = container.append("svg")
-              .attr("width", width + margin.left + margin.right)
-		  				.attr("height", height + margin.top + margin.bottom),
-
+  var SVG = container.append("svg");
+  svgSetup(width, height);
   // the pseudo-SVG, with margins applied, to which all subsequent SVG elements are appended
-  		svg = SVG.append("g")
-  						.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
+  var svg = SVG.append("g").attr("transform", "translate(" + margin.left + "," + margin.top + ")");
   // when the browser window resizes, the SVG also resizes to fit the parent's width
   window.addEventListener("resize", resizeSVG);
 
-  // the "dims" will hold all elements relevant to the rows and columns of the data, separately
+  // the "dims" will hold all elements relevant to the columns and rows of the data, separately
   var col = {}, row = {};
-
   // parse the files (.csv strings) and assign the data structures to col and row fields
   var dataset    = parseDataMatrix(datasetFile);
   col.stats      = dataset.stats.col;
@@ -79,10 +69,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   row.annotated  = rowAnnoFile ? true : false;
   if (col.annotated) annoSetup(col, colAnnoFile);
   if (row.annotated) annoSetup(row, rowAnnoFile);
-  if (col.annotated) colorsSetup(col, categorical, colCategoricalScheme, colContinuousScheme,
-                                                                                colAnnoHeatScheme);
-  if (row.annotated) colorsSetup(row, categorical, rowCategoricalScheme, rowContinuousScheme,
-                                                                                rowAnnoHeatScheme);
+  if (col.annotated) colorsSetup(col, categorical, colCatScheme, colConScheme, colAnnoHeatScheme);
+  if (row.annotated) colorsSetup(row, categorical, rowCatScheme, rowConScheme, rowAnnoHeatScheme);
 
   function annoSetup(dim, annoFile) {
     var annosParsed = parseAnnotations(annoFile);
@@ -964,22 +952,18 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   function toggleSettingsPanel(clickedRect, widthOffset, heightOffset, tooltip) {
     settingsHidden = !settingsHidden;
     if (!settingsHidden) tooltip.classed("hidden", true);
-    var obj = clickedRect.getBoundingClientRect(),
-        anchor = [obj.left + widthOffset() + window.pageXOffset,
-                  obj.top + heightOffset() + window.pageYOffset];
-    settingsPanel.style("left", anchor[0] + "px")
-                .style("top", 	anchor[1] + "px")
-                .classed("hidden", settingsHidden);
+    var box = clickedRect.getBoundingClientRect(),
+        anchor = [box.left + widthOffset() + window.pageXOffset,
+                  box.top + heightOffset() + window.pageYOffset];
+    toggleTooltip(settingsPanel, "left", "top", anchor, settingsHidden);
   }
 
   // displays the tooltip for the heatmap cell (mousedOverRect) with the given data d
   function displayCellTooltip(d, mousedOverRect) {
-  	var obj = mousedOverRect.getBoundingClientRect(),
-        anchor = [obj.left + cells.width() + window.pageXOffset,
-                  obj.top + cells.height() + window.pageYOffset];
-    cellTooltip.style("left", anchor[0] + "px")
-               .style("top", 	anchor[1] + "px")
-               .classed("hidden", false);
+  	var box = mousedOverRect.getBoundingClientRect(),
+        anchor = [box.left + cells.width() + window.pageXOffset,
+                  box.top + cells.height() + window.pageYOffset];
+    toggleTooltip(cellTooltip, "left", "top", anchor, false);
     cellTooltip.select("#value").text(d.value);
     cellTooltip.select("#row").text(d.row);
     cellTooltip.select("#col").text(d.col);
@@ -987,12 +971,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
   // displays the tooltip for the side color cell (mousedOverRect) with data d of the given dim
   function displaySideTooltip(d, mousedOverRect, dim) {
-  	var obj = mousedOverRect.getBoundingClientRect(),
-        anchor = [obj.left + dim.sideColors.width() + window.pageXOffset,
-                  obj.top + dim.sideColors.height() + window.pageYOffset];
-    dim.tooltip.style("left", anchor[0] + "px")
-               .style("top", 	anchor[1] + "px")
-               .classed("hidden", false);
+  	var box = mousedOverRect.getBoundingClientRect(),
+        anchor = [box.left + dim.sideColors.width() + window.pageXOffset,
+                  box.top + dim.sideColors.height() + window.pageYOffset];
+    toggleTooltip(dim.tooltip, "left", "top", anchor, false);
     var annotypes = Object.keys(d.annos);
     for (var j = 0; j < annotypes.length; j++) {
       dim.tooltip.select("#" + annotypes[j]).text(d.annos[annotypes[j]]);
@@ -1000,19 +982,17 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   }
 
   // displays the tooltip for the annotation cell (mouserOverRect) with data d of the given dim
-  // TODO: fix scroll bar weirdness for Windows
+  // TODO: fix scroll bar weirdness for Windows (document.body.offsetHeight > window.innerHeight ?)
   function displayAnnoTooltip(d, mousedOverRect, dim) {
-  	var obj = mousedOverRect.getBoundingClientRect(),
-			  anchor = [//document.body.offsetHeight > window.innerHeight ?
-			            //window.outerWidth - obj.left - window.pageXOffset :
-			            //window.innerWidth - obj.left - window.pageXOffset,
-                  window.innerWidth - obj.left - window.pageXOffset,
-			            obj.top + window.pageYOffset];
-		annoTooltip.style("right", anchor[0] + "px")
-			         .style("top", 	 anchor[1] + "px")
-			         .classed("hidden", false);
+  	var box = mousedOverRect.getBoundingClientRect(),
+			  anchor = [window.innerWidth - box.left - window.pageXOffset, box.top + window.pageYOffset];
+    toggleTooltip(annoTooltip, "right", "top", anchor, false);
 		annoTooltip.select("#annotype").text(undersToSpaces(dim.annoBy));
 		annoTooltip.select("#value").text(d);
+  }
+
+  function toggleTooltip(tip, xPos, yPos, anchor, hidden) {
+    tip.style(xPos, anchor[0] + "px").style(yPos, anchor[1] + "px").classed("hidden", hidden);
   }
 
   //================================================================================================
@@ -1075,8 +1055,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
   // parses the given string into the data structures used for generating the heatmap
   function parseDataMatrix(file) {
-    // parse the file into an array of arrays
-    var parsedRows = d3.csvParseRows(file);
+    var parsedRows = d3.csvParseRows(file); // parses the string into an array of arrays
     // the names of the columns should be stored in the header/first row of the file
     var colnames = parsedRows.shift(); // pops off the first element (ACTUALLY modifying parsedRows)
     colnames.shift(); // trims colnames down to just the column names for the numerical data,
