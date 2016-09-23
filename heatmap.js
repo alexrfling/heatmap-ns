@@ -184,8 +184,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     function annoMax() {
       var cM1 = col.labelsAnno ? col.labelsAnno.getBox().width + 2 * axisPad : 0,
           rM1 = row.labelsAnno ? row.labelsAnno.getBox().width + 2 * axisPad : 0,
-          cM2 = col.annoTitle ? document.getElementById("cTitle").getBoundingClientRect().width - marginAnnoColor + axisPad : 0,
-          rM2 = row.annoTitle ? document.getElementById("rTitle").getBoundingClientRect().width - marginAnnoColor + axisPad : 0,
+          cM2 = col.annoTitle ?
+            document.getElementById("cTitle").getBoundingClientRect().width - marginAnnoColor + axisPad : 0,
+          rM2 = row.annoTitle ?
+            document.getElementById("rTitle").getBoundingClientRect().width - marginAnnoColor + axisPad : 0,
           ck1 = colorKey ? colorKey.labels[scalingDim].getBox().width + 2 * axisPad : 0,
           ck2 = colorKey ?
             document.getElementById(scalingDim + "CKTitle").getBoundingClientRect().width
@@ -522,6 +524,32 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   colorKey.addLabels("col", [-dataset.stats.zMax.col, 0, dataset.stats.zMax.col]);
 
   //================================================================================================
+  //                                         	  TITLES
+  // These represent the titles on the columns of cells at the right.
+  //================================================================================================
+
+  function Title(id, text) {
+    this.id = id;
+    this.text = text;
+    this.selection = svg.append("text").attr("class", "annoTitle").attr("id", this.id)
+                                  .style("font-size", fontSizeCK).text(this.text);
+    this.setText = function(text) {
+      this.text = text;
+      this.selection.text(this.text);
+    };
+    this.position = function() {
+      positionElement(this.selection, this.anchor);
+    };
+  }
+
+  if (col.annotated) col.annoTitle = new Title("cTitle", undersToSpaces(col.annoBy));
+  if (row.annotated) row.annoTitle = new Title("rTitle", undersToSpaces(row.annoBy));
+  colorKey.addTitle("bucket", "Buckets");
+  colorKey.addTitle("none", "Linear Gradient");
+  colorKey.addTitle("row", "Row Z-Score");
+  colorKey.addTitle("col", "Column Z-Score");
+
+  //================================================================================================
   //                                             ANCHORS
   // An anchor is a 2-element array describing the pixel coordinates (relative to the SVG, not the
   // webpage as a whole) of the upper-left corner of a visual element. Using the "transform"
@@ -544,7 +572,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     if (col.annotated) {
       col.sideColors.anchor = [cells.anchor[0], 0];
       col.annoColors.anchor = [row.labelsSub.anchor[0] + row.marginLabelSub, marginAnnoTitle];
-      col.anchorAnnoTitle = [col.annoColors.anchor[0], col.annoColors.anchor[1] - annoTitlePad];
+      col.annoTitle.anchor = [col.annoColors.anchor[0], col.annoColors.anchor[1] - annoTitlePad];
       col.labelsAnno.anchor = [col.annoColors.anchor[0] + marginAnnoColor + axisPad,
       																																		col.annoColors.anchor[1]];
     }
@@ -552,7 +580,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       row.sideColors.anchor = [0, cells.anchor[1]];
       row.annoColors.anchor = [row.labelsSub.anchor[0] + row.marginLabelSub,
                                col.marginAnnoTotal + marginAnnoTitle];
-      row.anchorAnnoTitle = [row.annoColors.anchor[0], row.annoColors.anchor[1] - annoTitlePad];
+      row.annoTitle.anchor = [row.annoColors.anchor[0], row.annoColors.anchor[1] - annoTitlePad];
       row.labelsAnno.anchor = [row.annoColors.anchor[0] + marginAnnoColor + axisPad,
       																																		row.annoColors.anchor[1]];
     }
@@ -563,18 +591,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     colorKey.titleAnchor = [colorKey.cellsAnchor[0],
                             colorKey.cellsAnchor[1] - annoTitlePad];
   }
-
-  //================================================================================================
-  //                                         	  TITLES
-  // These represent the titles on the columns of cells at the right.
-  //================================================================================================
-
-  if (col.annotated) col.annoTitle = annoTitleSetup(col);
-  if (row.annotated) row.annoTitle = annoTitleSetup(row);
-  colorKey.addTitle("bucket", "Buckets");
-  colorKey.addTitle("none", "Linear Gradient");
-  colorKey.addTitle("row", "Row Z-Score");
-  colorKey.addTitle("col", "Column Z-Score");
 
   //================================================================================================
   //                                           BRUSHES
@@ -717,7 +733,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     dim.scaleAnnoColor.domain(values);
     dim.labelsAnno.updateScale(values);
     // visual updates
-    dim.annoTitle.text(undersToSpaces(dim.annoBy));
+    dim.annoTitle.setText(undersToSpaces(dim.annoBy));
     dim.annoColors.setup(values); // clear previous rects and add new ones in
     dim.labelsAnno.updateNT();
     dim.sideColors.selection.transition().duration(animDuration).attr("fill", dim.sideColors.fill);
@@ -960,7 +976,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       col.sideColors.update(["x", "y", "width", "height"]);
       col.annoColors.position();
       col.annoColors.update(["x", "y", "width", "height"]);
-      positionElement(col.annoTitle, col.anchorAnnoTitle);
+      col.annoTitle.position();//positionElement(col.annoTitle, col.anchorAnnoTitle);
     }
     if (row.annotated) {
       row.labelsAnno.position();
@@ -969,7 +985,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       row.sideColors.update(["x", "y", "width", "height"]);
       row.annoColors.position();
       row.annoColors.update(["x", "y", "width", "height"]);
-      positionElement(row.annoTitle, row.anchorAnnoTitle);
+      row.annoTitle.position();//positionElement(row.annoTitle, row.anchorAnnoTitle);
     }
     colorKey.updateCells(["x", "y", "width", "height"]);
     colorKey.positionCells();
