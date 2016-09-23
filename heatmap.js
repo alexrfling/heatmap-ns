@@ -184,14 +184,11 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     function annoMax() {
       var cM1 = col.labelsAnno ? col.labelsAnno.getBox().width + 2 * axisPad : 0,
           rM1 = row.labelsAnno ? row.labelsAnno.getBox().width + 2 * axisPad : 0,
-          cM2 = col.annoTitle ?
-            document.getElementById("cTitle").getBoundingClientRect().width - marginAnnoColor + axisPad : 0,
-          rM2 = row.annoTitle ?
-            document.getElementById("rTitle").getBoundingClientRect().width - marginAnnoColor + axisPad : 0,
+          cM2 = col.annoTitle ? col.annoTitle.getBox().width - marginAnnoColor + axisPad : 0,
+          rM2 = row.annoTitle ? row.annoTitle.getBox().width - marginAnnoColor + axisPad : 0,
           ck1 = colorKey ? colorKey.labels[scalingDim].getBox().width + 2 * axisPad : 0,
-          ck2 = colorKey ?
-            document.getElementById(scalingDim + "CKTitle").getBoundingClientRect().width
-                                                                              - marginAnnoColor + axisPad : 0;
+          ck2 = colorKey ? colorKey.titles[scalingDim].getBox().width
+                                                                    - marginAnnoColor + axisPad : 0;
       return Math.max(cM1, rM1, cM2, rM2, ck1, ck2);
     }
   }
@@ -483,8 +480,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       this.titles[name] = new Title(name + "CKTitle", text);
     },
     addLabels: function(name, labels) {
-      this.labels[name] = new Labels(name + "CKLabels", labels, function() { return marginColorKey; },
-                                       this.cells[name].height, "right", false);
+      this.labels[name] = new Labels(name + "CKLabels", labels,
+        function() { return marginColorKey; }, this.cells[name].height, "right", false);
     },
     change: function(type) {
       var names = Object.keys(this.titles);
@@ -522,8 +519,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   colorKey.addLabels("bucket", bucketLabels);
   colorKey.addLabels("none", [dataset.stats.totalMin,
                   (dataset.stats.totalMin + dataset.stats.totalMax ) / 2, dataset.stats.totalMax]);
-  colorKey.addLabels("row", [-dataset.stats.zMax.row, 0, dataset.stats.zMax.row]);
-  colorKey.addLabels("col", [-dataset.stats.zMax.col, 0, dataset.stats.zMax.col]);
+  colorKey.addLabels("row", [-dataset.stats.zMax.row.toFixed(2),
+                           0, dataset.stats.zMax.row.toFixed(2)]);
+  colorKey.addLabels("col", [-dataset.stats.zMax.col.toFixed(2),
+                           0, dataset.stats.zMax.col.toFixed(2)]);
 
   //================================================================================================
   //                                         	  TITLES
@@ -542,6 +541,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     this.position = function() {
       positionElement(this.selection, this.anchor);
     };
+    this.getBox = function() { return document.getElementById(this.id).getBoundingClientRect(); };
   }
 
   if (col.annotated) col.annoTitle = new Title("cTitle", undersToSpaces(col.annoBy));
@@ -789,7 +789,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     scalesSetup(w, h);
     col.brusher.extentsSetup();
     row.brusher.extentsSetup();
-    positionElements();
+    positionAllElements();
     col.currentScope[0] != 0 || col.currentScope[1] != col.names.length ? col.brusher.brushToScope()
                                                                         : col.brusher.clearBrush();
     row.currentScope[0] != 0 || row.currentScope[1] != row.names.length ? row.brusher.brushToScope()
@@ -948,47 +948,36 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     tip.style(xPos, anchor[0] + "px").style(yPos, anchor[1] + "px").classed("hidden", hidden);
   }
 
-  function positionElements() {
-    row.labels.position();
-  	row.labels.updateNT();
-    col.labels.position();
-    col.labels.updateNT();
-    row.labelsSub.position();
-    row.labelsSub.updateNT();
-    col.labelsSub.position();
-    col.labelsSub.updateNT();
+  function positionAllElements() {
     cells.position();
     cells.update(["x", "y", "width", "height"]);
-    row.cellsSub.position();
-    row.cellsSub.update(["x", "y", "width", "height"]);
-    col.cellsSub.position();
-    col.cellsSub.update(["x", "y", "width", "height"]);
-    col.brusher.callBrush();
-    row.brusher.callBrush();
-    if (col.annotated) {
-      col.labelsAnno.position();
-      col.labelsAnno.updateNT();
-      col.sideColors.position();
-      col.sideColors.update(["x", "y", "width", "height"]);
-      col.annoColors.position();
-      col.annoColors.update(["x", "y", "width", "height"]);
-      col.annoTitle.position();//positionElement(col.annoTitle, col.anchorAnnoTitle);
-    }
-    if (row.annotated) {
-      row.labelsAnno.position();
-      row.labelsAnno.updateNT();
-      row.sideColors.position();
-      row.sideColors.update(["x", "y", "width", "height"]);
-      row.annoColors.position();
-      row.annoColors.update(["x", "y", "width", "height"]);
-      row.annoTitle.position();//positionElement(row.annoTitle, row.anchorAnnoTitle);
-    }
     colorKey.updateCells(["x", "y", "width", "height"]);
     colorKey.positionCells();
     colorKey.positionLabels();
     colorKey.updateNTLabels();
     colorKey.positionTitles();
     colorKey.change(scalingDim);
+    positionElements(col);
+    positionElements(row);
+
+    function positionElements(dim) {
+      dim.labels.position();
+    	dim.labels.updateNT();
+      dim.labelsSub.position();
+      dim.labelsSub.updateNT();
+      dim.cellsSub.position();
+      dim.cellsSub.update(["x", "y", "width", "height"]);
+      dim.brusher.callBrush();
+      if (dim.annotated) {
+        dim.labelsAnno.position();
+        dim.labelsAnno.updateNT();
+        dim.sideColors.position();
+        dim.sideColors.update(["x", "y", "width", "height"]);
+        dim.annoColors.position();
+        dim.annoColors.update(["x", "y", "width", "height"]);
+        dim.annoTitle.position();
+      }
+    }
   }
 
   function svgSetup(w, h) {
