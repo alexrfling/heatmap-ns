@@ -139,8 +139,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   row.pos 	       = "y";
   col.size 	       = "width";
   row.size 	       = "height";
-  col.sizeHeatmap  = widthHeatmap;
-  row.sizeHeatmap  = heightHeatmap;
+  col.sizeHeatmap  = function() { return sizeHeatmap(row) - marginAnnoColor - marginAnnoLabel; };
+  row.sizeHeatmap  = function() { return sizeHeatmap(col); };
   if (col.annotated) annotypesSetup(col);
   if (row.annotated) annotypesSetup(row);
 
@@ -160,7 +160,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   marginsSetup(width, height);
 
   function marginsSetup(w, h) {
-    marginAnnoColor = Math.floor(h / 20);
+    marginAnnoColor = Math.floor(w / 50);
     marginAnnoLabel = Math.min(Math.floor(w / 4), Math.floor(annoMax() + axisPad));
     marginAnnoTitle = fontSizeCK + 2 * annoTitlePad;
     col.marginTotal = h;
@@ -228,8 +228,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   }
 
   // for cell position/size - map row/col.names to x/y/width/height based on the margins
-  col.scaleCell    = d3.scaleBand(); // col.names, widthHeatmap -> x, width of cells
-  row.scaleCell    = d3.scaleBand(); // row.names, heightHeatmap -> y, height of cells
+  col.scaleCell    = d3.scaleBand(); // col.names, col.sizeHeatmap -> x, width of cells
+  row.scaleCell    = d3.scaleBand(); // row.names, row.sizeHeatmap -> y, height of cells
   col.scaleCellSub = d3.scaleBand(); // col.names, row.marginBrush -> x, width of cellsRight
   row.scaleCellSub = d3.scaleBand(); // row.names, col.marginBrush -> y, height of cellsBottom
   if (col.annotated) col.scaleAnnoColor = d3.scaleBand().domain(col.annotations[col.annoBy]);
@@ -238,8 +238,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   scalesSetup(width, height);
 
   function scalesSetup(width, height) {
-    col.scaleCell.domain(col.names).range([0, widthHeatmap()]);
-    row.scaleCell.domain(row.names).range([0, heightHeatmap()]);
+    col.scaleCell.domain(col.names).range([0, col.sizeHeatmap()]);
+    row.scaleCell.domain(row.names).range([0, row.sizeHeatmap()]);
     col.scaleCellSub.domain(col.names).range([0, row.marginBrush]);
     row.scaleCellSub.domain(row.names).range([0, col.marginBrush]);
     if (col.annotated) col.scaleAnnoColor.range([0, col.marginAnnoHeight]);
@@ -444,10 +444,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     this.getBox = function() { return document.getElementById(this.id).getBoundingClientRect(); };
   }
 
-  row.labels = new Labels("rLabs", row.names, heightHeatmap, cells.height, "right", null, false);
-  col.labels = new Labels("cLabs", col.names, widthHeatmap, cells.width, "bottom", null, true);
-  row.labelsSub = new Labels("rSubs", row.names, heightHeatmap, cells.height, "right", null, false);
-  col.labelsSub = new Labels("cSubs", col.names, widthHeatmap, cells.width, "bottom", null, true);
+  row.labels = new Labels("rLabs", row.names, row.sizeHeatmap, cells.height, "right", null, false);
+  col.labels = new Labels("cLabs", col.names, col.sizeHeatmap, cells.width, "bottom", null, true);
+  row.labelsSub = new Labels("rSubs", row.names, row.sizeHeatmap, cells.height, "right", null, false);
+  col.labelsSub = new Labels("cSubs", col.names, col.sizeHeatmap, cells.width, "bottom", null, true);
   if (row.annotated) row.labelsAnno = new Labels("rAnnos", row.annotations[row.annoBy],
           function() { return row.marginAnnoHeight; }, row.annoColors.height, "right", null, false);
   if (col.annotated) col.labelsAnno = new Labels("cAnnos", col.annotations[col.annoBy],
@@ -542,8 +542,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
   function anchorsSetup(w, h) { // w not yet used
   	cells.anchor         = [row.marginSideColor, col.marginSideColor];
-    col.labels.anchor    = [cells.anchor[0], cells.anchor[1] + heightHeatmap() + axisPad];
-    row.labels.anchor    = [cells.anchor[0] + widthHeatmap() + axisPad, cells.anchor[1]];
+    col.labels.anchor    = [cells.anchor[0], cells.anchor[1] + row.sizeHeatmap() + axisPad];
+    row.labels.anchor    = [cells.anchor[0] + col.sizeHeatmap() + axisPad, cells.anchor[1]];
     col.cellsSub.anchor  = [cells.anchor[0], col.labels.anchor[1] + col.marginLabel];
     row.cellsSub.anchor  = [row.labels.anchor[0] + row.marginLabel, cells.anchor[1]];
     col.labelsSub.anchor = [cells.anchor[0], col.cellsSub.anchor[1] + col.marginBrush + axisPad];
@@ -623,11 +623,11 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   }
 
   col.brusher = new Brush(col, function() { return col.cellsSub.anchor; },
-                               function() { return [col.cellsSub.anchor[0] + widthHeatmap(),
+                               function() { return [col.cellsSub.anchor[0] + col.sizeHeatmap(),
                                                     col.cellsSub.anchor[1] + col.marginBrush]; });
   row.brusher = new Brush(row, function() { return row.cellsSub.anchor; },
                                function() { return [row.cellsSub.anchor[0] + row.marginBrush,
-                                                    row.cellsSub.anchor[1] + heightHeatmap()]; });
+                                                    row.cellsSub.anchor[1] + row.sizeHeatmap()]; });
 
   //================================================================================================
   //                                           INITIALIZATION
@@ -1033,10 +1033,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     dim.annoReg = cat ? function(index) { return catColors[index % catColors.length]; } : conColors;
     dim.annoHeat = annoHeatSchemes[annoHeatScheme];
   }
-
-  // return the width/height of the main heatmap in pixels
-  function widthHeatmap() { return sizeHeatmap(row) - marginAnnoColor - marginAnnoLabel; }
-  function heightHeatmap() { return sizeHeatmap(col); }
 
   // returns the size, in pixels, of the heatmap along the given dim (height - col, width - row),
   // but does not take into account margins used for color keys
