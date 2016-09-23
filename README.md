@@ -34,10 +34,14 @@ heatmap("dataOverview", data, colAnnos, rowAnnos)
 
 ### Required
 <b>id</b> - the HTML/CSS "id" attribute of the HTML element to which the heatmap will be appended
+
 <b>datasetFile</b> - CSV-formatted string representing a numerical matrix of data to be displayed in the heatmap
 
 ### Optional
 <b>colAnnoFile</b> - CSV-formatted string representing annotations for the columns of the matrix in datasetFile
+
 <b>rowAnnoFile</b> - CSV-formatted string representing annotations for the rows of the matrix in datasetFile
+
 <b>colClustOrder</b> - array of unique strings containing all the column names in datasetFile representing the order in which the columns should be displayed in the heatmap (colClustOrder[0] will be the left-most column and colClustOrder[colClustOrder.length - 1] will be the right-most column)
+
 <b>rowClustOrder</b> - array of unique strings containing all the row names in datasetFile representing the order in which the rows should be displayed in the heatmap (rowClustOrder[0] will be the top-most row and rowClustOrder[rowClustOrder.length - 1] will be the bottom-most row)
