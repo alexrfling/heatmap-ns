@@ -1,33 +1,32 @@
-#uniqueid {
-  margin: 0px;
-  border: 0px;
-  padding: 0px;
+.heatmap { /* div containing the entire widget (SVG and all tooltip divs) */
+  margin: 0px; /* set margin/border/padding to 0 so that */
+  border: 0px; /* the size of the entire widget is just */
+  padding: 0px; /* the size of the SVG */
   font-family: sans-serif;
 }
 
-svg {
+.heatmap svg { /* contains all SVG elements */
 	shape-rendering: crispEdges; /* holy grail */
 }
 
-.axis path { /* axis line */
-  stroke: none;
-  stroke-width: 0;
+.heatmap .axis path { /* axis line */
+  stroke: none; /* or, stroke-width: 0 */
 }
 
-.axis line { /* tickmarks */
+.heatmap .axis line { /* tickmarks */
   stroke: black;
 }
 
-.axis text { /* labels */
+.heatmap .axis text { /* labels */
 }
 
-rect:hover { /* all rects except those in the 'squished' heatmaps */
+.heatmap rect:hover { /* all rects except those in the 'squished' heatmaps */
   fill-opacity: 0.5;
 }
 
-.tooltip {
+.heatmap .tooltip { /* divs for all hover-over pop-ups */
   position: absolute;
-  width: auto;
+  max-width: 500px;
   height: auto;
   background-color: white;
   padding: 5px;
@@ -37,42 +36,43 @@ rect:hover { /* all rects except those in the 'squished' heatmaps */
   pointer-events: none;
   /*-webkit-border-radius: 5px;
   -moz-border-radius: 5px;
-  border-radius: 5px;*/
-  /*word-wrap: break-word;*/
+  border-radius: 5px;*/ /* uncomment to add rounded corners */
 }
 
-#settings { /* the control panel is only tooltip to have pointer events */
+.heatmap #settings { /* the settins panel is the only tooltip to have pointer events */
 	pointer-events: all;
 }
 
-.hidden { /* used for hiding tooltips */
+.heatmap .hidden { /* used for hiding tooltips */
 	display: none;
 }
 
-.tooltip p { /* all text inside tooltips */
+.heatmap .tooltip p { /* all text inside tooltips */
   margin: 0;
   font-size: 14px;
 }
 
-.selection { /* sliding window for zoom/pan */
+.heatmap .selection { /* sliding windows for zoom/pan */
 	fill: lightgray;
 	fill-opacity: 0.2;
 	stroke: gray;
 }
 
-.annoTitle { /* title(s) of the color key(s) */
+.heatmap .annoTitle { /* title(s) of the color key(s) */
 	font-weight: bold;
 }
 
-.tooltip td:nth-child(1) p { /* the row names in the tooltip's table */
+.heatmap .tooltip td:nth-child(1) p { /* the row names in the tooltips' tables */
 	font-weight: bold;
 	text-align: right;
+  word-break: keep-all; /* prevents words from being broken up */
 }
 
-.tooltip td:nth-child(2) { /* values in each row */
+.heatmap .tooltip td:nth-child(2) { /* values in each row */
 	padding-left: 5px;
+  word-break: break-all; /* breaks up words if they are too long */
 }
 
-.tooltip > p { /* title(s) of the tooltip(s) */
+.heatmap .tooltip > p { /* title(s) of the tooltip(s) */
 	font-weight: bold;
 }

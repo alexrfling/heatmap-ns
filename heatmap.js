@@ -3,30 +3,38 @@
 //--------------------------------------------------------------------------------------------------
 
 function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowClustOrder,
-                 height, renderOnBrushEnd, categorical, categoricalScheme, continuousScheme,
-                 annoHeatScheme, animDuration, sideColorPadding, annoTitlePadding, axisOffset,
+                 height, renderOnBrushEnd, categorical,
+                 colCategoricalScheme, colContinuousScheme, colAnnoHeatScheme,
+                 rowCategoricalScheme, rowContinuousScheme, rowAnnoHeatScheme,
+                 bucketDividers, bucketColors,
+                 animDuration, sideColorPad, annoTitlePad, axisPad,
       					 fontSize, fontSizeCK, lowColor, midColor, highColor, numColors) {
 
   // assign parameters to defaults if not given
-  height            = height || 600;
-  renderOnBrushEnd  = renderOnBrushEnd || false;
-  //categorical       = categorical || true;
-  categoricalScheme = categoricalScheme || "google";
-  continuousScheme  = continuousScheme || "rainbow";
-  annoHeatScheme    = annoHeatScheme || "plasma";
-  animDuration      = animDuration || 1200;
-  sideColorPadding  = sideColorPadding || 3;
-  annoTitlePadding  = annoTitlePadding || 7;
-  axisOffset        = axisOffset || 5;
-  fontSize          = fontSize || 9;
-  fontSizeCK        = fontSizeCK || 11;
-  lowColor          = lowColor || "cornflowerblue";
-  midColor          = midColor || "black";
-  highColor         = highColor || "orange";
-  numColors         = numColors || 256;
+  height               = height || 600;
+  renderOnBrushEnd     = renderOnBrushEnd || false;
+  //categorical          = categorical || true;
+  colCategoricalScheme = colCategoricalScheme || "google";
+  colContinuousScheme  = colContinuousScheme || "rainbow";
+  colAnnoHeatScheme    = colAnnoHeatScheme || "plasma";
+  rowCategoricalScheme = rowCategoricalScheme || "ns";
+  rowContinuousScheme  = rowContinuousScheme || "cubehelix";
+  rowAnnoHeatScheme    = rowAnnoHeatScheme || "magma";
+  bucketDividers       = bucketDividers || [25, 50, 100, 500];
+  bucketColors         = bucketColors || ["red", "orange", "yellow", "gray", "cornflowerblue"];
+  animDuration         = animDuration || 1200;
+  sideColorPad         = sideColorPad || 3;
+  annoTitlePad         = annoTitlePad || 7;
+  axisPad              = axisPad || 5;
+  fontSize             = fontSize || 9;
+  fontSizeCK           = fontSizeCK || 11;
+  lowColor             = lowColor || "cornflowerblue";
+  midColor             = midColor || "black";
+  highColor            = highColor || "orange";
+  numColors            = numColors || 256;
 
   // contains all colors used for the heatmap, side colors, and color keys
-  var colors = getColors(),
+  var heatmapColors = interpolateColors(lowColor, midColor, highColor, numColors),
 
   // the DOM element passed in
       parent = document.getElementById(id),
@@ -35,7 +43,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       width = parent.clientWidth,
 
   // holds all DOM elements of the heatmap (SVG and divs for the tooltips)
-      container = d3.select("#" + id).append("div").attr("id", "uniqueid");
+      container = d3.select("#" + id).append("div").attr("class", "heatmap");
 
   // margin convention for D3
   var margin = {top: 3, right: 3, bottom: 3, left: 3};
@@ -71,14 +79,18 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   row.annotated  = rowAnnoFile ? true : false;
   if (col.annotated) annoSetup(col, colAnnoFile);
   if (row.annotated) annoSetup(row, rowAnnoFile);
+  if (col.annotated) colorsSetup(col, categorical, colCategoricalScheme, colContinuousScheme,
+                                                                                colAnnoHeatScheme);
+  if (row.annotated) colorsSetup(row, categorical, rowCategoricalScheme, rowContinuousScheme,
+                                                                                rowAnnoHeatScheme);
 
   function annoSetup(dim, annoFile) {
-    var annosParsed        = parseAnnotations(annoFile);
-    dim.annoTypesAndValues = annosParsed.annoTypesAndValues;
-    dim.labelsAnnotated    = annosParsed.labels;
+    var annosParsed = parseAnnotations(annoFile);
+    dim.annotations = annosParsed.annotations;
+    dim.labelsAnnotated = annosParsed.labels;
   }
 
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
   //                                 				REFERENCES BY DIM
   //
   // Note that the row and col objects are mirror images of each other; every field that col has,
@@ -120,16 +132,15 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // needing only parameter, the dim, whose "labels", "coordinate", "length", and "sideColors"
   // fields will be used (along with the global reference to the heatmap cells) to determine the
   // visual updates. NOTE: the function that actually does this modifies more variables than just
-  // those that are listed here, and additionally the actual field names may be different than they
-  // are here.
+  // those listed here, and additionally the actual field names may be different than they are here.
   //
   // And that's the concept behind the "dim".
   //
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
 
   // set the current scope for each dimension (these get modified by interactivity functions)
-  col.currentScope = [Math.floor(col.names.length / 32), Math.ceil(5 * col.names.length / 32)];
-  row.currentScope = [Math.floor(row.names.length / 4), Math.ceil(7 * row.names.length / 8)];
+  col.currentScope = [0, col.names.length];
+  row.currentScope = [0, row.names.length];
   col.other        = row;
   row.other        = col;
   col.self         = "col";
@@ -142,32 +153,37 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   row.size 	       = "height";
   col.sizeHeatmap  = widthHeatmap;
   row.sizeHeatmap  = heightHeatmap;
+  if (col.annotated) annotypesSetup(col);
+  if (row.annotated) annotypesSetup(row);
 
-  //------------------------------------------------------------------------------------------------
+  function annotypesSetup(dim) {
+    dim.annotypes = Object.keys(dim.annotations).sort(function(a, b) {
+      return a.localeCompare(b);
+    });
+    dim.annoBy = dim.annotypes[0];
+  }
+
+  //================================================================================================
   //                                              MARGINS
-  //
   // A margin describes a visual element's length in pixels along one axis/dimension.
-  //
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
 
-  var marginAnnoColor, marginAnnoLabel, marginAnnoTitle;
-  if (col.annotated) col.annotypeAnno = Object.keys(col.annoTypesAndValues)[0];
-  if (row.annotated) row.annotypeAnno = Object.keys(row.annoTypesAndValues)[0];
+  var marginAnnoColor, marginAnnoLabel, marginAnnoTitle, marginColorKey;
   marginsSetup(width, height);
 
   function marginsSetup(w, h) {
-    marginAnnoColor = col.annotated || row.annotated ? Math.floor(h / 20) : 0;
-    marginAnnoLabel = col.annotated || row.annotated ? // TODO: font width estimation
-              Math.min(Math.floor(w / 4), Math.floor(axisOffset + annoMax() * 0.78 * fontSize)) : 0;
-    marginAnnoTitle = col.annotated || row.annotated ? fontSizeCK + 2 * annoTitlePadding : 0;
+    marginAnnoColor = Math.floor(h / 20);
+    marginAnnoLabel = Math.min(Math.floor(w / 4), Math.floor(annoMax() + axisPad));
+    marginAnnoTitle = fontSizeCK + 2 * annoTitlePad;
     col.marginTotal = h;
     row.marginTotal = w;
-    col.marginLabel = Math.min(Math.floor(w / 8),                         // estimate of font width
-                            Math.floor(axisOffset + lengthOfLongest(col.names) * 0.56 * fontSize));
-    row.marginLabel = Math.min(Math.floor(w / 8),                         // estimate of font width
-                            Math.floor(axisOffset + lengthOfLongest(row.names) * 0.78 * fontSize));
+    col.marginLabel = col.labels ? Math.ceil(col.labels.getBox().height + 2 * axisPad) : 0;
+    row.marginLabel = row.labels ? Math.ceil(row.labels.getBox().width + 2 * axisPad) : 0;
+    col.marginLabelSub = col.labelsSub ? Math.ceil(col.labelsSub.getBox().height + 2 * axisPad) : 0;
+    row.marginLabelSub = row.labelsSub ? Math.ceil(row.labelsSub.getBox().width + 2 * axisPad) : 0;
     col.marginBrush = Math.floor(h / 10);
     row.marginBrush = Math.floor(h / 10);
+    marginColorKey = Math.floor(h / 4) - marginAnnoTitle;
     sideAndAnnoMarginsSetup(col);
     sideAndAnnoMarginsSetup(row);
 
@@ -178,19 +194,19 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
 
     function annoMax() {
-      var mCol = col.annotated ? lengthOfLongest(col.annoTypesAndValues[col.annotypeAnno]) : 0,
-          mRow = row.annotated ? lengthOfLongest(row.annoTypesAndValues[row.annotypeAnno]) : 0;
-      return Math.max(mCol, mRow);
+      var cM1 = col.labelsAnno ? col.labelsAnno.getBox().width + 2 * axisPad : 0,
+          rM1 = row.labelsAnno ? row.labelsAnno.getBox().width + 2 * axisPad : 0,
+          cM2 = col.annoTitle ? document.getElementById("cTitle").getBoundingClientRect().width : 0,
+          rM2 = row.annoTitle ? document.getElementById("rTitle").getBoundingClientRect().width : 0;
+      return Math.max(cM1, rM1, cM2, rM2);
     }
   }
 
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
   //                                      TOOLTIPS/SETTINGS PANEL
-  //
   // Tooltips provide information for rows, columns, matrix data, and annotations when hovering over
   // the side colors, heatmap cells, and color key.
-  //
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
 
   var scaleBy, scalingDim, settingsHidden = true,
       settingsPanel              = settingsPanelSetup(),
@@ -199,37 +215,37 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   if (col.annotated) col.tooltip = sideTooltipSetup(col);
   if (row.annotated) row.tooltip = sideTooltipSetup(row);
 
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
   //                                             	SCALES
-  //
   // Scales are very useful for determining where visual elements should be placed relative to each
   // other. For example, to determine the sizes and positions of the cells that make up the heatmap,
   // a scale can map an array of row or column names to a continuous range of pixels.
-  //
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
 
   // scales for determining cell color
   var mainColorScale = d3.scaleQuantize()
                         .domain([-dataset.stats.zMax[scalingDim], dataset.stats.zMax[scalingDim]])
-                        .range(colors.heatmap);
+                        .range(heatmapColors);
+  var bucketizer = new Bucketizer(bucketDividers, bucketColors);
   if (col.annotated) colorScalesSetup(col);
   if (row.annotated) colorScalesSetup(row);
 
   function colorScalesSetup(dim) {
     dim.annoToNum = categorical ?
-                      d3.scaleOrdinal().domain(dim.annoTypesAndValues[dim.annotypeAnno]).range(d3.range(dim.annoTypesAndValues[dim.annotypeAnno].length))
-                    : d3.scalePoint().domain(dim.annoTypesAndValues[dim.annotypeAnno]).range([0, 0.9]); // must be within [0, 1]
-    dim.numToColor = colors.annoReg;
+      d3.scaleOrdinal().domain(dim.annotations[dim.annoBy])
+                       .range(d3.range(dim.annotations[dim.annoBy].length))
+      : d3.scalePoint().domain(dim.annotations[dim.annoBy])
+                       .range([0, 0.9]); // must be within [0, 1]
+    dim.numToColor = dim.annoReg;
   }
 
-  // scales for cell dimensions/positioning. These will map row/col names to x/y/width/height based
-  // on the margins in which the cells reside
+  // for cell position/size - map row/col.names to x/y/width/height based on the margins
   col.scaleCell    = d3.scaleBand(); // col.names, widthHeatmap -> x, width of cells
   row.scaleCell    = d3.scaleBand(); // row.names, heightHeatmap -> y, height of cells
   col.scaleCellSub = d3.scaleBand(); // col.names, row.marginBrush -> x, width of cellsRight
   row.scaleCellSub = d3.scaleBand(); // row.names, col.marginBrush -> y, height of cellsBottom
-  if (col.annotated) col.scaleAnnoColor = d3.scaleBand().domain(col.annoTypesAndValues[col.annotypeAnno]);
-  if (row.annotated) row.scaleAnnoColor = d3.scaleBand().domain(row.annoTypesAndValues[row.annotypeAnno]);
+  if (col.annotated) col.scaleAnnoColor = d3.scaleBand().domain(col.annotations[col.annoBy]);
+  if (row.annotated) row.scaleAnnoColor = d3.scaleBand().domain(row.annotations[row.annoBy]);
 
   scalesSetup(width, height);
 
@@ -242,12 +258,18 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     if (row.annotated) row.scaleAnnoColor.range([0, row.marginAnnoHeight]);
   }
 
-  //------------------------------------------------------------------------------------------------
-  //                                     ATTRIBUTE FUNCTIONS
+  //================================================================================================
+  //                                          CELlS
+  // These represent groupings of colorful rectangles (row side colors, color keys, heatmap itself).
   //
-  //
-  //
-  //------------------------------------------------------------------------------------------------
+  // In combination with the axes, these make up all the SVG elements. With the exception of the
+  // annotation titles and axes, every visual component can be decomposed into 2 parts:
+  //		* group - a g element which gets positioned at an anchor point
+  //		* cells - rect elements which live inside the group
+  // When a group is tranlated to a new position, all the elements inside of it move as well, and
+  // this makes it so that the coordinates (x and y) of cells are relative their group, not to the
+  // SVG as a whole.
+  //================================================================================================
 
   function Cells(anchor, type, dim, x, y, width, height, fill) {
     this.anchor = anchor;
@@ -267,43 +289,55 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
           .selectAll("rect")        	        // then, we add the cells in (visible)
           .data(function(d) { return d; }, key) // in the key function, "d" is now a cell
           .enter()										        // from here on, "d" refers to an individual cell
-          .append("rect");           	        // the cells have now been added, but still not visible
+          .append("rect");           	        // the cells have now been added, but still invisible
         if (!dim) this.selection.on("mouseover", function(d) { displayCellTooltip(d, this); })
-                    .on("mouseout", function() { cellTooltip.classed("hidden", true); })
-                    .on("click", function() { toggleSettingsPanel(this, width, height, cellTooltip) });
+                .on("mouseout", function() { cellTooltip.classed("hidden", true); })
+                .on("click", function() { toggleSettingsPanel(this, width, height, cellTooltip); });
         break;
       case "sideColors":
         this.selection = this.group.selectAll("rect")
-                  .data(dim.labelsAnnotated, key)
-                  .enter()
-                  .append("rect")
-                  .on("mouseover", function(d) { displaySideTooltip(d, this, dim); })
-                  .on("mouseout", function() { dim.tooltip.classed("hidden", true); })
-                  .on("click", function() { toggleSettingsPanel(this, width, height, dim.tooltip) });
+              .data(dim.labelsAnnotated, key)
+              .enter()
+              .append("rect")
+              .on("mouseover", function(d) { displaySideTooltip(d, this, dim); })
+              .on("mouseout", function() { dim.tooltip.classed("hidden", true); })
+              .on("click", function() { toggleSettingsPanel(this, width, height, dim.tooltip); });
         break;
       case "annoColors":
-        this.setup = function(data) {
-          this.group.selectAll("rect").remove();
+        if (!dim.self) {
           this.selection = this.group.selectAll("rect")
-      			      .data(data, function(d) { return d; })
-      			      .enter()
-      			      .append("rect")
+      		      .data(dim, function(d) { return d; })
+      			    .enter()
+      			    .append("rect")
+                .attr("x", this.x)
+                .attr("y", this.y)
+                .attr("width", this.width)
+                .attr("height", this.height)
+                .attr("fill", this.fill);
+      			    //.on("mouseover", function(d) { displayAnnoTooltip(d, this, dim); })
+      			    //.on("mouseout", function() { annoTooltip.classed("hidden", true); });
+        } else {
+          this.setup = function(data) {
+            this.group.selectAll("rect").remove();
+            this.selection = this.group.selectAll("rect")
+        		      .data(data, function(d) { return d; })
+        			    .enter()
+        			    .append("rect")
                   .attr("x", this.x)
                   .attr("y", this.y)
                   .attr("width", this.width)
                   .attr("height", this.height)
                   .attr("fill", this.fill)
-      			      .on("mouseover", function(d) { displayAnnoTooltip(d, this, dim); })
-      			      .on("mouseout", function() { annoTooltip.classed("hidden", true); });
-        };
-        this.setup(dim.annoTypesAndValues[dim.annotypeAnno]); // initialize
+        			    .on("mouseover", function(d) { displayAnnoTooltip(d, this, dim); })
+        			    .on("mouseout", function() { annoTooltip.classed("hidden", true); });
+          };
+          this.setup(dim.annotations[dim.annoBy]); // initialize
+        }
         break;
-      //default:
-      //  this.selection = null; throw exception???
     }
     this.selection.attr("fill", this.fill);
-    this.update = function(attributes) {
-      for (var j = 0; j < attributes.length; j++) this.selection.attr(attributes[j], this[attributes[j]]);
+    this.update = function(attrs) {
+      for (var j = 0; j < attrs.length; j++) this.selection.attr(attrs[j], this[attrs[j]]);
     };
     this.position = function() { positionElement(this.group, this.anchor); };
   }
@@ -316,6 +350,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     function(d) {
       if (scalingDim === "none") {
         return mainColorScale(d.value);
+      } else if (scalingDim === "bucket") {
+        return bucketizer.bucketize(d.value);
       } else {
         var ref = dataset.stats[scalingDim][dotsToUnders(d[scalingDim])];
         return mainColorScale((d.value - ref.mean) / ref.stdev);
@@ -342,9 +378,9 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     dim.sideColors = new Cells(null, "sideColors", dim,
       dim.self === "col" ? function(d) { return col.scaleCell(d.key); } : function() { return 0; },
       dim.self === "row" ? function(d) { return row.scaleCell(d.key); } : function() { return 0; },
-      dim.self === "col" ? cells.width : function() { return row.marginSideColor - sideColorPadding; },
-      dim.self === "row" ? cells.height : function() { return col.marginSideColor - sideColorPadding; },
-      function(d) { return dim.numToColor(dim.annoToNum(d.annos[dim.annotypeAnno])); });
+      dim.self === "col" ? cells.width : function() { return row.marginSideColor - sideColorPad; },
+      dim.self === "row" ? cells.height : function() { return col.marginSideColor - sideColorPad; },
+      function(d) { return dim.numToColor(dim.annoToNum(d.annos[dim.annoBy])); });
     dim.annoColors = new Cells(null, "annoColors", dim,
       function() { return 0; },
       function(d) { return dim.scaleAnnoColor(d); },
@@ -353,8 +389,9 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       function(d) { return dim.numToColor(dim.annoToNum(d)); });
   }
 
-  //------------------------------------------------------------------------------------------------
-  //                                             	AXES
+  //================================================================================================
+  //                                             	LABELS
+  // These make up all the tickmark-prefaced pieces of text next to cells.
   //
   // The axes provide a visualization for the labels of rows, columns, and annotations. There are 3
   // parts that go into making a visible axis:
@@ -364,10 +401,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //		* SVG element - a g element which makes the axis visible
   // When an axis is to be visually updated, first update its scale, then call its axis component on
   // its SVG element.
-  //
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
 
-  function Labels(names, room, offset, orientation, anchor, angled) {
+  function Labels(id, names, room, offset, orientation, anchor, angled) {
+    this.id = id;
     this.names = names;
     this.room = room;
     this.offset = offset;
@@ -386,9 +423,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       case "top": this.axis = d3.axisTop(this.scale); break;
       case "right": this.axis = d3.axisRight(this.scale); break;
       case "bottom": this.axis = d3.axisBottom(this.scale); break;
-      //default: throw "Invalid orientation: must be one of 'left', 'top', right', or 'bottom'."
     }
-    this.group = svg.append("g").attr("class", "axis").style("font-size", fontSize).call(this.axis); // TODO: no call??
+    this.group = svg.append("g").attr("class", "axis").attr("id", id).style("font-size", fontSize);
     this.update = function() {
       this.updateScale(this.names);
       if (this.angled) {
@@ -417,73 +453,151 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     };
     this.updateNT(); // for initial angling
     this.position = function() { positionElement(this.group, this.anchor); };
+    this.getBox = function() { return document.getElementById(this.id).getBoundingClientRect(); };
   }
 
-  row.labels = new Labels(row.names, heightHeatmap, cells.height, "right", null, false);
-  col.labels = new Labels(col.names, widthHeatmap, cells.width, "bottom", null, true);
-  row.labelsSub = new Labels(row.names, heightHeatmap, cells.height, "right", null, false);
-  col.labelsSub = new Labels(col.names, widthHeatmap, cells.width, "bottom", null, true);
-  if (row.annotated) row.labelsAnno = new Labels(row.annoTypesAndValues[row.annotypeAnno], function() { return row.marginAnnoHeight; }, row.annoColors.height, "right", null, false);
-  if (col.annotated) col.labelsAnno = new Labels(col.annoTypesAndValues[col.annotypeAnno], function() { return col.marginAnnoHeight; }, col.annoColors.height, "right", null, false);
+  row.labels = new Labels("rLabs", row.names, heightHeatmap, cells.height, "right", null, false);
+  col.labels = new Labels("cLabs", col.names, widthHeatmap, cells.width, "bottom", null, true);
+  row.labelsSub = new Labels("rSubs", row.names, heightHeatmap, cells.height, "right", null, false);
+  col.labelsSub = new Labels("cSubs", col.names, widthHeatmap, cells.width, "bottom", null, true);
+  if (row.annotated) row.labelsAnno = new Labels("rAnnos", row.annotations[row.annoBy],
+          function() { return row.marginAnnoHeight; }, row.annoColors.height, "right", null, false);
+  if (col.annotated) col.labelsAnno = new Labels("cAnnos", col.annotations[col.annoBy],
+          function() { return col.marginAnnoHeight; }, col.annoColors.height, "right", null, false);
 
-  //------------------------------------------------------------------------------------------------
+  bucketDividers.push(bucketDividers[bucketDividers.length - 1]);
+  var bucketLabels = bucketDividers.map(function(d, i) {
+    return i < bucketDividers.length - 1 ? "< " + d : ">= " + d;
+  });
+  var scaleBucket = d3.scaleBand().domain(bucketColors).range([0, marginColorKey]),
+      scaleGradient = d3.scaleBand().domain(heatmapColors).range([0, marginColorKey]);
+  var colorKey = {
+    cells: {},
+    labels: {},
+    titles: {},
+    updateCells: function(attrs) {
+      var names = Object.keys(this.cells);
+      for (var j = 0; j < names.length; j++) this.cells[names[j]].update(attrs);
+    },
+    positionCells: function() {
+      var names = Object.keys(this.cells);
+      for (var j = 0; j < names.length; j++) positionElement(this.cells[names[j]].group, this.cellsAnchor);
+    },
+    updateNTLabels: function() {
+      var names = Object.keys(this.labels);
+      for (var j = 0; j < names.length; j++) this.labels[names[j]].updateNT();
+    },
+    positionLabels: function() {
+      var names = Object.keys(this.labels);
+      for (var j = 0; j < names.length; j++) positionElement(this.labels[names[j]].group, this.labelsAnchor);
+    },
+    positionTitles: function() {
+      var names = Object.keys(this.titles);
+      for (var j = 0; j < names.length; j++) positionElement(this.titles[names[j]], this.titleAnchor);
+    },
+    addTitle: function(name, text) {
+      this.titles[name] = svg.append("text").attr("class", "annoTitle").attr("id", name + "CKTitle")
+                            .style("font-size", fontSizeCK).text(text);
+    },
+    addLabels: function(name, labels) {
+      this.labels[name] = new Labels(name + "CKLabels", labels, function() { return marginColorKey; },
+                                       this.cells[name].height, "right", null, false);
+    },
+    change: function(type) {
+      var names = Object.keys(this.titles);
+      for (var j = 0; j < names.length; j++) {
+        this.cells[names[j]].group.classed("hidden", names[j] !== type);
+        this.labels[names[j]].group.classed("hidden", names[j] !== type);
+        this.titles[names[j]].classed("hidden", names[j] !== type);
+      }
+    }
+  };
+  colorKey.cells.none = new Cells(null, "annoColors", heatmapColors,
+    function() { return 0; },
+    function(d) { return scaleGradient(d); },
+    function() { return marginAnnoColor; },
+    function() { return scaleGradient.bandwidth(); },
+    function(d) { return d; });
+  colorKey.cells.col = new Cells(null, "annoColors", heatmapColors, // same as none
+    function() { return 0; },
+    function(d) { return scaleGradient(d); },
+    function() { return marginAnnoColor; },
+    function() { return scaleGradient.bandwidth(); },
+    function(d) { return d; });
+  colorKey.cells.row = new Cells(null, "annoColors", heatmapColors, // same as none
+    function() { return 0; },
+    function(d) { return scaleGradient(d); },
+    function() { return marginAnnoColor; },
+    function() { return scaleGradient.bandwidth(); },
+    function(d) { return d; });
+  colorKey.cells.bucket = new Cells(null, "annoColors", bucketColors,
+    function() { return 0; },
+    function(d) { return scaleBucket(d); },
+    function() { return marginAnnoColor; },
+    function() { return scaleBucket.bandwidth(); },
+    function(d) { return d; });
+  colorKey.addLabels("bucket", bucketLabels);
+  colorKey.addLabels("none", [dataset.stats.totalMin, (dataset.stats.totalMin + dataset.stats.totalMax ) / 2, dataset.stats.totalMax]);
+  colorKey.addLabels("row", [-dataset.stats.zMax.row + dataset.stats.zMax.row % 0.01, 0, dataset.stats.zMax.row - dataset.stats.zMax.row % 0.01]);
+  colorKey.addLabels("col", [-dataset.stats.zMax.col + dataset.stats.zMax.col % 0.01, 0, dataset.stats.zMax.col - dataset.stats.zMax.col % 0.01]);
+
+  //================================================================================================
   //                                             ANCHORS
-  //
   // An anchor is a 2-element array describing the pixel coordinates (relative to the SVG, not the
   // webpage as a whole) of the upper-left corner of a visual element. Using the "transform"
   // attribute of SVG elements, we can position each group of visual elements (for example, all the
   // cells of the heatmap) by simply translating it to the right by its anchor at index 0, and down
   // by its anchor at index 1. Anchors are determined by the margins.
-  //
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
 
   anchorsSetup(width, height);
 
   function anchorsSetup(w, h) { // w not yet used
-  	cells.anchor          = [row.marginSideColor, col.marginSideColor]; // TODO: optionalize
-
-    col.labels.anchor     = [cells.anchor[0], cells.anchor[1] + heightHeatmap() + axisOffset];
-    row.labels.anchor     = [cells.anchor[0] + widthHeatmap() + axisOffset, cells.anchor[1]];
-    col.cellsSub.anchor   = [cells.anchor[0], col.labels.anchor[1] + col.marginLabel];
-    row.cellsSub.anchor   = [row.labels.anchor[0] + row.marginLabel, cells.anchor[1]];
-    col.labelsSub.anchor  = [cells.anchor[0], col.cellsSub.anchor[1] + col.marginBrush + axisOffset];
-    row.labelsSub.anchor  = [row.cellsSub.anchor[0] + row.marginBrush + axisOffset, cells.anchor[1]];
+  	cells.anchor         = [row.marginSideColor, col.marginSideColor];
+    col.labels.anchor    = [cells.anchor[0], cells.anchor[1] + heightHeatmap() + axisPad];
+    row.labels.anchor    = [cells.anchor[0] + widthHeatmap() + axisPad, cells.anchor[1]];
+    col.cellsSub.anchor  = [cells.anchor[0], col.labels.anchor[1] + col.marginLabel];
+    row.cellsSub.anchor  = [row.labels.anchor[0] + row.marginLabel, cells.anchor[1]];
+    col.labelsSub.anchor = [cells.anchor[0], col.cellsSub.anchor[1] + col.marginBrush + axisPad];
+    row.labelsSub.anchor = [row.cellsSub.anchor[0] + row.marginBrush + axisPad, cells.anchor[1]];
 
     if (col.annotated) {
       col.sideColors.anchor = [cells.anchor[0], 0];
-      col.annoColors.anchor = [row.labelsSub.anchor[0] + row.marginLabel, marginAnnoTitle];
-      col.anchorAnnoTitle   = [col.annoColors.anchor[0], col.annoColors.anchor[1] - annoTitlePadding];
-      col.labelsAnno.anchor = [col.annoColors.anchor[0] + marginAnnoColor + axisOffset,
-      																																				col.annoColors.anchor[1]];
+      col.annoColors.anchor = [row.labelsSub.anchor[0] + row.marginLabelSub, marginAnnoTitle];
+      col.anchorAnnoTitle = [col.annoColors.anchor[0], col.annoColors.anchor[1] - annoTitlePad];
+      col.labelsAnno.anchor = [col.annoColors.anchor[0] + marginAnnoColor + axisPad,
+      																																		col.annoColors.anchor[1]];
     }
     if (row.annotated) {
       row.sideColors.anchor = [0, cells.anchor[1]];
-      row.annoColors.anchor = [row.labelsSub.anchor[0] + row.marginLabel, col.marginAnnoTotal + marginAnnoTitle];
-      row.anchorAnnoTitle   = [row.annoColors.anchor[0], row.annoColors.anchor[1] - annoTitlePadding];
-      row.labelsAnno.anchor = [row.annoColors.anchor[0] + marginAnnoColor + axisOffset,
-      																																				row.annoColors.anchor[1]];
+      row.annoColors.anchor = [row.labelsSub.anchor[0] + row.marginLabelSub,
+                               col.marginAnnoTotal + marginAnnoTitle];
+      row.anchorAnnoTitle = [row.annoColors.anchor[0], row.annoColors.anchor[1] - annoTitlePad];
+      row.labelsAnno.anchor = [row.annoColors.anchor[0] + marginAnnoColor + axisPad,
+      																																		row.annoColors.anchor[1]];
     }
+    colorKey.cellsAnchor = [row.labelsSub.anchor[0] + row.marginLabelSub,
+                            col.marginAnnoTotal + row.marginAnnoTotal + marginAnnoTitle];
+    colorKey.labelsAnchor = [colorKey.cellsAnchor[0] + marginAnnoColor + axisPad,
+                             colorKey.cellsAnchor[1]];
+    colorKey.titleAnchor = [colorKey.cellsAnchor[0],
+                            colorKey.cellsAnchor[1] - annoTitlePad];
   }
 
-  //------------------------------------------------------------------------------------------------
-  //                                         	CELLS AND TITLES
-  //
-  // In combination with the axes, these make up all the SVG elements. With the exception of the
-  // annotation titles and axes, every visual component can be decomposed into 2 parts:
-  //		* group - a g element which gets positioned at an anchor point
-  //		* cells - rect elements which live inside the group
-  // When a group is tranlated to a new position, all the elements inside of it move as well, and
-  // this makes it so that the coordinates (x and y) of cells are relative their group, not to the
-  // SVG as a whole.
-  //
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
+  //                                         	  TITLES
+  // These represent the titles on the columns of cells at the right.
+  //================================================================================================
 
   if (col.annotated) col.annoTitle = annoTitleSetup(col);
   if (row.annotated) row.annoTitle = annoTitleSetup(row);
+  colorKey.addTitle("bucket", "Buckets");
+  colorKey.addTitle("none", "Linear Gradient");
+  colorKey.addTitle("row", "Row Z-Score");
+  colorKey.addTitle("col", "Column Z-Score");
 
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
   //                                           BRUSHES
-  //
   // The brushes provide a way to zoom and pan on the main heatmap by selecting regions on brushable
   // heatmaps, and they are made up of 2 parts:
   //		* brush component - a d3.brush object (brushX of col, brushY for row) which defines
@@ -495,8 +609,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //										selection which is draggable, and 2 "handles" on either side of the
   //										selection which allow it to be resized. The attributes of these elements
   //										can be programmatically controlled with CSS and JS
-  //
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
 
   function Brush(dim, upperLeft, lowerRight) {
     this.brush = dim.self === "col" ? d3.brushX() : d3.brushY();
@@ -512,12 +625,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       							[this.inverter.invertExtent(dim.names[dim.currentScope[0]])[0],
       							 this.inverter.invertExtent(dim.names[dim.currentScope[1] - 1])[1] - 1]);
     };
-    this.callBrush = function() {
-      this.group.call(this.brush);
-    };
-    this.clearBrush = function() {
-      this.group.call(this.brush.move, null);
-    }
+    this.callBrush = function() { this.group.call(this.brush); };
+    this.clearBrush = function() { this.group.call(this.brush.move, null); };
     this.extentsSetup = function() {
       this.brush.extent([this.upperLeft(), this.lowerRight()]);
       this.inverter.domain([this.upperLeft()[this.index], this.lowerRight()[this.index]]);
@@ -525,18 +634,25 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     this.extentsSetup();
   }
 
-  col.brusher = new Brush(col, function() { return col.cellsSub.anchor; }, function() { return [col.cellsSub.anchor[0] + widthHeatmap(), col.cellsSub.anchor[1] + col.marginBrush]; });
-  row.brusher = new Brush(row, function() { return row.cellsSub.anchor; }, function() { return [row.cellsSub.anchor[0] + row.marginBrush, row.cellsSub.anchor[1] + heightHeatmap()]; });
+  col.brusher = new Brush(col, function() { return col.cellsSub.anchor; },
+                               function() { return [col.cellsSub.anchor[0] + widthHeatmap(),
+                                                    col.cellsSub.anchor[1] + col.marginBrush]; });
+  row.brusher = new Brush(row, function() { return row.cellsSub.anchor; },
+                               function() { return [row.cellsSub.anchor[0] + row.marginBrush,
+                                                    row.cellsSub.anchor[1] + heightHeatmap()]; });
 
-  positionElements();
-  col.brusher.brushToScope();
-  row.brusher.brushToScope();
+  //================================================================================================
+  //                                           INITIALIZATION
+  // Get ready for everything to properly situated.
+  //================================================================================================
+
+  resizeSVG(); // initial setup of everything
 
   function positionElements() {
     row.labels.position();
-  	//row.labels.updateNT(); // unnecessary??? cuz brush???
+  	row.labels.updateNT();
     col.labels.position();
-    //col.labels.updateNT(); // unnecessary??? cuz brush???
+    col.labels.updateNT();
     row.labelsSub.position();
     row.labelsSub.updateNT();
     col.labelsSub.position();
@@ -567,6 +683,12 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       row.annoColors.update(["x", "y", "width", "height"]);
       positionElement(row.annoTitle, row.anchorAnnoTitle);
     }
+    colorKey.updateCells(["x", "y", "width", "height"]);
+    colorKey.positionCells();
+    colorKey.positionLabels();
+    colorKey.updateNTLabels();
+    colorKey.positionTitles();
+    colorKey.change(scalingDim);
   }
 
   function svgSetup(w, h) {
@@ -584,16 +706,17 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     col.brusher.extentsSetup();
     row.brusher.extentsSetup();
     positionElements();
-    col.currentScope[0] != 0 || col.currentScope[1] != col.names.length ? col.brusher.brushToScope() : col.brusher.clearBrush();
-    row.currentScope[0] != 0 || row.currentScope[1] != row.names.length ? row.brusher.brushToScope() : row.brusher.clearBrush();
+    col.currentScope[0] != 0 || col.currentScope[1] != col.names.length ? col.brusher.brushToScope()
+                                                                        : col.brusher.clearBrush();
+    row.currentScope[0] != 0 || row.currentScope[1] != row.names.length ? row.brusher.brushToScope()
+                                                                        : row.brusher.clearBrush();
   }
 
-  // places the given element (e) at its anchor point (a)
+  // places the given element (e) at the anchor point (a)
   function positionElement(e, a) { e.attr("transform", "translate(" + a[0] + "," + a[1] + ")"); }
 
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
   //                                   INTERACTIVITY FUNCTIONS
-  //
   // These functions determine all the things that can happen after the heatmap is initially
   // rendered (TODO: include resizeSVG in this section?).
   //
@@ -603,8 +726,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //
   // For the dropdowns in the settings panel, there are 3 functions, annoUpdate, sortUpdate, and
   // updateColorScaling.
-  //
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
 
   // updates the current scope of the given dimension and, if renderOnBrushEnd is false, performs
   // visual updates on the main heatmap and side colors
@@ -618,12 +740,12 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
   }
 
-  // Resets the scope of the given dim only if there is no current selection (i.e., the user clicks
+  // resets the scope of the given dim only if there is no current selection (i.e., the user clicks
   // off of the selected area, otherwise renders the dim's current scope if renderOnBrushEnd is true
   function ended(dim) {
     if (d3.event.selection) {
       if (renderOnBrushEnd) {
-      	var inverses = d3.event.selection.map(dim.brusher.inverter); // bounds of brushed -> row/column
+      	var inverses = d3.event.selection.map(dim.brusher.inverter); // pixel bounds -> row/column
     		dim.currentScope = [dim.names.indexOf(inverses[0]), dim.names.indexOf(inverses[1]) + 1];
       	renderScope(dim, true);
       }
@@ -646,7 +768,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   function renderScope(dim, transition) {
     var scopeArray = dim.names.slice(dim.currentScope[0], dim.currentScope[1]);
 	  var inScope = {};
-	  for (var j = 0; j < scopeArray.length; j++) inScope[scopeArray[j]] = true; // note that "undefined" is falsy
+	  for (var j = 0; j < scopeArray.length; j++) inScope[scopeArray[j]] = true; // undefined is falsy
     // scale updates
     dim.scaleCell.domain(scopeArray);
     dim.labels.updateScale(scopeArray);
@@ -656,32 +778,33 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   }
 
   // repositions and resizes the cells of the main heatmap and the side colors of the given
-  // dimension, showing only those that are in scope (for which inScope[d[dim.self]] is true)
-  function updateVisualScope(dim, inScope) {
-    cells.selection.attr(dim.pos,	function(d) { return inScope[d[dim.self]] ? cells[dim.pos](d) : 0; })
-                  .attr(dim.size, function(d) { return inScope[d[dim.self]] ? cells[dim.size]() : 0; });
+  // dimension, showing only those that are in visible (for which vis[d[dim.self]] is true)
+  function updateVisualScope(dim, vis) {
+    cells.selection.attr(dim.pos,	function(d) { return vis[d[dim.self]] ? cells[dim.pos](d) : 0; })
+                  .attr(dim.size, function(d) { return vis[d[dim.self]] ? cells[dim.size]() : 0; });
     if (dim.annotated) dim.sideColors.selection // push to respective side???
-                   .attr(dim.pos, function(d) { return inScope[d.key] ? dim.sideColors[dim.pos](d) : 0; })
-                  .attr(dim.size, function(d) { return inScope[d.key] ? dim.sideColors[dim.size]() : 0; });
+                .attr(dim.pos, function(d) { return vis[d.key] ? dim.sideColors[dim.pos](d) : 0; })
+               .attr(dim.size, function(d) { return vis[d.key] ? dim.sideColors[dim.size]() : 0; });
   }
 
   // annotates the rows/columns (depending on dim) and updates the respective annotation colors by
   // the currently selected annotation option for the given dimension
   function annoUpdate(dim, newAnnotype) {
-    dim.annotypeAnno = newAnnotype;
-    var values = dim.annoTypesAndValues[dim.annotypeAnno];
+    dim.annoBy = newAnnotype;
+    var values = dim.annotations[dim.annoBy];
     // scale updates
     dim.annoToNum.domain(values);
     if (categorical) dim.annoToNum.range(d3.range(values.length));
     if (values.every(function(value) { return !isNaN(value); }) && values.length > 2) {
-    	dim.numToColor = categorical ? function(index) { return colors.annoHeat(index / values.length); } : colors.annoHeat;
+    	dim.numToColor = categorical ? function(index) { return dim.annoHeat(index / values.length); }
+                                    : dim.annoHeat;
     } else {
-    	dim.numToColor = colors.annoReg;
+    	dim.numToColor = dim.annoReg;
     }
     dim.scaleAnnoColor.domain(values);
     dim.labelsAnno.updateScale(values);
     // visual updates
-    dim.annoTitle.text(undersToSpaces(dim.annotypeAnno));
+    dim.annoTitle.text(undersToSpaces(dim.annoBy));
     dim.annoColors.setup(values); // clear previous rects and add new ones in
     dim.labelsAnno.updateNT();
     dim.sideColors.selection.transition().duration(animDuration).attr("fill", dim.sideColors.fill);
@@ -691,7 +814,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // sorting option for the given dimension
   function sortUpdate(dim, annotype) {
   	if (annotype != "Clustered Order") { // sort the rows/columns by the chosen annotype
-      var values = dim.annoTypesAndValues[annotype],
+      var values = dim.annotations[annotype],
           valueToIndex = {}; // hashmap to determine priority for sorting
       for (var j = 0; j < values.length; j++) valueToIndex[values[j]] = j;
       dim.labelsAnnotated.sort(function(a, b) {
@@ -716,24 +839,30 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // updates the fill of the heatmap cells based on the currently selected scaling option
   function updateColorScaling(newScalingDim) {
     scalingDim = newScalingDim;
-    mainColorScale.domain(scalingDim === "none" ? [dataset.stats.totalMin, dataset.stats.totalMax]
+    if (scalingDim != "bucket") {
+      mainColorScale.domain(scalingDim === "none" ? [dataset.stats.totalMin, dataset.stats.totalMax]
                               : [-dataset.stats.zMax[scalingDim], dataset.stats.zMax[scalingDim]]);
+    }
+    colorKey.change(scalingDim);
     cells.update(["fill"]);
     col.cellsSub.update(["fill"]);
     row.cellsSub.update(["fill"]);
   }
 
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
   //                             ELEMENT GENERATING/DISPLAYING FUNCTIONS
-  //
-  //
-  //
-  //------------------------------------------------------------------------------------------------
+  // These handle the setup and displaying of various visual/interactive elements in the heatmap.
+  //================================================================================================
 
   function settingsPanelSetup() {
   	var panel = container.append("div").attr("id", "settings")
   								.attr("class", "tooltip").classed("hidden", true);
     panel.append("p").text("Settings");
+    panel.append("button").text("Fit to Labels").on("click", resizeSVG);
+    panel.append("button").text("Close Settings").on("click", function() {
+      settingsHidden = !settingsHidden;
+      panel.classed("hidden", settingsHidden);
+    });
   	var table = panel.append("table"),
   			row1 = table.append("tr");
     row1.append("td").append("p").text("Scale by");
@@ -742,7 +871,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   	scaleBy.selectAll("option")
       .data([{ value: col.self, text: col.title },
           	 { value: row.self, text: row.title },
-          	 { value: "none", text: "None" }])
+          	 { value: "none", text: "None" },
+             { value: "bucket", text: "Buckets" }])
       .enter()
       .append("option")
       .attr("value", function(d) { return d.value; })
@@ -757,21 +887,20 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     		  r2 = table.append("tr");
       r1.append("td").append("p").text(dim.title + "s: annotate by");
       r2.append("td").append("p").text(dim.title + "s: sort by");
-      dim.annoBy = selectorSetup(r1, dim, annoUpdate);
-      dim.sortBy = selectorSetup(r2, dim, sortUpdate);
-      dim.annoBy.selectAll("option")
-        .data(Object.keys(dim.annoTypesAndValues))
+      dim.annoByDropdown = selectorSetup(r1, dim, annoUpdate);
+      dim.sortByDropdown = selectorSetup(r2, dim, sortUpdate);
+      dim.annoByDropdown.selectAll("option")
+        .data(dim.annotypes)
         .enter()
         .append("option")
         .attr("value", function(d) { return d; })
         .text(function(d) { return undersToSpaces(d); });
-      dim.sortBy.selectAll("option")
-        .data(["Clustered Order"].concat(Object.keys(dim.annoTypesAndValues)))
+      dim.sortByDropdown.selectAll("option")
+        .data(["Clustered Order"].concat(dim.annotypes))
         .enter()
         .append("option")
         .attr("value", function(d) { return d; })
         .text(function(d) { return undersToSpaces(d); });
-      //dim.annotypeAnno = Object.keys(dim.annoTypesAndValues)[0];
     }
 
     function selectorSetup(s, dim, update) {
@@ -781,11 +910,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   	return panel;
   }
 
-  // appends the title for the color key of the given dimension and returns a reference to the
-  // selection
+  // appends the title for the color key of the given dim and returns a reference to the selection
   function annoTitleSetup(dim) {
-    return svg.append("text").attr("class", "annoTitle").style("font-size", fontSizeCK)
-    				.text(undersToSpaces(dim.annotypeAnno));
+    return svg.append("text").attr("class", "annoTitle").attr("id", dim.self.charAt(0) + "Title")
+            .style("font-size", fontSizeCK).text(undersToSpaces(dim.annoBy));
   }
 
   // sets up the tooltip for hovering over the cells of the main heatmap
@@ -836,7 +964,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   function toggleSettingsPanel(clickedRect, widthOffset, heightOffset, tooltip) {
     settingsHidden = !settingsHidden;
     if (!settingsHidden) tooltip.classed("hidden", true);
-    // copied from 'displayCellTooltip'
     var obj = clickedRect.getBoundingClientRect(),
         anchor = [obj.left + widthOffset() + window.pageXOffset,
                   obj.top + heightOffset() + window.pageYOffset];
@@ -858,8 +985,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     cellTooltip.select("#col").text(d.col);
   }
 
-  // displays the tooltip for the side color cell (mousedOverRect) with the given data d and the
-  // given dimension
+  // displays the tooltip for the side color cell (mousedOverRect) with data d of the given dim
   function displaySideTooltip(d, mousedOverRect, dim) {
   	var obj = mousedOverRect.getBoundingClientRect(),
         anchor = [obj.left + dim.sideColors.width() + window.pageXOffset,
@@ -869,16 +995,11 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
                .classed("hidden", false);
     var annotypes = Object.keys(d.annos);
     for (var j = 0; j < annotypes.length; j++) {
-      // TODO: arbitrary clipping: parameterize and/or figure out some math for this soon
-      var origLength = d.annos[annotypes[j]].length,
-          clipLength = Math.min(origLength, 9 * 3 + 8);
-      dim.tooltip.select("#" + annotypes[j])
-        .text(d.annos[annotypes[j]].substring(0, clipLength) + (clipLength < origLength ? "..." : ""));
+      dim.tooltip.select("#" + annotypes[j]).text(d.annos[annotypes[j]]);
     }
   }
 
-  // displays the tooltip for the annotation cell (mouserOverRect) with the given data d and the
-  // given dimension
+  // displays the tooltip for the annotation cell (mouserOverRect) with data d of the given dim
   // TODO: fix scroll bar weirdness for Windows
   function displayAnnoTooltip(d, mousedOverRect, dim) {
   	var obj = mousedOverRect.getBoundingClientRect(),
@@ -890,17 +1011,18 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 		annoTooltip.style("right", anchor[0] + "px")
 			         .style("top", 	 anchor[1] + "px")
 			         .classed("hidden", false);
-		annoTooltip.select("#annotype").text(undersToSpaces(dim.annotypeAnno));
+		annoTooltip.select("#annotype").text(undersToSpaces(dim.annoBy));
 		annoTooltip.select("#value").text(d);
   }
 
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
   //                                     OTHER HELPER FUNCTIONS
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
 
-  function getColors() {
-  	var heatmapColors = interpolateColors(lowColor, midColor, highColor, numColors),
-	  		categoricalSchemes = {
+  function colorsSetup(dim, cat, categoricalScheme, continuousScheme, annoHeatScheme) {
+  	var categoricalSchemes = {
+          ns:       ["#7fff00", "#eead0e", "#00b2ee", "#ee2c2c", "#bf3eff",
+                     "#d2b48c", "#6959cd", "#228b22", "#ff7f50", "#7a7a7a"],
 				  google: 	["#3366cc", "#dc3912", "#ff9900", "#109618", "#990099",
 				    				 "#0099c6", "#dd4477", "#66aa00", "#b82e2e", "#316395",
 				             "#994499", "#22aa99", "#aaaa11", "#6633cc", "#e67300",
@@ -928,48 +1050,39 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 			  };
     var catColors = categoricalSchemes[categoricalScheme],
         conColors = continuousSchemes[continuousScheme];
-    return {
-      heatmap: heatmapColors,
-      annoReg: categorical ? function(index) { return catColors[index % catColors.length]; } : conColors,
-      annoHeat: annoHeatSchemes[annoHeatScheme]
-    };
+    dim.annoReg = cat ? function(index) { return catColors[index % catColors.length]; } : conColors;
+    dim.annoHeat = annoHeatSchemes[annoHeatScheme];
   }
 
   // return the width/height of the main heatmap in pixels
   function widthHeatmap() { return sizeHeatmap(row) - marginAnnoColor - marginAnnoLabel; }
   function heightHeatmap() { return sizeHeatmap(col); }
 
-  // returns the total length, in pixels, for the main heatmap with respect to the given dim (height
-  // for col, width for row)
+  // returns the size, in pixels, of the heatmap along the given dim (height - col, width - row),
+  // but does not take into account margins used for color keys
   function sizeHeatmap(dim) {
-    return dim.marginTotal - dim.marginSideColor - (2 * dim.marginLabel) - dim.marginBrush;
+    return dim.marginTotal - dim.marginSideColor - dim.marginLabel - dim.marginBrush
+                                                                              - dim.marginLabelSub;
   }
 
   // returns the key field of the given object
   function key(d) { return d.key; }
 
-  //------------------------------------------------------------------------------------------------
+  //================================================================================================
   //                                         PARSING FUNCTIONS
-  //
-  //
-  //
-  //------------------------------------------------------------------------------------------------
+  // These take strings in CSV format and turn them into the data structures needed for the heatmap.
+  //================================================================================================
 
-  // parses the given file (a string) into the data structures used for creating the heatmap.
-  // Statistics relevant to determing the colors of the cells are also computed here
+  // parses the given string into the data structures used for generating the heatmap
   function parseDataMatrix(file) {
-
     // parse the file into an array of arrays
     var parsedRows = d3.csvParseRows(file);
-
     // the names of the columns should be stored in the header/first row of the file
     var colnames = parsedRows.shift(); // pops off the first element (ACTUALLY modifying parsedRows)
     colnames.shift(); // trims colnames down to just the column names for the numerical data,
     									// removing whatever name was given to the column containing the row names
-
     // the array of rownames will grow as we process each row
     var rownames = [];
-
     // stats will hold all the relevant statistics for the dataset
     var stats = {
                   col: {},
@@ -981,31 +1094,24 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
     // traverse the parsed rows to create the matrix (a doubly-nested array) for the heatmap, adding
     // to the rownames array and updating the stats object as we go
-    var matrix = d3.range(parsedRows.length).map(function(j) { // j = index of parsedRows (row index)
-
+    var matrix = d3.range(parsedRows.length).map(function(j) { // j = index of parsedRows
         // grab the row name out of the parsed row. This makes parsedRows[j] the same length as
-        // colnames, with parsedRows[j][k] being the value in the row labeled rowname and the column
-        // labeled colnames[k]
-        var rowname = parsedRows[j].shift(); //
-
+        // colnames, with parsedRows[j][k] being the value in row 'rowname' and column 'colnames[k]'
+        var rowname = parsedRows[j].shift();
         // add the new row name to the list of row names
         rownames.push(rowname);
-
         // traverse the parsed row, reformatting each element (a number) and updating stats
-        return d3.range(colnames.length).map(function(k) { // k = index of colnames (column index)
-
+        return d3.range(colnames.length).map(function(k) { // k = index of colnames
           // the "+" converts parsedRows[j][k] to a number (since it was parsed as a string)
           var value = +parsedRows[j][k];
-
           // update the stats for the current column and the current row with this value
           updateStats(stats, "col", dotsToUnders(colnames[k]), value);
           updateStats(stats, "row", dotsToUnders(rowname), value);
-
           return {
-            key: j + " " + k,       // useful for d3 data joins
-            row: rowname,      // determines visual attributes of the cell (position, size)
-            col: colnames[k],  // determines visual attributes of the cell (position, size)
-            value: value            // determines visual attributes of the cell (color)
+            key: j + " " + k, // useful for d3 data joins
+            row: rowname,     // determines cell attributes (position (y), size (height))
+            col: colnames[k], // determines cell attributes (position (x), size (width))
+            value: value      // determines cell attributes (fill)
           };
         });
     });
@@ -1015,123 +1121,91 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     var cStatNames = Object.keys(stats.col);
     for (var j = 0; j < cStatNames.length; j++) {
       finalCalculations(stats, "col", cStatNames[j], rownames.length);
-
-      // reassign the min and max as necessary
-      stats.totalMin = Math.min(stats.totalMin, stats.col[cStatNames[j]].min);
-      stats.totalMax = Math.max(stats.totalMax, stats.col[cStatNames[j]].max);
+      stats.totalMin = Math.min(stats.totalMin, stats.col[cStatNames[j]].min); // reassign if needed
+      stats.totalMax = Math.max(stats.totalMax, stats.col[cStatNames[j]].max); // reassign if needed
     }
-
     // perform final calculations of the stats for each row
     var rStatNames = Object.keys(stats.row);
     for (var j = 0; j < rStatNames.length; j++) {
       finalCalculations(stats, "row", rStatNames[j], colnames.length);
     }
-
     // find the z-score in the dataset with the largest magnitude
     for (var j = 0; j < matrix.length; j++) {
       for (var k = 0; k < matrix[j].length; k++) {
-
-        // grab the current value and compute its z-score relative to its row and to its column
-        var value = matrix[j][k].value,
-            colZ = (value - stats.col[dotsToUnders(colnames[k])].mean)
-            																					/ stats.col[dotsToUnders(colnames[k])].stdev,
-            rowZ = (value - stats.row[dotsToUnders(rownames[j])].mean)
-            																					/ stats.row[dotsToUnders(rownames[j])].stdev;
-
-        // reassign the maxes as necessary
-        stats.zMax.col = Math.max(stats.zMax.col, Math.abs(colZ));
-        stats.zMax.row = Math.max(stats.zMax.row, Math.abs(rowZ));
+        var value = matrix[j][k].value, // grab the value and compute its z-score for to its row/col
+            colname = dotsToUnders(colnames[k]),
+            rowname = dotsToUnders(rownames[j]),
+            colZ = (value - stats.col[colname].mean) / stats.col[colname].stdev,
+            rowZ = (value - stats.row[rowname].mean) / stats.row[rowname].stdev;
+        stats.zMax.col = Math.max(stats.zMax.col, Math.abs(colZ)); // reassign max if necessary
+        stats.zMax.row = Math.max(stats.zMax.row, Math.abs(rowZ)); // reassign max if necessary
       }
     }
 
     // updates the stats object for the given dimension at the given name with the given value
     function updateStats(stats, dim, name, value) {
-
-      // if we have not yet seen this dimension name for this dimension, create a new object to keep
-      // track of its stats
-      if (stats[dim][name] === undefined) {
-
+      if (stats[dim][name] === undefined) { // if unseen, give it a fresh new stats object
         // an stdev field will be added to this object during final calculations
         stats[dim][name] = {
-                min: value,       // helps to find most negative z-score
-                max: value,       // helps to find most positive z-score
-                mean: 0,          // used in calculating standard deviation/z-scores for cell fills
-                meanOfSquares: 0  // used in calculating standard deviation
-              };
+          min: value,       // helps to find most negative z-score
+          max: value,       // helps to find most positive z-score
+          mean: 0,          // used in calculating standard deviation/z-scores for cell fills
+          meanOfSquares: 0  // used in calculating standard deviation
+        };
       }
-
-      // reassign min and max if necessary
-      if (value < stats[dim][name].min) stats[dim][name].min = value;
-      if (value > stats[dim][name].max) stats[dim][name].max = value;
-
-      // add the value and squared value to the mean and meanOfSquares, respectively (these will be
-      // averaged later)
-      stats[dim][name].mean += value;
-      stats[dim][name].meanOfSquares += value * value;
+      if (value < stats[dim][name].min) stats[dim][name].min = value; // reassign min if necessary
+      if (value > stats[dim][name].max) stats[dim][name].max = value; // reassign max if necessary
+      stats[dim][name].mean += value;                   // this will be averaged later
+      stats[dim][name].meanOfSquares += value * value;  // this will be averaged later
     }
 
-    // performs final calculations on the stats object for the dimension at the given name. The mean
-    // and meanOfSquares are divided by the given numVals and an stdev field is added to
-    // stats[dim][name] based on their values
+    // adds the stdev field to the stats object for the dimension at the given name
     function finalCalculations(stats, dim, name, numVals) {
       stats[dim][name].mean *= (1 / numVals);
       stats[dim][name].meanOfSquares *= (1 / numVals);
-      stats[dim][name].stdev = Math.sqrt(stats[dim][name].meanOfSquares - Math.pow(stats[dim][name].mean, 2));
+      stats[dim][name].stdev = Math.sqrt(stats[dim][name].meanOfSquares
+                                                              - Math.pow(stats[dim][name].mean, 2));
     }
 
     return {
       matrix: matrix,     // array of arrays of objects (cells have value, row, col, key)
       rownames: rownames, // arrays of strings (list of all row names, assumed to be clustered)
       colnames: colnames, // arrays of strings (list of all column names, assumed to be clustered)
-      stats: stats        // object with 5 fields: row and col are hashmaps from row/column name to
-      										// object of statistics, zMax stores the largest z-score (by magnitude)
-      										// for both row and col, and totalMin/totalMax store the min and max of
-      										// the entire dataset
+      stats: stats        // object with 5 fields: row and col (hashmaps from row/col name to object
+      										// of statistics, zMax stores largest z-score (by magnitude) for both row
+      										// and col, and totalMin/totalMax store min and max of the entire dataset
     };
   }
 
-  // parses the given file (a string) into the data structures used for annotating/sorting the
-  // heatmap for one of the dimensions
+  // parses the given string into the data structures used for annotating/sorting the heatmap
   function parseAnnotations(file) {
-
-    // parse the file into an array of arrays
-    file = file.charAt(0) === "," ? "Name" + file : file;
-    var parsedRows = d3.csvParseRows(file);
-
+    file = file.charAt(0) === "," ? "Name" + file : file; // add a nameKey if there isn't one
+    var na = "{ no data }"; // this will be used as a readable name if a cell only holds ""
+    var parsedRows = d3.csvParseRows(file); // parse the file into an array of arrays
     // the names of the different kinds of annotations should be stored in the first row of the file
     var annotypes = parsedRows.shift(); // pops off the first element (ACTUALLY modifies parsedRows)
     annotypes = annotypes.map(dotsToUnders); // periods in names of annotypes will mess up JS code
-
     var nameKey = annotypes.shift(); // trims annotypes down to JUST the actual annotation types
-
-    // each type of annotation will be mapped to a sorted array of all its unique values
-    var annotations = {};
+    var annotations = {}; // each type of annotation will map to a sorted array of its unique values
     for (var j = 0; j < annotypes.length; j++) annotations[annotypes[j]] = [];
 
     // in these nested loops, examine all values for each annotation type and add them to the
     // hashmap of annotation types -> array of unique values
     for (var j = 0; j < parsedRows.length; j++) {
-
       // toss out the first element in the row (the name of the dimension for this value); what's
       // left is an array of the same length as the annotypes array, with values[k] being a value
       // for the annotation type annotypes[k]
       parsedRows[j].shift();
       var values = parsedRows[j];
-
       // associate new unique values with their corresponding annotation types as necessary
       for (var k = 0; k < annotypes.length; k++) {
-
-        // give the value a readable name if blank
-        var value = values[k] === "" ? "{ no data }" : values[k];
-
-        // if this value is not already in the array of unique values for its corresponding
-        // annotation type, then add it in
+        var value = values[k] || na; // give a readable name if blank
+        // add this value into the array of unique values for its corresponding annotation type
         if (annotations[annotypes[k]].indexOf(value) < 0) annotations[annotypes[k]].push(value);
       }
     }
 
-    // sort the values for each annotation type. When comparing two values, if both can be parsed as
-    // numbers, then compare them numerically, otherwise compare them lexicographically
+    // sort each annotation type's values (numerically if both numbers, otherwise lexicographically)
     for (var j = 0; j < annotypes.length; j++) {
       annotations[annotypes[j]].sort(function(a, b) {
         if (!isNaN(a) && !isNaN(b)) return (+a) - (+b); // the "+" converts a and b to numbers
@@ -1140,20 +1214,15 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     }
 
     // parse the file into an array of objects (each dimension (row or column) is grouped with all
-    // its values for each annotation type, with the column names for the file being the keys)
-    var parsedLabels = d3.csvParse(file);
-
-    // restructure and reformat the elements of the parsed labels so that each object is now a
-    // nested object, with a key field holding the original object's value for the nameKey and an
-    // annos holding the entire original object (reformatted). This allows for easier lookup of the
-    // annotations for a given row/column name, and makes d3 data joins easier
-    var labels = parsedLabels.map(function(obj) {
-
-      // reformat the original object so that it's keys contain no periods and it's values are
-      // renamed if blank (same convention as when parsing the hashmap)
+    // its values for each annotation type, with the column names for the file being the keys). Then
+    // restructure and reformat the elements so that each object is now a nested object, with a key
+    // field holding the original object's value for the nameKey and an annos holding the entire
+    // original object (reformatted). This allows for easier lookup of the annotations for a given
+    // row/column name, and makes d3 data joins easier
+    var labels = d3.csvParse(file).map(function(obj) {
+      // reformat so that keys contain no periods and values are renamed if blank
       var objClean = {}, keys = Object.keys(obj);
-      for (var j = 0; j < keys.length; j++) objClean[dotsToUnders(keys[j])] = obj[keys[j]] || "{ no data }";
-
+      for (var j = 0; j < keys.length; j++) objClean[dotsToUnders(keys[j])] = obj[keys[j]] || na;
       return {
         key: objClean[nameKey], // this corresponds to the name of the row/column
         annos: objClean
@@ -1161,8 +1230,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     });
 
     return {
-      annoTypesAndValues: annotations,  // hashmap string to string[] (annotation types -> values)
-      labels: labels                    // array of objects (list of annotated dimension names)
+      annotations: annotations, // hashmap string to string[] (annotation types -> values)
+      labels: labels            // array of objects (list of annotated dimension names)
     };
   }
 }
