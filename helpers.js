@@ -49,3 +49,6 @@ function Bucketizer(dividers, colors) {
 
 // returns the key field of the given object
 function key(d) { return d.key; }
+
+// return the given object
+function identity(d) { return d; }

@@ -259,8 +259,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // SVG as a whole.
   //================================================================================================
 
-  function Cells(anchor, type, dim, x, y, width, height, fill) {
-    this.anchor = anchor;
+  function Cells(type, dim, x, y, width, height, fill) {
     this.dim = dim;
     this.x = x;
     this.y = y;
@@ -268,16 +267,20 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     this.height = height;
     this.fill = fill;
     this.group = svg.append("g");
+    this.update = function(attrs) {
+      for (var j = 0; j < attrs.length; j++) this.selection.attr(attrs[j], this[attrs[j]]);
+    };
+    this.position = function() { positionElement(this.group, this.anchor); };
     switch(type) {
       case "heatmap":
         this.selection = this.group.selectAll("g") // first, we add the rows in (not visible)
-          .data(dataset.matrix)     	        // each "d" is an array of cells
-          .enter()										        // selects all the new data (i.e., all of it)
-          .append("g")              	        // the rows have now been added
-          .selectAll("rect")        	        // then, we add the cells in (visible)
-          .data(function(d) { return d; }, key) // in the key function, "d" is now a cell
-          .enter()										        // from here on, "d" refers to an individual cell
-          .append("rect");           	        // the cells have now been added, but still invisible
+          .data(dataset.matrix) // each "d" is an array of cells
+          .enter()						  // selects all the new data (i.e., all of it)
+          .append("g")          // the rows have now been added
+          .selectAll("rect")    // then, we add the cells in (visible)
+          .data(identity, key)  // in the key function, "d" is now a cell
+          .enter()				      // from here on, "d" refers to an individual cell
+          .append("rect");      // the cells have now been added, but still invisible
         if (!dim) this.selection.on("mouseover", function(d) { displayCellTooltip(d, this); })
                 .on("mouseout", function() { cellTooltip.classed("hidden", true); })
                 .on("click", function() { toggleSettingsPanel(this, width, height, cellTooltip); });
@@ -294,43 +297,28 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       case "annoColors":
         if (!dim.self) {
           this.selection = this.group.selectAll("rect")
-      		      .data(dim, function(d) { return d; })
+      		      .data(dim, identity)
       			    .enter()
-      			    .append("rect")
-                .attr("x", this.x)
-                .attr("y", this.y)
-                .attr("width", this.width)
-                .attr("height", this.height)
-                .attr("fill", this.fill);
-      			    //.on("mouseover", function(d) { displayAnnoTooltip(d, this, dim); })
-      			    //.on("mouseout", function() { annoTooltip.classed("hidden", true); });
+      			    .append("rect");
         } else {
           this.setup = function(data) {
             this.group.selectAll("rect").remove();
             this.selection = this.group.selectAll("rect")
-        		      .data(data, function(d) { return d; })
+        		      .data(data, identity)
         			    .enter()
         			    .append("rect")
-                  .attr("x", this.x)
-                  .attr("y", this.y)
-                  .attr("width", this.width)
-                  .attr("height", this.height)
-                  .attr("fill", this.fill)
         			    .on("mouseover", function(d) { displayAnnoTooltip(d, this, dim); })
         			    .on("mouseout", function() { annoTooltip.classed("hidden", true); });
+            this.update(["x", "y", "width", "height", "fill"]);
           };
           this.setup(dim.annotations[dim.annoBy]); // initialize
         }
         break;
     }
-    this.selection.attr("fill", this.fill);
-    this.update = function(attrs) {
-      for (var j = 0; j < attrs.length; j++) this.selection.attr(attrs[j], this[attrs[j]]);
-    };
-    this.position = function() { positionElement(this.group, this.anchor); };
+    this.update(["x", "y", "width", "height", "fill"]); // initialize
   }
 
-  var cells = new Cells(null, "heatmap", null,
+  var cells = new Cells("heatmap", null,
     function(d) { return col.scaleCell(d.col); },
     function(d) { return row.scaleCell(d.row); },
     function() { return col.scaleCell.bandwidth(); },
@@ -346,13 +334,13 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       }
     });
 
-  col.cellsSub = new Cells(null, "heatmap", col,
+  col.cellsSub = new Cells("heatmap", col,
     cells.x, // inherit x attribute from cells
     function(d) { return row.scaleCellSub(d.row); },
     cells.width, // inherit width attribute from cells
     function() { return row.scaleCellSub.bandwidth(); },
     cells.fill); // inherit fill attribute from cells
-  row.cellsSub = new Cells(null, "heatmap", row,
+  row.cellsSub = new Cells("heatmap", row,
     function(d) { return col.scaleCellSub(d.col); },
     cells.y, // inherit y attribute from cells
     function() { return col.scaleCellSub.bandwidth(); },
@@ -363,13 +351,13 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   if (row.annotated) sideAndAnnoColorsSetup(row);
 
   function sideAndAnnoColorsSetup(dim) {
-    dim.sideColors = new Cells(null, "sideColors", dim,
+    dim.sideColors = new Cells("sideColors", dim,
       dim.self === "col" ? function(d) { return col.scaleCell(d.key); } : function() { return 0; },
       dim.self === "row" ? function(d) { return row.scaleCell(d.key); } : function() { return 0; },
       dim.self === "col" ? cells.width : function() { return row.marginSideColor - sideColorPad; },
       dim.self === "row" ? cells.height : function() { return col.marginSideColor - sideColorPad; },
       function(d) { return dim.numToColor(dim.annoToNum(d.annos[dim.annoBy])); });
-    dim.annoColors = new Cells(null, "annoColors", dim,
+    dim.annoColors = new Cells("annoColors", dim,
       function() { return 0; },
       function(d) { return dim.scaleAnnoColor(d); },
       function() { return marginAnnoColor; },
@@ -391,12 +379,11 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // its SVG element.
   //================================================================================================
 
-  function Labels(id, names, room, offset, orientation, anchor, angled) {
+  function Labels(id, names, room, offset, orientation, angled) {
     this.id = id;
     this.names = names;
     this.room = room;
     this.offset = offset;
-    this.anchor = anchor;
     this.angled = angled;
     this.factor = this.angled ? 0.75 : 1;
     this.scale = d3.scalePoint();
@@ -444,14 +431,14 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     this.getBox = function() { return document.getElementById(this.id).getBoundingClientRect(); };
   }
 
-  row.labels = new Labels("rLabs", row.names, row.sizeHeatmap, cells.height, "right", null, false);
-  col.labels = new Labels("cLabs", col.names, col.sizeHeatmap, cells.width, "bottom", null, true);
-  row.labelsSub = new Labels("rSubs", row.names, row.sizeHeatmap, cells.height, "right", null, false);
-  col.labelsSub = new Labels("cSubs", col.names, col.sizeHeatmap, cells.width, "bottom", null, true);
+  row.labels = new Labels("rLabs", row.names, row.sizeHeatmap, cells.height, "right", false);
+  col.labels = new Labels("cLabs", col.names, col.sizeHeatmap, cells.width, "bottom", true);
+  row.labelsSub = new Labels("rSubs", row.names, row.sizeHeatmap, cells.height, "right", false);
+  col.labelsSub = new Labels("cSubs", col.names, col.sizeHeatmap, cells.width, "bottom", true);
   if (row.annotated) row.labelsAnno = new Labels("rAnnos", row.annotations[row.annoBy],
-          function() { return row.marginAnnoHeight; }, row.annoColors.height, "right", null, false);
+          function() { return row.marginAnnoHeight; }, row.annoColors.height, "right", false);
   if (col.annotated) col.labelsAnno = new Labels("cAnnos", col.annotations[col.annoBy],
-          function() { return col.marginAnnoHeight; }, col.annoColors.height, "right", null, false);
+          function() { return col.marginAnnoHeight; }, col.annoColors.height, "right", false);
 
   bucketDividers.push(bucketDividers[bucketDividers.length - 1]);
   var bucketLabels = bucketDividers.map(function(d, i) {
@@ -489,7 +476,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     },
     addLabels: function(name, labels) {
       this.labels[name] = new Labels(name + "CKLabels", labels, function() { return marginColorKey; },
-                                       this.cells[name].height, "right", null, false);
+                                       this.cells[name].height, "right", false);
     },
     change: function(type) {
       var names = Object.keys(this.titles);
@@ -500,30 +487,30 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       }
     }
   };
-  colorKey.cells.none = new Cells(null, "annoColors", heatmapColors,
+  colorKey.cells.none = new Cells("annoColors", heatmapColors,
     function() { return 0; },
     function(d) { return scaleGradient(d); },
     function() { return marginAnnoColor; },
     function() { return scaleGradient.bandwidth(); },
-    function(d) { return d; });
-  colorKey.cells.col = new Cells(null, "annoColors", heatmapColors, // same as none
+    identity);
+  colorKey.cells.col = new Cells("annoColors", heatmapColors, // same as none
     function() { return 0; },
     function(d) { return scaleGradient(d); },
     function() { return marginAnnoColor; },
     function() { return scaleGradient.bandwidth(); },
-    function(d) { return d; });
-  colorKey.cells.row = new Cells(null, "annoColors", heatmapColors, // same as none
+    identity);
+  colorKey.cells.row = new Cells("annoColors", heatmapColors, // same as none
     function() { return 0; },
     function(d) { return scaleGradient(d); },
     function() { return marginAnnoColor; },
     function() { return scaleGradient.bandwidth(); },
-    function(d) { return d; });
-  colorKey.cells.bucket = new Cells(null, "annoColors", bucketColors,
+    identity);
+  colorKey.cells.bucket = new Cells("annoColors", bucketColors,
     function() { return 0; },
     function(d) { return scaleBucket(d); },
     function() { return marginAnnoColor; },
     function() { return scaleBucket.bandwidth(); },
-    function(d) { return d; });
+    identity);
   colorKey.addLabels("bucket", bucketLabels);
   colorKey.addLabels("none", [dataset.stats.totalMin, (dataset.stats.totalMin + dataset.stats.totalMax ) / 2, dataset.stats.totalMax]);
   colorKey.addLabels("row", [-dataset.stats.zMax.row + dataset.stats.zMax.row % 0.01, 0, dataset.stats.zMax.row - dataset.stats.zMax.row % 0.01]);
@@ -881,13 +868,13 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
         .data(dim.annotypes)
         .enter()
         .append("option")
-        .attr("value", function(d) { return d; })
+        .attr("value", identity)
         .text(function(d) { return undersToSpaces(d); });
       dim.sortByDropdown.selectAll("option")
         .data(["Clustered Order"].concat(dim.annotypes))
         .enter()
         .append("option")
-        .attr("value", function(d) { return d; })
+        .attr("value", identity)
         .text(function(d) { return undersToSpaces(d); });
     }
 
@@ -931,7 +918,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
                 .enter()
                 .append("tr");
     rows.append("td").append("p").text(function(d) { return undersToSpaces(d); });
-    rows.append("td").append("p").attr("id", function(d) { return d; });
+    rows.append("td").append("p").attr("id", identity);
     return tooltip;
   }
 
