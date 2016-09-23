@@ -184,9 +184,13 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     function annoMax() {
       var cM1 = col.labelsAnno ? col.labelsAnno.getBox().width + 2 * axisPad : 0,
           rM1 = row.labelsAnno ? row.labelsAnno.getBox().width + 2 * axisPad : 0,
-          cM2 = col.annoTitle ? document.getElementById("cTitle").getBoundingClientRect().width : 0,
-          rM2 = row.annoTitle ? document.getElementById("rTitle").getBoundingClientRect().width : 0;
-      return Math.max(cM1, rM1, cM2, rM2);
+          cM2 = col.annoTitle ? document.getElementById("cTitle").getBoundingClientRect().width - marginAnnoColor + axisPad : 0,
+          rM2 = row.annoTitle ? document.getElementById("rTitle").getBoundingClientRect().width - marginAnnoColor + axisPad : 0,
+          ck1 = colorKey ? colorKey.labels[scalingDim].getBox().width + 2 * axisPad : 0,
+          ck2 = colorKey ?
+            document.getElementById(scalingDim + "CKTitle").getBoundingClientRect().width
+                                                                              - marginAnnoColor + axisPad : 0;
+      return Math.max(cM1, rM1, cM2, rM2, ck1, ck2);
     }
   }
 
@@ -512,9 +516,10 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     function() { return scaleBucket.bandwidth(); },
     identity);
   colorKey.addLabels("bucket", bucketLabels);
-  colorKey.addLabels("none", [dataset.stats.totalMin, (dataset.stats.totalMin + dataset.stats.totalMax ) / 2, dataset.stats.totalMax]);
-  colorKey.addLabels("row", [-dataset.stats.zMax.row + dataset.stats.zMax.row % 0.01, 0, dataset.stats.zMax.row - dataset.stats.zMax.row % 0.01]);
-  colorKey.addLabels("col", [-dataset.stats.zMax.col + dataset.stats.zMax.col % 0.01, 0, dataset.stats.zMax.col - dataset.stats.zMax.col % 0.01]);
+  colorKey.addLabels("none", [dataset.stats.totalMin,
+                  (dataset.stats.totalMin + dataset.stats.totalMax ) / 2, dataset.stats.totalMax]);
+  colorKey.addLabels("row", [-dataset.stats.zMax.row, 0, dataset.stats.zMax.row]);
+  colorKey.addLabels("col", [-dataset.stats.zMax.col, 0, dataset.stats.zMax.col]);
 
   //================================================================================================
   //                                             ANCHORS
