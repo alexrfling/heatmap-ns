@@ -1045,9 +1045,6 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
                                                                               - dim.marginLabelSub;
   }
 
-  // returns the key field of the given object
-  function key(d) { return d.key; }
-
   //================================================================================================
   //                                         PARSING FUNCTIONS
   // These take strings in CSV format and turn them into the data structures needed for the heatmap.
