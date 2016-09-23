@@ -35,15 +35,6 @@ function interpolateColors(low, mid, high, length) {
   return lowToMid.concat(midToHigh);
 }
 
-// returns the length of longest stringy/array in the given array
-function lengthOfLongest(array) {
-  var max = 0;
-  for (var i = 0; i < array.length; i++) {
-    max = Math.max(array[i].length, max);
-  }
-  return max;
-}
-
 function Bucketizer(dividers, colors) {
   this.domain = dividers.map(function(d) { return d; }); // copy
   this.domain.push(Number.POSITIVE_INFINITY);
@@ -55,3 +46,9 @@ function Bucketizer(dividers, colors) {
     return this.range[this.range.length - 1];
   }
 }
+
+// returns the key field of the given object
+function key(d) { return d.key; }
+
+// return the given object
+function identity(d) { return d; }
