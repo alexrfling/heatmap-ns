@@ -199,12 +199,68 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // the side colors, heatmap cells, and color key.
   //================================================================================================
 
+  function Tooltip(title, labels, type, accessor) {
+    this.title = title;
+    this.labels = labels;
+    this.type = type;
+    this.group = container.append("div").attr("class", "tooltip").classed("hidden", true);
+    this.titleElement = this.group.append("p").text(title);
+    this.table = this.group.append("table");
+    this.setup = function(labels) {
+      this.labels = labels;
+      this.table.selectAll("tr").remove();
+      var rows = this.table.selectAll("tr").data(this.labels).enter().append("tr");
+      rows.append("td").append("p").text(function(d) { return d.text; });
+      rows.append("td").append("p").attr("id", function(d) { return d.id; });
+    };
+    this.show = function(d, mousedOverRect) {
+      var box = mousedOverRect.getBoundingClientRect(),
+          anchor = this.type === "anno" ?
+            [window.innerWidth - box.left - window.pageXOffset, box.top + window.pageYOffset]
+            : [box.left + box.width + window.pageXOffset,
+               box.top + box.height + window.pageYOffset];
+      this.group.style(this.type === "anno" ? "right" : "left", anchor[0] + "px")
+                .style("top", anchor[1] + "px").classed("hidden", false);
+      if (type === "anno") {
+        this.group.select("#value").text(d);
+      } else {
+        var keys = Object.keys(accessor(d));
+        for (var j = 0; j < keys.length; j++)
+          this.group.select("#" + keys[j]).text(accessor(d)[keys[j]]);
+      }
+    };
+    this.hide = function() { this.group.classed("hidden", true); };
+
+    // initialize
+    this.setup(this.labels);
+    // this.hide();
+  }
+
+  var cellTooltip = new Tooltip("Cell Info", [{ text: "Value", id: "value" },
+                                              { text: "Row", id: "row" },
+                                              { text: "Column", id: "col" }], "cell", identity);
+  if (col.annotated) col.tooltip = new Tooltip("Column Info",
+    Object.keys(col.labelsAnnotated[0].annos).map(function(d) {
+      return {
+        text: undersToSpaces(d),
+        id: d
+      };
+    }), "side", function(d) { return d.annos; });
+  if (row.annotated) row.tooltip = new Tooltip("Row Info",
+    Object.keys(row.labelsAnnotated[0].annos).map(function(d) {
+      return {
+        text: undersToSpaces(d),
+        id: d
+      };
+    }), "side", function(d) { return d.annos; });
+
+  // TODO: fix scroll bar weirdness for Windows (document.body.offsetHeight > window.innerHeight ?)
+  if (col.annotated) col.annoTooltip = new Tooltip("Column Annotation Info",
+    [{ text: undersToSpaces(col.annoBy), id: "value" }], "anno", null);
+  if (row.annotated) row.annoTooltip = new Tooltip("Row Annotation Info",
+      [{ text: undersToSpaces(row.annoBy), id: "value" }], "anno", null);
   var scaleBy, scalingDim, settingsHidden = true,
-      settingsPanel              = settingsPanelSetup(),
-      cellTooltip                = cellTooltipSetup(),
-      annoTooltip                = annoTooltipSetup();
-  if (col.annotated) col.tooltip = sideTooltipSetup(col);
-  if (row.annotated) row.tooltip = sideTooltipSetup(row);
+      settingsPanel              = settingsPanelSetup();
 
   //================================================================================================
   //                                             	SCALES
@@ -338,18 +394,18 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
           .data(identity, key)  // in the key function, "d" is now a cell
           .enter()				      // from here on, "d" refers to an individual cell
           .append("rect");      // the cells have now been added, but still invisible
-        if (!dim) this.selection.on("mouseover", function(d) { displayCellTooltip(d, this); })
-                .on("mouseout", function() { cellTooltip.classed("hidden", true); })
-                .on("click", function() { toggleSettingsPanel(this, width, height, cellTooltip); });
+        if (!dim) this.selection.on("mouseover", function(d) { cellTooltip.show(d, this); })
+                .on("mouseout", function() { cellTooltip.hide(); })
+                .on("click", function() { toggleSettingsPanel(this, cellTooltip); });
         break;
       case "sideColors":
         this.selection = this.group.selectAll("rect")
               .data(dim.labelsAnnotated, key)
               .enter()
               .append("rect")
-              .on("mouseover", function(d) { displaySideTooltip(d, this, dim); })
-              .on("mouseout", function() { dim.tooltip.classed("hidden", true); })
-              .on("click", function() { toggleSettingsPanel(this, width, height, dim.tooltip); });
+              .on("mouseover", function(d) { dim.tooltip.show(d, this); })
+              .on("mouseout", function() { dim.tooltip.hide(); })
+              .on("click", function() { toggleSettingsPanel(this, dim.tooltip); });
         break;
       case "annoColors":
         if (!dim.self) {
@@ -364,8 +420,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
         		      .data(data, identity)
         			    .enter()
         			    .append("rect")
-        			    .on("mouseover", function(d) { displayAnnoTooltip(d, this, dim); })
-        			    .on("mouseout", function() { annoTooltip.classed("hidden", true); });
+        			    .on("mouseover", function(d) { dim.annoTooltip.show(d, this); })
+        			    .on("mouseout", function() { dim.annoTooltip.hide(); });
             this.update(["x", "y", "width", "height", "fill"]);
           };
           this.setup(dim.annotations[dim.annoBy]); // initialize
@@ -723,6 +779,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // the currently selected annotation option for the given dimension
   function annoUpdate(dim, newAnnotype) {
     dim.annoBy = newAnnotype;
+    dim.annoTooltip.setup([{ text: undersToSpaces(dim.annoBy), id: "value" }]);
     var values = dim.annotations[dim.annoBy];
     // scale updates
     dim.annoToNum.domain(values);
@@ -858,91 +915,16 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   	return panel;
   }
 
-  // sets up the tooltip for hovering over the cells of the main heatmap
-  function cellTooltipSetup() {
-  	var tooltip = container.append("div").attr("class", "tooltip").classed("hidden", true);
-	  tooltip.append("p").text("Cell Info");
-	  var table = tooltip.append("table"),
-	      row1 = table.append("tr"),
-	      row2 = table.append("tr"),
-	      row3 = table.append("tr");
-	  row1.append("td").append("p").text("Value");
-	  row1.append("td").append("p").attr("id", "value");
-	  row2.append("td").append("p").text("Row");
-	  row2.append("td").append("p").attr("id", "row");
-	  row3.append("td").append("p").text("Column");
-	  row3.append("td").append("p").attr("id", "col");
-	  return tooltip;
-  }
-
-  // sets up the tooltip for hovering over row/column (determined by dim) side colors
-  function sideTooltipSetup(dim) {
-    var tooltip = container.append("div").attr("class", "tooltip").classed("hidden", true);
-    tooltip.append("p").text(dim.title + " Info");
-    var table = tooltip.append("table"),
-        rows = table.selectAll("tr")
-                .data(Object.keys(dim.labelsAnnotated[0].annos))
-                .enter()
-                .append("tr");
-    rows.append("td").append("p").text(function(d) { return undersToSpaces(d); });
-    rows.append("td").append("p").attr("id", identity);
-    return tooltip;
-  }
-
-  // sets up the tooltip for hovering over the annotation colors
-  function annoTooltipSetup() {
-  	var tooltip = container.append("div").attr("class", "tooltip").classed("hidden", true);
-	  tooltip.append("p").text("Annotation Info");
-	  var row1 = tooltip.append("table").append("tr");
-	  row1.append("td").append("p").attr("id", "annotype");
-	  row1.append("td").append("p").attr("id", "value");
-	  return tooltip;
-  }
-
-  // positions the settings panel at the lower-right corner of the cell (clickedRect), with width
-  // function widthOffset and height function heightOffset. Sets settingsHidden to !settingsHidden
-  // and then hides the given tooltip if settingsHidden is false and hides the settings panel if
-  // settingsHidden is true (else shows the settings panel)
-  function toggleSettingsPanel(clickedRect, widthOffset, heightOffset, tooltip) {
+  // positions the settings panel at the lower-right corner of the cell (clickedRect). Sets
+  // settingsHidden to !settingsHidden and then hides the given tooltip if settingsHidden is false
+  // and hides the settings panel if settingsHidden is true (else shows the settings panel)
+  function toggleSettingsPanel(clickedRect, tooltip) {
     settingsHidden = !settingsHidden;
-    if (!settingsHidden) tooltip.classed("hidden", true);
+    if (!settingsHidden) tooltip.hide();
     var box = clickedRect.getBoundingClientRect(),
-        anchor = [box.left + widthOffset() + window.pageXOffset,
-                  box.top + heightOffset() + window.pageYOffset];
+        anchor = [box.left + box.width + window.pageXOffset,
+                  box.top + box.height + window.pageYOffset];
     toggleTooltip(settingsPanel, "left", "top", anchor, settingsHidden);
-  }
-
-  // displays the tooltip for the heatmap cell (mousedOverRect) with the given data d
-  function displayCellTooltip(d, mousedOverRect) {
-  	var box = mousedOverRect.getBoundingClientRect(),
-        anchor = [box.left + cells.width() + window.pageXOffset,
-                  box.top + cells.height() + window.pageYOffset];
-    toggleTooltip(cellTooltip, "left", "top", anchor, false);
-    cellTooltip.select("#value").text(d.value);
-    cellTooltip.select("#row").text(d.row);
-    cellTooltip.select("#col").text(d.col);
-  }
-
-  // displays the tooltip for the side color cell (mousedOverRect) with data d of the given dim
-  function displaySideTooltip(d, mousedOverRect, dim) {
-  	var box = mousedOverRect.getBoundingClientRect(),
-        anchor = [box.left + dim.sideColors.width() + window.pageXOffset,
-                  box.top + dim.sideColors.height() + window.pageYOffset];
-    toggleTooltip(dim.tooltip, "left", "top", anchor, false);
-    var annotypes = Object.keys(d.annos);
-    for (var j = 0; j < annotypes.length; j++) {
-      dim.tooltip.select("#" + annotypes[j]).text(d.annos[annotypes[j]]);
-    }
-  }
-
-  // displays the tooltip for the annotation cell (mouserOverRect) with data d of the given dim
-  // TODO: fix scroll bar weirdness for Windows (document.body.offsetHeight > window.innerHeight ?)
-  function displayAnnoTooltip(d, mousedOverRect, dim) {
-  	var box = mousedOverRect.getBoundingClientRect(),
-			  anchor = [window.innerWidth - box.left - window.pageXOffset, box.top + window.pageYOffset];
-    toggleTooltip(annoTooltip, "right", "top", anchor, false);
-		annoTooltip.select("#annotype").text(undersToSpaces(dim.annoBy));
-		annoTooltip.select("#value").text(d);
   }
 
   function toggleTooltip(tip, xPos, yPos, anchor, hidden) {
