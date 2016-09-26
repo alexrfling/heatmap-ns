@@ -924,11 +924,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     var box = clickedRect.getBoundingClientRect(),
         anchor = [box.left + box.width + window.pageXOffset,
                   box.top + box.height + window.pageYOffset];
-    toggleTooltip(settingsPanel, "left", "top", anchor, settingsHidden);
-  }
-
-  function toggleTooltip(tip, xPos, yPos, anchor, hidden) {
-    tip.style(xPos, anchor[0] + "px").style(yPos, anchor[1] + "px").classed("hidden", hidden);
+    settingsPanel.style("left", anchor[0] + "px").style("top", anchor[1] + "px")
+                  .classed("hidden", settingsHidden);
   }
 
   function positionAllElements() {
