@@ -199,21 +199,27 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // the side colors, heatmap cells, and color key.
   //================================================================================================
 
-  function Tooltip(title, labels, type, accessor) {
-    this.title = title;
-    this.labels = labels;
-    this.type = type;
-    this.group = container.append("div").attr("class", "tooltip").classed("hidden", true);
-    this.titleElement = this.group.append("p").text(title);
-    this.table = this.group.append("table");
-    this.setup = function(labels) {
+  class Tooltip {
+    constructor(title, labels, type, accessor) {
+      this.title = title;
+      this.labels = labels;
+      this.type = type;
+      this.accessor = accessor;
+      this.group = container.append("div").attr("class", "tooltip").classed("hidden", true);
+      this.titleElement = this.group.append("p").text(title);
+      this.table = this.group.append("table");
+      this.setup(this.labels);
+    }
+
+    setup(labels) {
       this.labels = labels;
       this.table.selectAll("tr").remove();
       var rows = this.table.selectAll("tr").data(this.labels).enter().append("tr");
       rows.append("td").append("p").text(function(d) { return d.text; });
       rows.append("td").append("p").attr("id", function(d) { return d.id; });
-    };
-    this.show = function(d, mousedOverRect) {
+    }
+
+    show(d, mousedOverRect) {
       var box = mousedOverRect.getBoundingClientRect(),
           anchor = this.type === "anno" ?
             [window.innerWidth - box.left - window.pageXOffset, box.top + window.pageYOffset]
@@ -221,19 +227,18 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
                box.top + box.height + window.pageYOffset];
       this.group.style(this.type === "anno" ? "right" : "left", anchor[0] + "px")
                 .style("top", anchor[1] + "px").classed("hidden", false);
-      if (type === "anno") {
+      if (this.type === "anno") {
         this.group.select("#value").text(d);
       } else {
-        var keys = Object.keys(accessor(d));
+        var keys = Object.keys(this.accessor(d));
         for (var j = 0; j < keys.length; j++)
-          this.group.select("#" + keys[j]).text(accessor(d)[keys[j]]);
+          this.group.select("#" + keys[j]).text(this.accessor(d)[keys[j]]);
       }
-    };
-    this.hide = function() { this.group.classed("hidden", true); };
+    }
 
-    // initialize
-    this.setup(this.labels);
-    // this.hide();
+    hide() {
+      this.group.classed("hidden", true);
+    }
   }
 
   var cellTooltip = new Tooltip("Cell Info", [{ text: "Value", id: "value" },
@@ -689,27 +694,39 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //										can be programmatically controlled with CSS and JS
   //================================================================================================
 
-  function Brush(dim, upperLeft, lowerRight) {
-    this.brush = dim.self === "col" ? d3.brushX() : d3.brushY();
-    this.upperLeft = upperLeft;
-    this.lowerRight = lowerRight;
-    this.index = dim.self === "col" ? 0 : 1;
-    this.inverter = d3.scaleQuantize().range(dim.names);
-    this.brush.on("brush", function() { brushed(dim); })
-              .on("end", function() { ended(dim); });
-    this.group = svg.append("g").attr("class", "brush").call(this.brush);
-    this.brushToScope = function() {
+  class Brush {
+    constructor(dim, upperLeft, lowerRight) {
+      this.dim = dim;
+      this.brush = this.dim.self === "col" ? d3.brushX() : d3.brushY();
+      this.upperLeft = upperLeft;
+      this.lowerRight = lowerRight;
+      this.index = this.dim.self === "col" ? 0 : 1;
+      this.inverter = d3.scaleQuantize().range(this.dim.names);
+      this.brush.on("brush", function() { brushed(dim); })
+                .on("end", function() { ended(dim); });
+      this.group = svg.append("g").attr("class", "brush");
+      this.callBrush();
+      this.extentsSetup();
+    }
+
+    brushToScope() {
       this.group.call(this.brush.move,
-      							[this.inverter.invertExtent(dim.names[dim.currentScope[0]])[0],
-      							 this.inverter.invertExtent(dim.names[dim.currentScope[1] - 1])[1] - 1]);
-    };
-    this.callBrush = function() { this.group.call(this.brush); };
-    this.clearBrush = function() { this.group.call(this.brush.move, null); };
-    this.extentsSetup = function() {
+      							[this.inverter.invertExtent(this.dim.names[this.dim.currentScope[0]])[0],
+      							 this.inverter.invertExtent(this.dim.names[this.dim.currentScope[1] - 1])[1] - 1]);
+    }
+
+    callBrush() {
+      this.group.call(this.brush);
+    }
+
+    clearBrush() {
+      this.group.call(this.brush.move, null);
+    }
+
+    extentsSetup() {
       this.brush.extent([this.upperLeft(), this.lowerRight()]);
       this.inverter.domain([this.upperLeft()[this.index], this.lowerRight()[this.index]]);
-    };
-    this.extentsSetup();
+    }
   }
 
   col.brusher = new Brush(col, function() { return col.cellsSub.anchor; },
