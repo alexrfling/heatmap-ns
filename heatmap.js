@@ -340,7 +340,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     positionTitles: function() {
       var names = Object.keys(this.titles);
       for (var j = 0; j < names.length; j++)
-        positionElement(this.titles[names[j]].selection, this.titleAnchor);
+        positionElement(this.titles[names[j]].group, this.titleAnchor);
     },
     addTitle: function(name, text) {
       this.titles[name] = new Title(name + "CKTitle", text);
@@ -354,13 +354,13 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       for (var j = 0; j < names.length; j++) {
         this.cells[names[j]].group.classed("hidden", names[j] !== type);
         this.labels[names[j]].group.classed("hidden", names[j] !== type);
-        this.titles[names[j]].selection.classed("hidden", names[j] !== type);
+        this.titles[names[j]].group.classed("hidden", names[j] !== type);
       }
     }
   };
 
   //================================================================================================
-  //                                          CELlS
+  //                                          CELLS
   // These represent groupings of colorful rectangles (row side colors, color keys, heatmap itself).
   //
   // In combination with the axes, these make up all the SVG elements. With the exception of the
@@ -372,63 +372,82 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // SVG as a whole.
   //================================================================================================
 
-  function Cells(type, dim, x, y, width, height, fill) {
-    this.dim = dim;
-    this.x = x;
-    this.y = y;
-    this.width = width;
-    this.height = height;
-    this.fill = fill;
-    this.group = svg.append("g");
-    this.update = function(attrs) {
-      for (var j = 0; j < attrs.length; j++) this.selection.attr(attrs[j], this[attrs[j]]);
-    };
-    this.position = function() { positionElement(this.group, this.anchor); };
-    switch(type) {
-      case "heatmap":
-        this.selection = this.group.selectAll("g") // first, we add the rows in (not visible)
-          .data(dataset.matrix) // each "d" is an array of cells
-          .enter()						  // selects all the new data (i.e., all of it)
-          .append("g")          // the rows have now been added
-          .selectAll("rect")    // then, we add the cells in (visible)
-          .data(identity, key)  // in the key function, "d" is now a cell
-          .enter()				      // from here on, "d" refers to an individual cell
-          .append("rect");      // the cells have now been added, but still invisible
-        if (!dim) this.selection.on("mouseover", function(d) { cellTooltip.show(d, this); })
-                .on("mouseout", function() { cellTooltip.hide(); })
-                .on("click", function() { toggleSettingsPanel(this, cellTooltip); });
-        break;
-      case "sideColors":
-        this.selection = this.group.selectAll("rect")
-              .data(dim.labelsAnnotated, key)
-              .enter()
-              .append("rect")
-              .on("mouseover", function(d) { dim.tooltip.show(d, this); })
-              .on("mouseout", function() { dim.tooltip.hide(); })
-              .on("click", function() { toggleSettingsPanel(this, dim.tooltip); });
-        break;
-      case "annoColors":
-        if (!dim.self) {
-          this.selection = this.group.selectAll("rect")
-      		      .data(dim, identity)
-      			    .enter()
-      			    .append("rect");
-        } else {
-          this.setup = function(data) {
-            this.group.selectAll("rect").remove();
-            this.selection = this.group.selectAll("rect")
-        		      .data(data, identity)
-        			    .enter()
-        			    .append("rect")
-        			    .on("mouseover", function(d) { dim.annoTooltip.show(d, this); })
-        			    .on("mouseout", function() { dim.annoTooltip.hide(); });
-            this.update(["x", "y", "width", "height", "fill"]);
-          };
-          this.setup(dim.annotations[dim.annoBy]); // initialize
-        }
-        break;
+  class GraphicalElement {
+    constructor() {
+      this.group = svg.append("g");
+      this.anchor = null;
     }
-    this.update(["x", "y", "width", "height", "fill"]); // initialize
+
+    position() {
+      positionElement(this.group, this.anchor);
+    }
+
+    getBox() {
+      return document.getElementById(this.id).getBoundingClientRect();
+    }
+  }
+
+  class Cells extends GraphicalElement {
+    constructor(type, dim, x, y, width, height, fill) {
+      super();
+      this.dim = dim;
+      this.x = x;
+      this.y = y;
+      this.width = width;
+      this.height = height;
+      this.fill = fill;
+      switch(type) {
+        case "heatmap":
+          this.selection = this.group.selectAll("g") // first, we add the rows in (not visible)
+            .data(dataset.matrix) // each "d" is an array of cells
+            .enter()						  // selects all the new data (i.e., all of it)
+            .append("g")          // the rows have now been added
+            .selectAll("rect")    // then, we add the cells in (visible)
+            .data(identity, key)  // in the key function, "d" is now a cell
+            .enter()				      // from here on, "d" refers to an individual cell
+            .append("rect");      // the cells have now been added, but still invisible
+          if (!dim) this.selection.on("mouseover", function(d) { cellTooltip.show(d, this); })
+                  .on("mouseout", function() { cellTooltip.hide(); })
+                  .on("click", function() { toggleSettingsPanel(this, cellTooltip); });
+          break;
+        case "sideColors":
+          this.selection = this.group.selectAll("rect")
+                .data(dim.labelsAnnotated, key)
+                .enter()
+                .append("rect")
+                .on("mouseover", function(d) { dim.tooltip.show(d, this); })
+                .on("mouseout", function() { dim.tooltip.hide(); })
+                .on("click", function() { toggleSettingsPanel(this, dim.tooltip); });
+          break;
+        case "annoColors":
+          if (!dim.self) {
+            this.selection = this.group.selectAll("rect")
+        		      .data(dim, identity)
+        			    .enter()
+        			    .append("rect");
+          } else {
+            this.setup = function(data) {
+              this.group.selectAll("rect").remove();
+              this.selection = this.group.selectAll("rect")
+          		      .data(data, identity)
+          			    .enter()
+          			    .append("rect")
+          			    .on("mouseover", function(d) { dim.annoTooltip.show(d, this); })
+          			    .on("mouseout", function() { dim.annoTooltip.hide(); });
+              this.update(["x", "y", "width", "height", "fill"]);
+            };
+            this.setup(dim.annotations[dim.annoBy]); // initialize
+          }
+          break;
+      }
+      this.update(["x", "y", "width", "height", "fill"]); // initialize
+    }
+
+    update(attrs) {
+      for (var j = 0; j < attrs.length; j++) {
+        this.selection.attr(attrs[j], this[attrs[j]]);
+      }
+    };
   }
 
   var cells = new Cells("heatmap", null,
@@ -513,28 +532,34 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // its SVG element.
   //================================================================================================
 
-  function Labels(id, names, room, offset, orientation, angled) {
-    this.id = id;
-    this.names = names;
-    this.room = room;
-    this.offset = offset;
-    this.angled = angled;
-    this.factor = this.angled ? 0.75 : 1;
-    this.scale = d3.scalePoint();
-    this.updateScale = function(newNames) {
+  class Labels extends GraphicalElement {
+    constructor(id, names, room, offset, orientation, angled) {
+      super();
+      this.id = id;
+      this.names = names;
+      this.room = room;
+      this.offset = offset;
+      this.angled = angled;
+      this.factor = this.angled ? 0.75 : 1;
+      this.scale = d3.scalePoint();
+      this.updateScale(this.names);
+      switch(orientation) {
+        case "left": this.axis = d3.axisLeft(this.scale); break;
+        case "top": this.axis = d3.axisTop(this.scale); break;
+        case "right": this.axis = d3.axisRight(this.scale); break;
+        case "bottom": this.axis = d3.axisBottom(this.scale); break;
+      }
+      this.group.attr("class", "axis").attr("id", id).style("font-size", fontSize);
+      this.updateNT(); // for initial angling
+    }
+
+    updateScale(newNames) {
       this.names = newNames;
       this.scale.domain(sample(this.names, Math.floor(this.factor * this.room() / fontSize)))
              		.range([this.offset() / 2, this.room() - this.offset() / 2]);
-    };
-    this.updateScale(this.names);
-    switch(orientation) {
-      case "left": this.axis = d3.axisLeft(this.scale); break;
-      case "top": this.axis = d3.axisTop(this.scale); break;
-      case "right": this.axis = d3.axisRight(this.scale); break;
-      case "bottom": this.axis = d3.axisBottom(this.scale); break;
     }
-    this.group = svg.append("g").attr("class", "axis").attr("id", id).style("font-size", fontSize);
-    this.update = function() {
+
+    update() {
       this.updateScale(this.names);
       if (this.angled) {
         this.group.transition().duration(animDuration).call(this.axis)
@@ -546,8 +571,9 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       } else {
         this.group.transition().duration(animDuration).call(this.axis);
       }
-    };
-    this.updateNT = function() {
+    }
+
+    updateNT() {
       this.updateScale(this.names);
       if (this.angled) {
         this.group.call(this.axis)
@@ -559,10 +585,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
       } else {
         this.group.call(this.axis);
       }
-    };
-    this.updateNT(); // for initial angling
-    this.position = function() { positionElement(this.group, this.anchor); };
-    this.getBox = function() { return document.getElementById(this.id).getBoundingClientRect(); };
+    }
   }
 
   row.labels = new Labels("rLabs", row.names, row.sizeHeatmap, cells.height, "right", false);
@@ -587,19 +610,19 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // These represent the titles on the columns of cells at the right.
   //================================================================================================
 
-  function Title(id, text) {
-    this.id = id;
-    this.text = text;
-    this.selection = svg.append("text").attr("class", "annoTitle").attr("id", this.id)
-                                  .style("font-size", fontSizeCK).text(this.text);
-    this.setText = function(text) {
+  class Title extends GraphicalElement {
+    constructor(id, text) {
+      super();
+      this.id = id;
+      this.text = text;
+      this.selection = this.group.append("text").attr("class", "annoTitle").attr("id", this.id)
+                                    .style("font-size", fontSizeCK).text(this.text);
+    }
+
+    setText(text) {
       this.text = text;
       this.selection.text(this.text);
-    };
-    this.position = function() {
-      positionElement(this.selection, this.anchor);
-    };
-    this.getBox = function() { return document.getElementById(this.id).getBoundingClientRect(); };
+    }
   }
 
   if (col.annotated) col.annoTitle = new Title("cTitle", undersToSpaces(col.annoBy));
