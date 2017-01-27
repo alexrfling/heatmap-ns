@@ -8,7 +8,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
                  rowCatScheme, rowConScheme, rowAnnoHeatScheme,
                  bucketDividers, bucketColors,
                  animDuration, sideColorPad, annoTitlePad, axisPad,
-      					 fontSize, fontSizeCK, lowColor, midColor, highColor, numColors) {
+      					 fontSize, fontSizeCK, lowColor, midColor, highColor, numColors, parsed) {
 
   // assign parameters to defaults if not given
   height            = height || 600;
@@ -58,7 +58,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // the "dims" will hold all elements relevant to the columns and rows of the data, separately
   var col = {}, row = {};
   // parse the files (.csv strings) and assign the data structures to col and row fields
-  var dataset    = parseDataMatrix(datasetFile);
+  var dataset    = parsed ? datasetFile : parseDataMatrix(datasetFile);
   col.stats      = dataset.stats.col;
   row.stats      = dataset.stats.row;
   col.clustOrder = colClustOrder || dataset.colnames;
