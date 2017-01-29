@@ -58,7 +58,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // the "dims" will hold all elements relevant to the columns and rows of the data, separately
   var col = {}, row = {};
   // parse the files (.csv strings) and assign the data structures to col and row fields
-  var dataset    = parsed ? datasetFile : parseDataMatrix(datasetFile);
+  var dataset    = parseDataMatrix(datasetFile, parsed);
   col.stats      = dataset.stats.col;
   row.stats      = dataset.stats.row;
   col.clustOrder = colClustOrder || dataset.colnames;
@@ -1060,7 +1060,28 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   //================================================================================================
 
   // parses the given string into the data structures used for generating the heatmap
-  function parseDataMatrix(file) {
+  function parseDataMatrix(file, parsed) {
+    // TODO fix style...
+    if (parsed) {
+        var matrix = file.matrix;
+        var rownames = file.rownames;
+        var colnames = file.colnames;
+
+        var stats = {
+            col: {},
+            row: {},
+            zMax: { col: 0, row: 0 },
+            totalMin: Number.POSITIVE_INFINITY,
+            totalMax: Number.NEGATIVE_INFINITY
+        };
+
+        matrix.forEach(function (array) {
+            array.forEach(function (element) {
+                updateStats(stats, "col", dotsToUnders(element.colname), element.value);
+                updateStats(stats, "row", dotsToUnders(element.rowname), element.value);
+            });
+        });
+    } else {
     var parsedRows = d3.csvParseRows(file); // parses the string into an array of arrays
     var colnames = parsedRows.shift(); // column names should be stored in the first row
     colnames.shift(); // removes whatever name was given to the column containing the row names
@@ -1097,6 +1118,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
           };
         });
     });
+    }
 
     // perform final calculations of the stats for each column, and find the totalMin and totalMax
     // of the dataset (this could also be done in the final calculations for the row stats)
