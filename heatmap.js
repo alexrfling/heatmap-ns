@@ -1077,8 +1077,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
 
         matrix.forEach(function (array) {
             array.forEach(function (element) {
-                updateStats(stats, "col", dotsToUnders(element.colname), element.value);
-                updateStats(stats, "row", dotsToUnders(element.rowname), element.value);
+                updateStats(stats, "col", dotsToUnders(element.col), element.value);
+                updateStats(stats, "row", dotsToUnders(element.row), element.value);
             });
         });
     } else {
