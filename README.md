@@ -9,10 +9,10 @@ in the strings, appended to the HTML element.
 ## Boilerplate
 In the head of your HTML document, include:
 ```html
-<link rel="stylesheet" type="text/css" href="heatmap.css">
-<script src="d3/d3.min.js"></script>
-<script src="helpers.js"></script>
-<script src="heatmap.js"></script>
+<link rel='stylesheet' type='text/css' href='heatmap.css'>
+<script src='d3/d3.min.js'></script>
+<script src='helpers.js'></script>
+<script src='heatmap.js'></script>
 ```
 
 ## Usage
@@ -31,24 +31,24 @@ heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowClustOrder,
 ### Example
 Element in the HTML document:
 ```html
-<div id="dataOverview"></div>
+<div id='dataOverview'></div>
 ```
 Data in JavaScript:
 ```js
-var data = "Row,ColumnOne,ColumnTwo\nRowOne,12,34\nRowTwo,56,78";
-var rowAnnos = "Row,Analyte.Type,Is.Control\nRowOne,mRNA,true\nRowTwo,protein,false";
-var colAnnos = "Column,Binding.Density\nColumnTwo,0.61\nColumnOne,0.9";
+var data = 'Row,ColumnOne,ColumnTwo\nRowOne,12,34\nRowTwo,56,78';
+var rowAnnos = 'Row,Analyte.Type,Is.Control\nRowOne,mRNA,true\nRowTwo,protein,false';
+var colAnnos = 'Column,Binding.Density\nColumnTwo,0.61\nColumnOne,0.9';
 ```
 Create an interactive heatmap of `data` annotated with `rowAnnos` and `colAnnos`:
 ```js
-heatmap("dataOverview", data, colAnnos, rowAnnos)
+heatmap('dataOverview', data, colAnnos, rowAnnos)
 ```
 See heatmap.html for more example usage.
 
 ## Parameters
 
 ### Required
-<b>id</b> - the "id" attribute of the HTML element to which the heatmap will be appended
+<b>id</b> - the 'id' attribute of the HTML element to which the heatmap will be appended
 
 <b>datasetFile</b> - CSV-formatted string representing a numerical matrix of data
 
@@ -77,34 +77,34 @@ rendering of visual updates when zooming/panning (default: `false` - recommended
 
 <b>categorical</b> - `true` for categorical, `false` for continuous color schemes (default: `true`)
 
-<b>colCatScheme</b> - one of `"ns"`, `"google"`, or `"rainbow"` indicating categorical color scheme
-to use for non-numerical column annotations (default: `"google"`). Ignored if `categorical` is
+<b>colCatScheme</b> - one of `'ns'`, `'google'`, or `'rainbow'` indicating categorical color scheme
+to use for non-numerical column annotations (default: `'google'`). Ignored if `categorical` is
 `false`
 
-<b>colConScheme</b> - one of `"cubehelix"` or `"rainbow"` indicating continuous color scheme to use
-for non-numerical column annotations (default: `"rainbow"`). Ignored if `categorical` is `true`
+<b>colConScheme</b> - one of `'cubehelix'` or `'rainbow'` indicating continuous color scheme to use
+for non-numerical column annotations (default: `'rainbow'`). Ignored if `categorical` is `true`
 
-<b>colAnnoHeatScheme</b> - one of `"viridis"`, `"inferno"`, `"magma"`, `"plasma"`, `"warm"`, or
-`"cool"` indicating color scheme to use for numerical column annotations (default: `"plasma"`)
+<b>colAnnoHeatScheme</b> - one of `'viridis'`, `'inferno'`, `'magma'`, `'plasma'`, `'warm'`, or
+`'cool'` indicating color scheme to use for numerical column annotations (default: `'plasma'`)
 
-<b>rowCatScheme</b> - one of `"ns"`, `"google"`, or `"rainbow"` indicating categorical color scheme
-to use for non-numerical row annotations (default: `"ns"`). Ignored if `categorical` is `false`
+<b>rowCatScheme</b> - one of `'ns'`, `'google'`, or `'rainbow'` indicating categorical color scheme
+to use for non-numerical row annotations (default: `'ns'`). Ignored if `categorical` is `false`
 
-<b>rowConScheme</b> - one of `"cubehelix"` or `"rainbow"` indicating continuous color scheme to use
-for non-numerical row annotations (default: `"cubehelix"`). Ignored if `categorical` is `true`
+<b>rowConScheme</b> - one of `'cubehelix'` or `'rainbow'` indicating continuous color scheme to use
+for non-numerical row annotations (default: `'cubehelix'`). Ignored if `categorical` is `true`
 
-<b>rowAnnoHeatScheme</b> - one of `"viridis"`, `"inferno"`, `"magma"`, `"plasma"`, `"warm"`, or
-`"cool"` indicating color scheme to use for numerical row annotations (default: `"magma"`)
+<b>rowAnnoHeatScheme</b> - one of `'viridis'`, `'inferno'`, `'magma'`, `'plasma'`, `'warm'`, or
+`'cool'` indicating color scheme to use for numerical row annotations (default: `'magma'`)
 
 <b>bucketDividers</b> - array of numbers, of length 1 less than `bucketColors`, indicating the caps
-for "bucket" color scaling (default: `[25, 50, 100, 500]`). Data less than `bucketDividers[0]` will
+for 'bucket' color scaling (default: `[25, 50, 100, 500]`). Data less than `bucketDividers[0]` will
 be given the color `bucketColors[0]`, data between `bucketDividers[0]` (inclusive) and
 `bucketDividers[1]` (exclusive) will be given the color `bucketColors[1]`, and so on. Data greater
 than or equal to `bucketDividers[bucketDividers.length - 1]` will be given the color
 `bucketColors[bucketColors.length - 1]`
 
 <b>bucketColors</b> - array of strings, of length 1 more than `bucketDividers`, indicating the
-colors for "bucket" color scaling (default: `["red", "orange", "yellow", "gray", "cornflowerblue"]`)
+colors for 'bucket' color scaling (default: `['red', 'orange', 'yellow', 'gray', 'cornflowerblue']`)
 
 <b>animDuration</b> - number of milliseconds animations should last (default: `1200`)
 
@@ -122,12 +122,12 @@ colors for "bucket" color scaling (default: `["red", "orange", "yellow", "gray",
 <b>fontSizeCK</b> - font size, in pixels, of color key titles (default: `11`)
 
 <b>lowColor</b> - string representing the color for data with negative z-scores
-(default: `"cornflowerblue"`)
+(default: `'cornflowerblue'`)
 
-<b>midColor</b> - string representing the color for data with a z-score of 0 (default: `"black"`)
+<b>midColor</b> - string representing the color for data with a z-score of 0 (default: `'black'`)
 
 <b>highColor</b> - string representing the color for data with positive z-scores
-(default: `"orange"`)
+(default: `'orange'`)
 
 <b>numColors</b> - number of colors to include in the interpolation of `lowColor`, `midColor`, and
 `highColor` (default: `256`)
