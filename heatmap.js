@@ -312,7 +312,7 @@ function heatmap(id, datasetFile, options) {
         positionCells: function () {
             var names = Object.keys(this.cells);
             for (var j = 0; j < names.length; j++) {
-                positionElement(this.cells[names[j]].group, this.cellsAnchor);
+                GraphicalElement.prototype.position.call({ group: this.cells[names[j]].group, anchor: this.cellsAnchor });
             }
         },
         updateVisNTLabels: function () {
@@ -324,13 +324,13 @@ function heatmap(id, datasetFile, options) {
         positionLabels: function () {
             var names = Object.keys(this.labels);
             for (var j = 0; j < names.length; j++) {
-                positionElement(this.labels[names[j]].group, this.labelsAnchor);
+                GraphicalElement.prototype.position.call({ group: this.labels[names[j]].group, anchor: this.labelsAnchor });
             }
         },
         positionTitles: function () {
             var names = Object.keys(this.titles);
             for (var j = 0; j < names.length; j++) {
-                positionElement(this.titles[names[j]].group, this.titleAnchor);
+                GraphicalElement.prototype.position.call({ group: this.titles[names[j]].group, anchor: this.titleAnchor });
             }
         },
         addTitle: function (name, text) {
@@ -931,16 +931,11 @@ function heatmap(id, datasetFile, options) {
         }
     }
 
-    // places the given element (e) at the anchor point (a)
-    function positionElement (e, a) {
-        e.attr('transform', 'translate(' + a[0] + ',' + a[1] + ')');
-    }
-
     //================================================================================================
     //                                     OTHER HELPER FUNCTIONS
     //================================================================================================
 
-    function colorsSetup(dim, cat, categoricalScheme, continuousScheme, annoHeatScheme) {
+    function colorsSetup (dim, cat, categoricalScheme, continuousScheme, annoHeatScheme) {
         var categoricalSchemes = {
             ns: [
                 '#7fff00', '#eead0e', '#00b2ee', '#ee2c2c', '#bf3eff',
