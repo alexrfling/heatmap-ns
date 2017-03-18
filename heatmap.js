@@ -300,6 +300,7 @@ function heatmap(id, datasetFile, options) {
     //================================================================================================
 
     var colorKey = {
+        anchors: {},
         cells: {},
         labels: {},
         titles: {},
@@ -309,28 +310,19 @@ function heatmap(id, datasetFile, options) {
                 this.cells[names[j]].updateVis(attrs);
             }
         },
-        positionCells: function () {
-            var names = Object.keys(this.cells);
+        positionElements: function (type) { // type should be 'cells', 'labels', or 'titles'
+            var me = this;
+            var elements = me[type];
+            var names = Object.keys(elements);
+
             for (var j = 0; j < names.length; j++) {
-                GraphicalElement.prototype.position.call({ group: this.cells[names[j]].group, anchor: this.cellsAnchor });
+                GraphicalElement.prototype.position.call({ group: elements[names[j]].group, anchor: me.anchors[type] });
             }
         },
         updateVisNTLabels: function () {
             var names = Object.keys(this.labels);
             for (var j = 0; j < names.length; j++) {
                 this.labels[names[j]].updateVisNT();
-            }
-        },
-        positionLabels: function () {
-            var names = Object.keys(this.labels);
-            for (var j = 0; j < names.length; j++) {
-                GraphicalElement.prototype.position.call({ group: this.labels[names[j]].group, anchor: this.labelsAnchor });
-            }
-        },
-        positionTitles: function () {
-            var names = Object.keys(this.titles);
-            for (var j = 0; j < names.length; j++) {
-                GraphicalElement.prototype.position.call({ group: this.titles[names[j]].group, anchor: this.titleAnchor });
             }
         },
         addTitle: function (name, text) {
@@ -589,9 +581,9 @@ function heatmap(id, datasetFile, options) {
             row.annoTitle.anchor = [row.annoColors.anchor[0], row.annoColors.anchor[1] - annoTitlePad];
             row.labelsAnno.anchor = [row.annoColors.anchor[0] + marginAnnoColor + axisPad, row.annoColors.anchor[1]];
         }
-        colorKey.cellsAnchor = [row.labelsSub.anchor[0] + row.marginLabelSub, col.marginAnnoTotal + row.marginAnnoTotal + marginAnnoTitle];
-        colorKey.labelsAnchor = [colorKey.cellsAnchor[0] + marginAnnoColor + axisPad, colorKey.cellsAnchor[1]];
-        colorKey.titleAnchor = [colorKey.cellsAnchor[0], colorKey.cellsAnchor[1] - annoTitlePad];
+        colorKey.anchors.cells = [row.labelsSub.anchor[0] + row.marginLabelSub, col.marginAnnoTotal + row.marginAnnoTotal + marginAnnoTitle];
+        colorKey.anchors.labels = [colorKey.anchors.cells[0] + marginAnnoColor + axisPad, colorKey.anchors.cells[1]];
+        colorKey.anchors.titles = [colorKey.anchors.cells[0], colorKey.anchors.cells[1] - annoTitlePad];
     }
 
     //================================================================================================
@@ -899,19 +891,19 @@ function heatmap(id, datasetFile, options) {
             .classed('hidden', settingsHidden);
     }
 
-    function positionAllElements() {
+    function positionAllElements () {
         cells.position();
         cells.updateVis(['x', 'y', 'width', 'height']);
         colorKey.updateCells(['x', 'y', 'width', 'height']);
-        colorKey.positionCells();
-        colorKey.positionLabels();
+        colorKey.positionElements('cells');
+        colorKey.positionElements('labels');
         colorKey.updateVisNTLabels();
-        colorKey.positionTitles();
+        colorKey.positionElements('titles');
         colorKey.change(scalingDim);
-        positionElements(col);
-        positionElements(row);
+        positionElementsForDim(col);
+        positionElementsForDim(row);
 
-        function positionElements(dim) {
+        function positionElementsForDim (dim) {
             dim.labels.position();
             dim.labels.updateVisNT();
             dim.labelsSub.position();
