@@ -1,7 +1,3 @@
-//--------------------------------------------------------------------------------------------------
-//                                      BEGIN HEATMAP FUNCTION
-//--------------------------------------------------------------------------------------------------
-
 function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowClustOrder,
                  height, renderOnBrushEnd, categorical,
                  colCatScheme, colConScheme, colAnnoHeatScheme,
@@ -1168,7 +1164,3 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
     };
   }
 }
-
-//--------------------------------------------------------------------------------------------------
-//                                        END HEATMAP FUNCTION
-//--------------------------------------------------------------------------------------------------
