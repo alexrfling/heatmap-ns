@@ -1,25 +1,34 @@
-function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowClustOrder, height, renderOnBrushEnd, categorical, colCatScheme, colConScheme, colAnnoHeatScheme, rowCatScheme, rowConScheme, rowAnnoHeatScheme, bucketDividers, bucketColors, animDuration, sideColorPad, annoTitlePad, axisPad, fontSize, fontSizeCK, lowColor, midColor, highColor, numColors, parsed) {
+function heatmap(id, datasetFile, options) {
+    options = (options || {});
+
+    var colAnnoFile = options.colAnnoFile;
+    var rowAnnoFile = options.rowAnnoFile;
+    var colClustOrder = options.colClustOrder;
+    var rowClustOrder = options.rowClustOrder;
+    var parsed = options.parsed;
+    var renderOnBrushEnd = options.renderOnBrushEnd;
+    var categorical = options.categorical;
 
     // assign parameters to defaults if not given
-    height = height || 600;
-    colCatScheme = colCatScheme || 'google';
-    colConScheme = colConScheme || 'rainbow';
-    colAnnoHeatScheme = colAnnoHeatScheme || 'plasma';
-    rowCatScheme = rowCatScheme || 'ns';
-    rowConScheme = rowConScheme || 'cubehelix';
-    rowAnnoHeatScheme = rowAnnoHeatScheme || 'magma';
-    bucketDividers = bucketDividers || [25, 50, 100, 500];
-    bucketColors = bucketColors || ['red', 'orange', 'yellow', 'gray', 'cornflowerblue'];
-    animDuration = animDuration || 1200;
-    sideColorPad = sideColorPad || 3;
-    annoTitlePad = annoTitlePad || 7;
-    axisPad = axisPad || 5;
-    fontSize = fontSize || 9;
-    fontSizeCK = fontSizeCK || 11;
-    lowColor = lowColor || 'cornflowerblue';
-    midColor = midColor || 'black';
-    highColor = highColor || 'orange';
-    numColors = numColors || 256;
+    var height = (options.height || 600);
+    var colCatScheme = (options.colCatScheme || 'google');
+    var colConScheme = (options.colConScheme || 'rainbow');
+    var colAnnoHeatScheme = (options.colAnnoHeatScheme || 'plasma');
+    var rowCatScheme = (options.rowCatScheme || 'ns');
+    var rowConScheme = (options.rowConScheme || 'cubehelix');
+    var rowAnnoHeatScheme = (options.rowAnnoHeatScheme || 'magma');
+    var bucketDividers = (options.bucketDividers || [25, 50, 100, 500]);
+    var bucketColors = (options.bucketColors || ['red', 'orange', 'yellow', 'gray', 'cornflowerblue']);
+    var animDuration = (options.animDuration || 1200);
+    var sideColorPad = (options.sideColorPad || 3);
+    var annoTitlePad = (options.annoTitlePad || 7);
+    var axisPad = (options.axisPad || 5);
+    var fontSize = (options.fontSize || 9);
+    var fontSizeCK = (options.fontSizeCK || 11);
+    var lowColor = (options.lowColor || 'cornflowerblue');
+    var midColor = (options.midColor || 'black');
+    var highColor = (options.highColor || 'orange');
+    var numColors = (options.numColors || 256);
 
     // the array of colors used for the heatmap
     var heatmapColors = interpolateColors(lowColor, midColor, highColor, numColors);
