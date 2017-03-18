@@ -1,4 +1,4 @@
-function heatmap(id, datasetFile, options) {
+function heatmap (id, datasetFile, options) {
     options = (options || {});
 
     var colAnnoFile = options.colAnnoFile;
