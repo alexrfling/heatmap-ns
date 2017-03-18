@@ -62,7 +62,7 @@ function heatmap (id, datasetFile, options) {
     if (col.annotated) colorsSetup(col, categorical, colCatScheme, colConScheme, colAnnoHeatScheme);
     if (row.annotated) colorsSetup(row, categorical, rowCatScheme, rowConScheme, rowAnnoHeatScheme);
 
-    function annoSetup(dim, annoFile) {
+    function annoSetup (dim, annoFile) {
         var annosParsed = parseAnnotations(annoFile);
         dim.annotations = annosParsed.annotations;
         dim.labelsAnnotated = annosParsed.labels;
