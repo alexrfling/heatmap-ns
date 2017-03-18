@@ -195,71 +195,46 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // the side colors, heatmap cells, and color key.
   //================================================================================================
 
-  class Tooltip {
-    constructor(title, labels, type, accessor) {
-      this.title = title;
-      this.labels = labels;
-      this.type = type;
-      this.accessor = accessor;
-      this.group = container.append('div').attr('class', 'tooltip').classed('hidden', true);
-      this.titleElement = this.group.append('p').text(title);
-      this.table = this.group.append('table');
-      this.setup(this.labels);
-    }
+  class AnnoTooltip extends Tooltip {
 
-    setup(labels) {
-      this.labels = labels;
-      this.table.selectAll('tr').remove();
-      var rows = this.table.selectAll('tr').data(this.labels).enter().append('tr');
-      rows.append('td').append('p').text(function(d) { return d.text; });
-      rows.append('td').append('p').attr('id', function(d) { return d.id; });
-    }
+      show (d, rect) {
+          var me = this;
+          var box = rect.getBoundingClientRect();
+          var anchor = [window.innerWidth - box.left - window.pageXOffset, box.top + window.pageYOffset];
 
-    show(d, mousedOverRect) {
-      var box = mousedOverRect.getBoundingClientRect(),
-          anchor = this.type === 'anno' ?
-            [window.innerWidth - box.left - window.pageXOffset, box.top + window.pageYOffset]
-            : [box.left + box.width + window.pageXOffset,
-               box.top + box.height + window.pageYOffset];
-      this.group.style(this.type === 'anno' ? 'right' : 'left', anchor[0] + 'px')
-                .style('top', anchor[1] + 'px').classed('hidden', false);
-      if (this.type === 'anno') {
-        this.group.select('#value').text(d);
-      } else {
-        var keys = Object.keys(this.accessor(d));
-        for (var j = 0; j < keys.length; j++)
-          this.group.select('#' + keys[j]).text(this.accessor(d)[keys[j]]);
+          me.group
+              .style('right', anchor[0] + 'px')
+              .style('top', anchor[1] + 'px')
+              .classed('hidden', false);
+          me.group
+              .select('#value')
+              .text(d);
       }
-    }
-
-    hide() {
-      this.group.classed('hidden', true);
-    }
   }
 
-  var cellTooltip = new Tooltip('Cell Info', [{ text: 'Value', id: 'value' },
-                                              { text: 'Row', id: 'row' },
-                                              { text: 'Column', id: 'col' }], 'cell', identity);
-  if (col.annotated) col.tooltip = new Tooltip('Column Info',
+  var cellTooltip = new Tooltip(container, 'Cell Info', [{ text: 'Value', id: 'value' },
+                                                         { text: 'Row', id: 'row' },
+                                                         { text: 'Column', id: 'col' }], identity);
+  if (col.annotated) col.tooltip = new Tooltip(container, 'Column Info',
     Object.keys(col.labelsAnnotated[0].annos).map(function(d) {
       return {
         text: undersToSpaces(d),
         id: d
       };
-    }), 'side', function(d) { return d.annos; });
-  if (row.annotated) row.tooltip = new Tooltip('Row Info',
+    }), function(d) { return d.annos; });
+  if (row.annotated) row.tooltip = new Tooltip(container, 'Row Info',
     Object.keys(row.labelsAnnotated[0].annos).map(function(d) {
       return {
         text: undersToSpaces(d),
         id: d
       };
-    }), 'side', function(d) { return d.annos; });
+    }), function(d) { return d.annos; });
 
   // TODO: fix scroll bar weirdness for Windows (document.body.offsetHeight > window.innerHeight ?)
-  if (col.annotated) col.annoTooltip = new Tooltip('Column Annotation Info',
-    [{ text: undersToSpaces(col.annoBy), id: 'value' }], 'anno', null);
-  if (row.annotated) row.annoTooltip = new Tooltip('Row Annotation Info',
-      [{ text: undersToSpaces(row.annoBy), id: 'value' }], 'anno', null);
+  if (col.annotated) col.annoTooltip = new AnnoTooltip(container, 'Column Annotation Info',
+    [{ text: undersToSpaces(col.annoBy), id: 'value' }], null);
+  if (row.annotated) row.annoTooltip = new AnnoTooltip(container, 'Row Annotation Info',
+      [{ text: undersToSpaces(row.annoBy), id: 'value' }], null);
   var scaleBy, scalingDim, settingsHidden = true,
       settingsPanel              = settingsPanelSetup();
 
