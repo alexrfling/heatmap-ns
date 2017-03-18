@@ -344,7 +344,7 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
         positionElement(this.titles[names[j]].group, this.titleAnchor);
     },
     addTitle: function(name, text) {
-      this.titles[name] = new Title(svg, name + 'CKTitleGroup', name + 'CKTitle', text);
+      this.titles[name] = new Title(svg, name + 'CKTitle', 'annoTitle', text, fontSizeCK);
     },
     addLabels: function(name, labels) {
       this.labels[name] = new Labels(svg, name + 'CKLabels', 'axis', labels,
@@ -540,23 +540,8 @@ function heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowCl
   // These represent the titles on the columns of cells at the right.
   //================================================================================================
 
-  class Title extends GraphicalElement {
-    constructor(svg, id, idText, text) {
-      super(svg, id);
-      this.idText = idText;
-      this.text = text;
-      this.selection = this.group.append('text').attr('class', 'annoTitle').attr('id', this.idText)
-                                    .style('font-size', fontSizeCK).text(this.text);
-    }
-
-    setText(text) {
-      this.text = text;
-      this.selection.text(this.text);
-    }
-  }
-
-  if (col.annotated) col.annoTitle = new Title(svg, 'cTitleGroup', 'cTitle', undersToSpaces(col.annoBy));
-  if (row.annotated) row.annoTitle = new Title(svg, 'rTitleGroup', 'rTitle', undersToSpaces(row.annoBy));
+  if (col.annotated) col.annoTitle = new Title(svg, 'cTitle', 'annoTitle', undersToSpaces(col.annoBy), fontSizeCK);
+  if (row.annotated) row.annoTitle = new Title(svg, 'rTitle', 'annoTitle', undersToSpaces(row.annoBy), fontSizeCK);
   colorKey.addTitle('bucket', 'Buckets');
   colorKey.addTitle('none', 'Linear Gradient');
   colorKey.addTitle('row', 'Row Z-Score');
