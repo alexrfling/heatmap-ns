@@ -304,12 +304,7 @@ function heatmap (id, datasetFile, options) {
         cells: {},
         labels: {},
         titles: {},
-        updateCells: function (attrs) {
-            var names = Object.keys(this.cells);
-            for (var j = 0; j < names.length; j++) {
-                this.cells[names[j]].updateVis(attrs);
-            }
-        },
+
         positionElements: function (type) { // type should be 'cells', 'labels', or 'titles'
             var me = this;
             var elements = me[type];
@@ -319,25 +314,46 @@ function heatmap (id, datasetFile, options) {
                 GraphicalElement.prototype.position.call({ group: elements[names[j]].group, anchor: me.anchors[type] });
             }
         },
-        updateVisNTLabels: function () {
-            var names = Object.keys(this.labels);
+
+        updateCells: function (attrs) {
+            var me = this;
+            var names = Object.keys(me.cells);
+
             for (var j = 0; j < names.length; j++) {
-                this.labels[names[j]].updateVisNT();
+                me.cells[names[j]].updateVis(attrs);
             }
         },
-        addTitle: function (name, text) {
-            this.titles[name] = new Title(container.svg, name + 'CKTitle', 'annoTitle', text, fontSizeCK);
-        },
-        addLabels: function (name, labels) {
-            this.labels[name] = new Labels(container.svg, name + 'CKLabels', 'axis', labels,
-                function () { return marginColorKey; }, this.cells[name].attrs.height, false, fontSize, 'right');
-        },
-        change: function (type) {
-            var names = Object.keys(this.titles);
+
+        updateVisNTLabels: function () {
+            var me = this;
+            var names = Object.keys(me.labels);
+
             for (var j = 0; j < names.length; j++) {
-                this.cells[names[j]].group.classed('hidden', names[j] !== type);
-                this.labels[names[j]].group.classed('hidden', names[j] !== type);
-                this.titles[names[j]].group.classed('hidden', names[j] !== type);
+                me.labels[names[j]].updateVisNT();
+            }
+        },
+
+        addTitle: function (name, text) {
+            var me = this;
+
+            me.titles[name] = new Title(container.svg, name + 'CKTitle', 'annoTitle', text, fontSizeCK);
+        },
+
+        addLabels: function (name, labels) {
+            var me = this;
+
+            me.labels[name] = new Labels(container.svg, name + 'CKLabels', 'axis', labels,
+                function () { return marginColorKey; }, me.cells[name].attrs.height, false, fontSize, 'right');
+        },
+
+        change: function (type) {
+            var me = this;
+            var names = Object.keys(me.titles);
+
+            for (var j = 0; j < names.length; j++) {
+                me.cells[names[j]].group.classed('hidden', names[j] !== type);
+                me.labels[names[j]].group.classed('hidden', names[j] !== type);
+                me.titles[names[j]].group.classed('hidden', names[j] !== type);
             }
         }
     };
@@ -494,7 +510,7 @@ function heatmap (id, datasetFile, options) {
     if (col.annotated) sideAndAnnoColorsSetup(col);
     if (row.annotated) sideAndAnnoColorsSetup(row);
 
-    function sideAndAnnoColorsSetup(dim) {
+    function sideAndAnnoColorsSetup (dim) {
         dim.sideColors = new SideColorsCells(container.svg, dim.self + 'SideColors', null, null,
             dim.self === 'col' ? function (d) { return col.scaleCell(d.key); } : function () { return 0; },
             dim.self === 'row' ? function (d) { return row.scaleCell(d.key); } : function () { return 0; },
@@ -561,7 +577,7 @@ function heatmap (id, datasetFile, options) {
 
     anchorsSetup(width, height);
 
-    function anchorsSetup(w, h) { // w not yet used
+    function anchorsSetup (w, h) { // w not yet used
         cells.anchor = [row.marginSideColor, col.marginSideColor];
         col.labels.anchor = [cells.anchor[0], cells.anchor[1] + row.sizeHeatmap() + axisPad];
         row.labels.anchor = [cells.anchor[0] + col.sizeHeatmap() + axisPad, cells.anchor[1]];
@@ -604,37 +620,47 @@ function heatmap (id, datasetFile, options) {
     class Brush {
 
         constructor (dim, upperLeft, lowerRight) {
-            this.dim = dim;
-            this.brush = this.dim.self === 'col' ? d3.brushX() : d3.brushY();
-            this.upperLeft = upperLeft;
-            this.lowerRight = lowerRight;
-            this.index = this.dim.self === 'col' ? 0 : 1;
-            this.inverter = d3.scaleQuantize().range(this.dim.names);
-            this.brush
+            var me = this;
+
+            me.dim = dim;
+            me.brush = me.dim.self === 'col' ? d3.brushX() : d3.brushY();
+            me.upperLeft = upperLeft;
+            me.lowerRight = lowerRight;
+            me.index = me.dim.self === 'col' ? 0 : 1;
+            me.inverter = d3.scaleQuantize().range(me.dim.names);
+            me.brush
                 .on('brush', function () { brushed(dim); })
                 .on('end', function () { ended(dim); });
-            this.group = container.svg.append('g').attr('class', 'brush');
-            this.callBrush();
-            this.extentsSetup();
+            me.group = container.svg.append('g').attr('class', 'brush');
+            me.callBrush();
+            me.extentsSetup();
         }
 
         brushToScope () {
-            this.group.call(this.brush.move,
-                [this.inverter.invertExtent(this.dim.names[this.dim.currentScope[0]])[0],
-                this.inverter.invertExtent(this.dim.names[this.dim.currentScope[1] - 1])[1] - 1]);
+            var me = this;
+
+            me.group.call(me.brush.move,
+                [me.inverter.invertExtent(me.dim.names[me.dim.currentScope[0]])[0],
+                me.inverter.invertExtent(me.dim.names[me.dim.currentScope[1] - 1])[1] - 1]);
         }
 
         callBrush () {
-            this.group.call(this.brush);
+            var me = this;
+
+            me.group.call(me.brush);
         }
 
         clearBrush () {
-            this.group.call(this.brush.move, null);
+            var me = this;
+
+            me.group.call(me.brush.move, null);
         }
 
         extentsSetup () {
-            this.brush.extent([this.upperLeft(), this.lowerRight()]);
-            this.inverter.domain([this.upperLeft()[this.index], this.lowerRight()[this.index]]);
+            var me = this;
+
+            me.brush.extent([me.upperLeft(), me.lowerRight()]);
+            me.inverter.domain([me.upperLeft()[me.index], me.lowerRight()[me.index]]);
         }
     }
 
@@ -793,9 +819,8 @@ function heatmap (id, datasetFile, options) {
 
     function resize () {
         var size = container.resize(height);
-        w = size.svgWidth; //parent.clientWidth - margin.left - margin.right;
-        h = size.svgHeight; //height - margin.top - margin.bottom;
-        //svgSetup(w, h);
+        w = size.svgWidth;
+        h = size.svgHeight;
         marginsSetup(w, h);
         anchorsSetup(w, h);
         scalesSetup(w, h);
@@ -1032,9 +1057,9 @@ function heatmap (id, datasetFile, options) {
                     updateStats(stats, 'row', dotsToUnders(rowname), value);
                     return {
                         key: j + ' ' + k, // useful for d3 data joins
-                        row: rowname,     // determines cell attributes (position (y), size (height))
+                        row: rowname, // determines cell attributes (position (y), size (height))
                         col: colnames[k], // determines cell attributes (position (x), size (width))
-                        value: value      // determines cell attributes (fill)
+                        value: value // determines cell attributes (fill)
                     };
                 });
             });
@@ -1071,16 +1096,16 @@ function heatmap (id, datasetFile, options) {
             if (stats[dim][name] === undefined) { // if unseen, give it a fresh new stats object
                 // an stdev field will be added to this object during final calculations
                 stats[dim][name] = {
-                    min: value,       // helps to find most negative z-score
-                    max: value,       // helps to find most positive z-score
-                    mean: 0,          // used in calculating standard deviation/z-scores for cell fills
-                    meanOfSquares: 0  // used in calculating standard deviation
+                    min: value, // helps to find most negative z-score
+                    max: value, // helps to find most positive z-score
+                    mean: 0, // used in calculating standard deviation/z-scores for cell fills
+                    meanOfSquares: 0 // used in calculating standard deviation
                 };
             }
             if (value < stats[dim][name].min) stats[dim][name].min = value; // reassign min if necessary
             if (value > stats[dim][name].max) stats[dim][name].max = value; // reassign max if necessary
-            stats[dim][name].mean += value;                   // this will be averaged later
-            stats[dim][name].meanOfSquares += value * value;  // this will be averaged later
+            stats[dim][name].mean += value; // this will be averaged later
+            stats[dim][name].meanOfSquares += value * value; // this will be averaged later
         }
 
         // adds the stdev field to the stats object for the dimension at the given name
@@ -1091,10 +1116,10 @@ function heatmap (id, datasetFile, options) {
         }
 
         return {
-            matrix: matrix,     // array of arrays of objects (cells have value, row, col, key)
+            matrix: matrix, // array of arrays of objects (cells have value, row, col, key)
             rownames: rownames, // arrays of strings (list of all row names, assumed to be clustered)
             colnames: colnames, // arrays of strings (list of all column names, assumed to be clustered)
-            stats: stats        // object with 5 fields: row and col (hashmaps from row/col name to object
+            stats: stats // object with 5 fields: row and col (hashmaps from row/col name to object
           	     // of statistics, zMax stores largest z-score (by magnitude) for both row
                  // and col, and totalMin/totalMax store min and max of the entire dataset
         };
@@ -1154,7 +1179,7 @@ function heatmap (id, datasetFile, options) {
 
         return {
             annotations: annotations, // hashmap string to string[] (annotation types -> values)
-            labels: labels            // array of objects (list of annotated dimension names)
+            labels: labels // array of objects (list of annotated dimension names)
         };
     }
 }
