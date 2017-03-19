@@ -38,8 +38,6 @@ function heatmap (id, datasetFile, options) {
 
     var container = new SVGContainer(id, 'heatmap', '', resize, margin, height);
 
-    container.resize();
-
     var width = container.svgWidth;
     height = container.svgHeight;
 
@@ -331,12 +329,12 @@ function heatmap (id, datasetFile, options) {
             }
         },
 
-        updateVisNTLabels: function () {
+        updateVisLabels: function () {
             var me = this;
             var names = Object.keys(me.labels);
 
             for (var j = 0; j < names.length; j++) {
-                me.labels[names[j]].updateVisNT();
+                me.labels[names[j]].updateVis();
             }
         },
 
@@ -757,7 +755,7 @@ function heatmap (id, datasetFile, options) {
         dim.scaleCell.domain(scopeArray);
         dim.labels.updateNames(scopeArray);
         // visual updates
-        transition ? dim.labels.updateVis(animDuration) : dim.labels.updateVisNT();
+        transition ? dim.labels.updateVis(animDuration) : dim.labels.updateVis();
         updateVisualScope(dim, inScope);
     }
 
@@ -795,7 +793,7 @@ function heatmap (id, datasetFile, options) {
         // visual updates
         dim.annoTitle.setText(undersToSpaces(dim.annoBy));
         dim.annoColors.setup(values); // clear previous rects and add new ones in
-        dim.labelsAnno.updateVisNT();
+        dim.labelsAnno.updateVis();
         dim.sideColors.selection.transition().duration(animDuration).attr('fill', dim.sideColors.attrs.fill);
     }
 
@@ -946,7 +944,7 @@ function heatmap (id, datasetFile, options) {
         colorKey.updateCells(['x', 'y', 'width', 'height']);
         colorKey.positionElements('cells');
         colorKey.positionElements('labels');
-        colorKey.updateVisNTLabels();
+        colorKey.updateVisLabels();
         colorKey.positionElements('titles');
         colorKey.change(scalingDim);
         positionElementsForDim(col);
@@ -954,15 +952,15 @@ function heatmap (id, datasetFile, options) {
 
         function positionElementsForDim (dim) {
             dim.labels.position();
-            dim.labels.updateVisNT();
+            dim.labels.updateVis();
             dim.labelsSub.position();
-            dim.labelsSub.updateVisNT();
+            dim.labelsSub.updateVis();
             dim.cellsSub.position();
             dim.cellsSub.updateVis(['x', 'y', 'width', 'height']);
             dim.brusher.callBrush();
             if (dim.annotated) {
                 dim.labelsAnno.position();
-                dim.labelsAnno.updateVisNT();
+                dim.labelsAnno.updateVis();
                 dim.sideColors.position();
                 dim.sideColors.updateVis(['x', 'y', 'width', 'height']);
                 dim.annoColors.position();
