@@ -213,32 +213,24 @@ function heatmap (id, datasetFile, options) {
     }
 
     var cellTooltip = new Tooltip(container.div, 'Cell Info', [{ text: 'Value', id: 'value' }, { text: 'Row', id: 'row' }, { text: 'Column', id: 'col' }], identity);
-    if (col.annotated) {
-        col.tooltip = new Tooltip(container.div, 'Column Info',
-            Object.keys(col.labelsAnnotated[0].annos).map(function(d) {
-                return {
-                    text: undersToSpaces(d),
-                    id: d
-                };
-            }), function(d) { return d.annos; });
-    }
-    if (row.annotated) {
-        row.tooltip = new Tooltip(container.div, 'Row Info',
-            Object.keys(row.labelsAnnotated[0].annos).map(function(d) {
-                return {
-                    text: undersToSpaces(d),
-                    id: d
-                };
-            }), function(d) { return d.annos; });
+    tooltipSetupForDim(col);
+    tooltipSetupForDim(row);
+
+    function tooltipSetupForDim (dim) {
+        if (dim.annotated) {
+            dim.tooltip = new Tooltip(container.div, dim.title + ' Info',
+                Object.keys(dim.labelsAnnotated[0].annos).map(function (d) {
+                    return {
+                        text: undersToSpaces(d),
+                        id: d
+                    };
+                }), function(d) { return d.annos; });
+
+            // TODO fix scroll bar weirdness for Windows (document.body.offsetHeight > window.innerHeight ?)
+            dim.annoTooltip = new AnnoTooltip(container.div, dim.title + ' Annotation Info', [{ text: undersToSpaces(dim.annoBy), id: 'value' }], null);
+        }
     }
 
-    // TODO: fix scroll bar weirdness for Windows (document.body.offsetHeight > window.innerHeight ?)
-    if (col.annotated) {
-        col.annoTooltip = new AnnoTooltip(container.div, 'Column Annotation Info', [{ text: undersToSpaces(col.annoBy), id: 'value' }], null);
-    }
-    if (row.annotated) {
-        row.annoTooltip = new AnnoTooltip(container.div, 'Row Annotation Info', [{ text: undersToSpaces(row.annoBy), id: 'value' }], null);
-    }
     var scaleBy;
     var scalingDim;
     var settingsHidden = true;
