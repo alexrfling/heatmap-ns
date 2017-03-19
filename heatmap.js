@@ -11,10 +11,10 @@ function heatmap (id, datasetFile, options) {
 
     // assign parameters to defaults if not given
     var height = (options.height || 600);
-    var colCatScheme = (options.colCatScheme || 'google');
+    var colCatScheme = (options.colCatScheme || 'rainbow');
     var colConScheme = (options.colConScheme || 'rainbow');
     var colAnnoHeatScheme = (options.colAnnoHeatScheme || 'plasma');
-    var rowCatScheme = (options.rowCatScheme || 'ns');
+    var rowCatScheme = (options.rowCatScheme || 'google');
     var rowConScheme = (options.rowConScheme || 'cubehelix');
     var rowAnnoHeatScheme = (options.rowAnnoHeatScheme || 'magma');
     var bucketDividers = (options.bucketDividers || [25, 50, 100, 500]);
