@@ -681,21 +681,24 @@ class Heatmap {
 
         class Brush {
 
-            constructor (svg, dim, onBrushed, onEnded, upperLeft, lowerRight) {
+            constructor (svg, dim, brush, onBrushed, onEnded, upperLeft, lowerRight, index) {
                 var me = this;
 
                 me.dim = dim;
+                me.brush = brush;
                 me.onBrushed = onBrushed;
                 me.onEnded = onEnded;
-                me.brush = (me.dim.self === 'col' ? d3.brushX() : d3.brushY());
                 me.upperLeft = upperLeft;
                 me.lowerRight = lowerRight;
-                me.index = (me.dim.self === 'col' ? 0 : 1);
-                me.inverter = d3.scaleQuantize().range(me.dim.names);
+                me.index = index;
+                me.inverter = d3.scaleQuantize()
+                    .range(me.dim.names);
                 me.brush
                     .on('brush', me.onBrushed)
                     .on('end', me.onEnded);
-                me.group = svg.append('g').attr('class', 'brush');
+                me.group = svg
+                    .append('g')
+                    .attr('class', 'brush');
                 me.callBrush();
                 me.extentsSetup();
             }
@@ -731,18 +734,22 @@ class Heatmap {
         col.brusher = new Brush(
             me.container.svg,
             col,
+            d3.brushX(),
             function () { me.brushed(col); },
             function () { me.ended(col); },
             function () { return col.cellsSub.anchor; },
-            function () { return [col.cellsSub.anchor[0] + col.sizeHeatmap(), col.cellsSub.anchor[1] + col.marginBrush]; }
+            function () { return [col.cellsSub.anchor[0] + col.sizeHeatmap(), col.cellsSub.anchor[1] + col.marginBrush]; },
+            0
         );
         row.brusher = new Brush(
             me.container.svg,
             row,
+            d3.brushY(),
             function () { me.brushed(row); },
             function () { me.ended(row); },
             function () { return row.cellsSub.anchor; },
-            function () { return [row.cellsSub.anchor[0] + row.marginBrush, row.cellsSub.anchor[1] + row.sizeHeatmap()]; }
+            function () { return [row.cellsSub.anchor[0] + row.marginBrush, row.cellsSub.anchor[1] + row.sizeHeatmap()]; },
+            1
         );
 
         //----------------------------------------------------------------------
