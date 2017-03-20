@@ -394,33 +394,6 @@ function heatmap (id, datasetFile, options) {
     // cells are relative their group, not to the SVG as a whole.
     //--------------------------------------------------------------------------
 
-    class HeatmapCells extends Cells {
-
-        updateData (data, key) {
-            var me = this;
-            var dim = me.options.dim;
-
-            me.selection = me.group
-                .selectAll('g') // first, we add the rows in (not visible)
-                .data(dataset.matrix) // each 'd' is an array of cells
-                .enter() // selects all the new data (i.e., all of it)
-                .append('g') // the rows have now been added
-                .selectAll('rect') // then, we add the cells in (visible)
-                .data(identity, key) // in the key function, 'd' is now a cell
-                .enter() // from here on, 'd' refers to an individual cell
-                .append('rect'); // the cells have now been added, but still invisible
-
-            if (!dim) {
-                me.selection
-                    .on('mouseover', cellTooltip.show)
-                    .on('mouseout', cellTooltip.hide)
-                    .on('click', function () { toggleSettingsPanel(this, cellTooltip); });
-            }
-
-            me.updateVis(['x', 'y', 'width', 'height', 'fill']); // initialize
-        }
-    }
-
     class SideColorsCells extends Cells {
 
         updateData (data, key) {
@@ -473,7 +446,11 @@ function heatmap (id, datasetFile, options) {
         }
     }
 
-    var cells = new HeatmapCells(container.svg, 'mainCells', null, null,
+    var cells = new Cells(
+        container.svg,
+        'mainCells',
+        dataset.matrix,
+        key,
         function (d) { return col.scaleCell(d.col); },
         function (d) { return row.scaleCell(d.row); },
         function () { return col.scaleCell.bandwidth(); },
@@ -483,23 +460,42 @@ function heatmap (id, datasetFile, options) {
             if (scalingDim === 'bucket') return bucketizer.bucketize(d.value);
             var ref = dataset.stats[scalingDim][dotsToUnders(d[scalingDim])];
             return mainColorScale((d.value - ref.mean) / ref.stdev);
-        },
-        { dim: null });
+        }
+    );
 
-    col.cellsSub = new HeatmapCells(container.svg, 'colCellsSub', null, null,
+    // attach event listeners
+    cells.selection
+        .on('mouseover', cellTooltip.show)
+        .on('mouseout', cellTooltip.hide)
+        .on('click', function () { toggleSettingsPanel(this, cellTooltip); });
+
+    col.cellsSub = new Cells(
+        container.svg,
+        'colCellsSub',
+        dataset.matrix,
+        key,
         cells.attrs.x, // inherit x attribute from cells
         function (d) { return row.scaleCellSub(d.row); },
         cells.attrs.width, // inherit width attribute from cells
         function () { return row.scaleCellSub.bandwidth(); },
-        cells.attrs.fill, // inherit fill attribute from cells
-        { dim: col });
-    row.cellsSub = new HeatmapCells(container.svg, 'rowCellsSub', null, null,
+        cells.attrs.fill // inherit fill attribute from cells
+    );
+    row.cellsSub = new Cells(
+        container.svg,
+        'rowCellsSub',
+        dataset.matrix,
+        key,
         function (d) { return col.scaleCellSub(d.col); },
         cells.attrs.y, // inherit y attribute from cells
         function () { return col.scaleCellSub.bandwidth(); },
         cells.attrs.height, // inherit height attribute from cells
-        cells.attrs.fill, // inherit fill attribute from cells
-        { dim: row });
+        cells.attrs.fill // inherit fill attribute from cells
+    );
+
+    // initialize fills
+    cells.updateVis(['fill']);
+    col.cellsSub.updateVis(['fill']);
+    row.cellsSub.updateVis(['fill']);
 
     colorKey.cells.none = new AnnoColorsCells(container.svg, 'colorKeyCellsNone', null, null,
         function () { return 0; },
@@ -1167,8 +1163,14 @@ function heatmap (id, datasetFile, options) {
             stats[dim][name].stdev = Math.sqrt(stats[dim][name].meanOfSquares - Math.pow(stats[dim][name].mean, 2));
         }
 
+        function flatten (matrix) {
+            return matrix.reduce(function (acc, array) {
+                return acc.concat(array);
+            }, []);
+        }
+
         return {
-            matrix: matrix, // array of arrays of objects (cells have value, row, col, key)
+            matrix: flatten(matrix), // array of arrays of objects (cells have value, row, col, key)
             rownames: rownames, // arrays of strings (list of all row names, assumed to be clustered)
             colnames: colnames, // arrays of strings (list of all column names, assumed to be clustered)
             stats: stats // object with 5 fields: row and col (hashmaps from row/col name to object
