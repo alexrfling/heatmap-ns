@@ -46,7 +46,15 @@ class Heatmap {
         // clear out DOM elements inside parent
         flushContents(me.parentId);
 
-        me.container = new SVGContainer(me.parentId, 'heatmap', '', function () { me.resize.call(me); }, me.SVG_MARGINS, me.initialHeight);
+        // holds all HTML and SVG elements
+        me.container = new SVGContainer(
+            me.parentId,
+            'heatmap',
+            'heatmapSVG',
+            function () { me.resize.call(me); },
+            me.SVG_MARGINS,
+            me.initialHeight
+        );
 
         // the 'dims' will hold all elements relevant to the columns and rows of the
         // data, separately
