@@ -221,23 +221,54 @@ function heatmap (id, datasetFile, options) {
         }
     }
 
-    var cellTooltip = new Tooltip(container.div, 'Cell Info', [{ text: 'Value', id: 'value' }, { text: 'Row', id: 'row' }, { text: 'Column', id: 'col' }], identity);
+    var cellTooltip = d3.tip()
+        .attr('class', 'd3-tip')
+        .direction('e')
+        .offset([0, 10])
+        .html(function (d) {
+            return '<table>' +
+                '<tr><td>Value</td><td>' + d.value + '</td></tr>' +
+                '<tr><td>Row</td><td>' + d.row + '</td></tr>' +
+                '<tr><td>Column</td><td>' + d.col + '</td></tr>' +
+                '</table>';
+        });
+
+    // invoke tooltip
+    container.svg.call(cellTooltip);
     tooltipSetupForDim(col);
     tooltipSetupForDim(row);
 
     function tooltipSetupForDim (dim) {
         if (dim.annotated) {
-            dim.tooltip = new Tooltip(container.div, dim.title + ' Info',
-                Object.keys(dim.labelsAnnotated[0].annos).map(function (d) {
-                    return {
-                        text: undersToSpaces(d),
-                        id: d
-                    };
-                }), function(d) { return d.annos; });
+            dim.tooltip = d3.tip()
+                .attr('class', 'd3-tip')
+                .direction('se')
+                .offset([0, 0])
+                .html(function (d) {
+                    var keys = Object.keys(d.annos);
+                    var labels = keys.map(undersToSpaces);
+                    var html = '<table>';
 
-            // TODO fix scroll bar weirdness for Windows
-            // (document.body.offsetHeight > window.innerHeight ?)
-            dim.annoTooltip = new AnnoTooltip(container.div, dim.title + ' Annotation Info', [{ text: undersToSpaces(dim.annoBy), id: 'value' }], null);
+                    for (var j = 0; j < keys.length; j++) {
+                        html += '<tr><td>' + labels[j] + '</td><td>' + d.annos[keys[j]] + '</td></tr>'
+                    }
+
+                    html += '</table>';
+
+                    return html;
+                });
+            container.svg.call(dim.tooltip);
+
+            dim.annoTooltip = d3.tip()
+                .attr('class', 'd3-tip')
+                .direction('w')
+                .offset([0, -10])
+                .html(function (d) {
+                    return '<table>' +
+                        '<tr><td>' + undersToSpaces(dim.annoBy) + '</td><td>' + d + '</td></tr>' +
+                        '</table>';
+                });
+            container.svg.call(dim.annoTooltip);
         }
     }
 
@@ -396,7 +427,7 @@ function heatmap (id, datasetFile, options) {
 
             if (!dim) {
                 me.selection
-                    .on('mouseover', function (d) { cellTooltip.show(d, this); })
+                    .on('mouseover', function (d) { cellTooltip.show(d); })
                     .on('mouseout', function () { cellTooltip.hide(); })
                     .on('click', function () { toggleSettingsPanel(this, cellTooltip); });
             }
@@ -416,7 +447,7 @@ function heatmap (id, datasetFile, options) {
                 .data(dim.labelsAnnotated, key)
                 .enter()
                 .append('rect')
-                .on('mouseover', function (d) { dim.tooltip.show(d, this); })
+                .on('mouseover', function (d) { dim.tooltip.show(d); })
                 .on('mouseout', function () { dim.tooltip.hide(); })
                 .on('click', function () { toggleSettingsPanel(this, dim.tooltip); });
 
@@ -446,7 +477,7 @@ function heatmap (id, datasetFile, options) {
             		      .data(data, identity)
             			  .enter()
             			  .append('rect')
-            			  .on('mouseover', function (d) { dim.annoTooltip.show(d, this); })
+            			  .on('mouseover', function (d) { dim.annoTooltip.show(d); })
             			  .on('mouseout', function () { dim.annoTooltip.hide(); });
                     me.updateVis(['x', 'y', 'width', 'height', 'fill']);
                 };
@@ -778,7 +809,6 @@ function heatmap (id, datasetFile, options) {
     // given dimension
     function annoUpdate (dim, newAnnotype) {
         dim.annoBy = newAnnotype;
-        dim.annoTooltip.setup([{ text: undersToSpaces(dim.annoBy), id: 'value' }]);
         var values = dim.annotations[dim.annoBy];
         // scale updates
         dim.annoToNum.domain(values);
