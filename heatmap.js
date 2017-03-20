@@ -314,7 +314,7 @@ function heatmap (id, datasetFile, options) {
     }
 
     //--------------------------------------------------------------------------
-    //                                            COLOR KEY
+    //                              COLOR KEY
     // This holds all the elements that make up the color keys for the scaling
     // options (row, col, none, and bucket).
     //--------------------------------------------------------------------------
@@ -394,39 +394,6 @@ function heatmap (id, datasetFile, options) {
     // cells are relative their group, not to the SVG as a whole.
     //--------------------------------------------------------------------------
 
-    class AnnoColorsCells extends Cells {
-
-        updateData (data, key) {
-            var me = this;
-            var dim = me.options.dim;
-
-            if (!dim.self) {
-                me.selection = me.group
-                    .selectAll('rect')
-            		  .data(dim, identity)
-            		  .enter()
-            	      .append('rect');
-            } else {
-                me.setup = function (data) {
-                    me.group
-                        .selectAll('rect')
-                        .remove();
-                    me.selection = me.group
-                        .selectAll('rect')
-            		      .data(data, identity)
-            			  .enter()
-            			  .append('rect')
-            			  .on('mouseover', dim.annoTooltip.show)
-            			  .on('mouseout', dim.annoTooltip.hide);
-                    me.updateVis(['x', 'y', 'width', 'height', 'fill']);
-                };
-                me.setup(dim.annotations[dim.annoBy]); // initialize
-            }
-
-            me.updateVis(['x', 'y', 'width', 'height', 'fill']); // initialize
-        }
-    }
-
     var cells = new Cells(
         container.svg,
         'mainCells',
@@ -443,12 +410,6 @@ function heatmap (id, datasetFile, options) {
             return mainColorScale((d.value - ref.mean) / ref.stdev);
         }
     );
-
-    // attach event listeners
-    cells.selection
-        .on('mouseover', cellTooltip.show)
-        .on('mouseout', cellTooltip.hide)
-        .on('click', function () { toggleSettingsPanel(this, cellTooltip); });
 
     col.cellsSub = new Cells(
         container.svg,
@@ -472,11 +433,6 @@ function heatmap (id, datasetFile, options) {
         cells.attrs.height, // inherit height attribute from cells
         cells.attrs.fill // inherit fill attribute from cells
     );
-
-    // initialize fills
-    cells.updateVis(['fill']);
-    col.cellsSub.updateVis(['fill']);
-    row.cellsSub.updateVis(['fill']);
 
     colorKey.cells.none = new Cells(
         container.svg,
@@ -523,6 +479,16 @@ function heatmap (id, datasetFile, options) {
         identity
     );
 
+    // attach event listeners
+    cells.selection
+        .on('mouseover', cellTooltip.show)
+        .on('mouseout', cellTooltip.hide)
+        .on('click', function () { toggleSettingsPanel(this, cellTooltip); });
+
+    // initialize fills
+    cells.updateVis(['fill']);
+    col.cellsSub.updateVis(['fill']);
+    row.cellsSub.updateVis(['fill']);
     colorKey.cells.none.updateVis(['fill']);
     colorKey.cells.col.updateVis(['fill']);
     colorKey.cells.row.updateVis(['fill']);
@@ -543,22 +509,30 @@ function heatmap (id, datasetFile, options) {
             dim.self === 'row' ? cells.attrs.height : function () { return col.marginSideColor - sideColorPad; },
             function (d) { return dim.numToColor(dim.annoToNum(d.annos[dim.annoBy])); }
         );
+        dim.annoColors = new Cells(
+            container.svg,
+            dim.self + 'AnnoColors',
+            dim.annotations[dim.annoBy],
+            identity,
+            function () { return 0; },
+            function (d) { return dim.scaleAnnoColor(d); },
+            function () { return marginAnnoColor; },
+            function () { return dim.scaleAnnoColor.bandwidth(); },
+            function (d) { return dim.numToColor(dim.annoToNum(d)); }
+        );
 
         // attach event listeners
         dim.sideColors.selection
             .on('mouseover', dim.tooltip.show)
             .on('mouseout', dim.tooltip.hide)
             .on('click', function () { toggleSettingsPanel(this, dim.tooltip); });
+        dim.annoColors.selection
+            .on('mouseover', dim.annoTooltip.show)
+            .on('mouseout', dim.annoTooltip.hide);
 
+        // initialize fills
         dim.sideColors.updateVis(['fill']);
-
-        dim.annoColors = new AnnoColorsCells(container.svg, dim.self + 'AnnoColors', null, null,
-            function () { return 0; },
-            function (d) { return dim.scaleAnnoColor(d); },
-            function () { return marginAnnoColor; },
-            function () { return dim.scaleAnnoColor.bandwidth(); },
-            function (d) { return dim.numToColor(dim.annoToNum(d)); },
-            { dim: dim });
+        dim.annoColors.updateVis(['fill']);
     }
 
     //--------------------------------------------------------------------------
@@ -818,7 +792,8 @@ function heatmap (id, datasetFile, options) {
         dim.labelsAnno.updateNames(values);
         // visual updates
         dim.annoTitle.setText(undersToSpaces(dim.annoBy));
-        dim.annoColors.setup(values); // clear previous rects and add new ones in
+        dim.annoColors.updateData(values, identity);
+        dim.annoColors.updateVis(['x', 'y', 'width', 'height', 'fill']);
         dim.labelsAnno.updateVis();
         dim.sideColors.selection.transition().duration(animDuration).attr('fill', dim.sideColors.attrs.fill);
     }
