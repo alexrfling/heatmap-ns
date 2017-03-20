@@ -478,34 +478,55 @@ function heatmap (id, datasetFile, options) {
     col.cellsSub.updateVis(['fill']);
     row.cellsSub.updateVis(['fill']);
 
-    colorKey.cells.none = new AnnoColorsCells(container.svg, 'colorKeyCellsNone', null, null,
+    colorKey.cells.none = new Cells(
+        container.svg,
+        'colorKeyCellsNone',
+        heatmapColors,
+        identity,
         function () { return 0; },
         function (d) { return scaleGradient(d); },
         function () { return marginAnnoColor; },
         function () { return scaleGradient.bandwidth(); },
+        identity
+    );
+    colorKey.cells.col = new Cells(
+        container.svg,
+        'colorKeyCellsCol',
+        heatmapColors,
         identity,
-        { dim: heatmapColors });
-    colorKey.cells.col = new AnnoColorsCells(container.svg, 'colorKeyCellsCol', null, null,
         function () { return 0; },
         function (d) { return scaleGradient(d); },
         function () { return marginAnnoColor; },
         function () { return scaleGradient.bandwidth(); },
+        identity
+    );
+    colorKey.cells.row = new Cells(
+        container.svg,
+        'colorKeyCellsRow',
+        heatmapColors,
         identity,
-        { dim: heatmapColors }); // same as none
-    colorKey.cells.row = new AnnoColorsCells(container.svg, 'colorKeyCellsRow', null, null,
         function () { return 0; },
         function (d) { return scaleGradient(d); },
         function () { return marginAnnoColor; },
         function () { return scaleGradient.bandwidth(); },
+        identity
+    );
+    colorKey.cells.bucket = new Cells(
+        container.svg,
+        'colorKeyCellsBuckets',
+        bucketColors,
         identity,
-        { dim: heatmapColors }); // same as none
-    colorKey.cells.bucket = new AnnoColorsCells(container.svg, 'colorKeyCellsBuckets', null, null,
         function () { return 0; },
         function (d) { return scaleBucket(d); },
         function () { return marginAnnoColor; },
         function () { return scaleBucket.bandwidth(); },
-        identity,
-        { dim: bucketColors });
+        identity
+    );
+
+    colorKey.cells.none.updateVis(['fill']);
+    colorKey.cells.col.updateVis(['fill']);
+    colorKey.cells.row.updateVis(['fill']);
+    colorKey.cells.bucket.updateVis(['fill']);
 
     if (col.annotated) sideAndAnnoColorsSetup(col);
     if (row.annotated) sideAndAnnoColorsSetup(row);
