@@ -47,7 +47,8 @@
 			bucketColors: ['red', 'orange', 'yellow', 'gray', 'cornflowerblue']
 		};
 
-		heatmap(id = 'heatmap', datasetFile = heatmapString[TEST_SET_INDEX], options);
+		var heatmap = new Heatmap('heatmap', 600);
+		heatmap.initializeVis(heatmapString[TEST_SET_INDEX], options);
 	</script>
 </body>
 </html>
