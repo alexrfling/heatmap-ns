@@ -326,19 +326,26 @@ class Heatmap {
                 }
             },
 
-            addTitle: function (name, text) {
-                // HACK
-                var me2 = this;
+            addTitle: function (svg, name, text, fontSize) {
+                var me = this;
 
-                me2.titles[name] = new Title(me.container.svg, name + 'CKTitle', 'annoTitle', text, me.FONT_SIZE_CK);
+                me.titles[name] = new Title(svg, name + 'CKTitle', 'annoTitle', text, fontSize);
             },
 
-            addLabels: function (name, labels) {
-                // HACK
-                var me2 = this;
+            addLabels: function (svg, name, labels, margin, fontSize) {
+                var me = this;
 
-                me2.labels[name] = new Labels(me.container.svg, name + 'CKLabels', 'axis', labels,
-                    function () { return me.marginColorKey; }, me2.cells[name].attrs.height, false, me.FONT_SIZE, 'right');
+                me.labels[name] = new Labels(
+                    svg,
+                    name + 'CKLabels',
+                    'axis',
+                    labels,
+                    margin,
+                    me.cells[name].attrs.height,
+                    false,
+                    fontSize,
+                    'right'
+                );
             },
 
             change: function (type) {
@@ -602,22 +609,34 @@ class Heatmap {
         }
 
         me.colorKey.addLabels(
+            me.container.svg,
             'bucket',
             me.bucketDividers.concat([me.bucketDividers[me.bucketDividers.length - 1]]).map(function (d, i) {
                 return i < me.bucketDividers.length ? '< ' + d : '>= ' + d;
-            })
+            }),
+            function () { return me.marginColorKey; },
+            me.FONT_SIZE
         );
         me.colorKey.addLabels(
+            me.container.svg,
             'none',
-            [me.dataset.stats.totalMin, (me.dataset.stats.totalMin + me.dataset.stats.totalMax ) / 2, me.dataset.stats.totalMax]
+            [me.dataset.stats.totalMin, (me.dataset.stats.totalMin + me.dataset.stats.totalMax ) / 2, me.dataset.stats.totalMax],
+            function () { return me.marginColorKey; },
+            me.FONT_SIZE
         );
         me.colorKey.addLabels(
+            me.container.svg,
             'row',
-            [-me.dataset.stats.zMax.row.toFixed(2), 0, me.dataset.stats.zMax.row.toFixed(2)]
+            [-me.dataset.stats.zMax.row.toFixed(2), 0, me.dataset.stats.zMax.row.toFixed(2)],
+            function () { return me.marginColorKey; },
+            me.FONT_SIZE
         );
         me.colorKey.addLabels(
+            me.container.svg,
             'col',
-            [-me.dataset.stats.zMax.col.toFixed(2), 0, me.dataset.stats.zMax.col.toFixed(2)]
+            [-me.dataset.stats.zMax.col.toFixed(2), 0, me.dataset.stats.zMax.col.toFixed(2)],
+            function () { return me.marginColorKey; },
+            me.FONT_SIZE
         );
 
         //----------------------------------------------------------------------
@@ -643,10 +662,11 @@ class Heatmap {
                 me.FONT_SIZE_CK
             );
         }
-        me.colorKey.addTitle('bucket', 'Buckets');
-        me.colorKey.addTitle('none', 'Linear Gradient');
-        me.colorKey.addTitle('row', 'Row Z-Score');
-        me.colorKey.addTitle('col', 'Column Z-Score');
+
+        me.colorKey.addTitle(me.container.svg, 'bucket', 'Buckets', me.FONT_SIZE_CK);
+        me.colorKey.addTitle(me.container.svg, 'none', 'Linear Gradient', me.FONT_SIZE_CK);
+        me.colorKey.addTitle(me.container.svg, 'row', 'Row Z-Score', me.FONT_SIZE_CK);
+        me.colorKey.addTitle(me.container.svg, 'col', 'Column Z-Score', me.FONT_SIZE_CK);
 
         //----------------------------------------------------------------------
         //                                  ANCHORS
