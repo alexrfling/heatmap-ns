@@ -17,12 +17,11 @@ class Heatmap {
         var me = this;
         options = (options || {});
 
-        me.datasetFile = datasetFile;
+        me.dataset = me.parseDataset(datasetFile, options.parsed);
         me.colAnnoFile = options.colAnnoFile;
         me.rowAnnoFile = options.rowAnnoFile;
         me.colClustOrder = options.colClustOrder;
         me.rowClustOrder = options.rowClustOrder;
-        me.parsed = options.parsed;
         me.renderOnBrushEnd = options.renderOnBrushEnd;
         me.categorical = options.categorical;
 
@@ -54,9 +53,7 @@ class Heatmap {
         var col = me.col = {};
         var row = me.row = {};
 
-        // parse the files (.csv strings) and assign the data structures to col and
-        // row fields
-        me.dataset = me.parseDataMatrix(me.datasetFile, me.parsed);
+        // assign data structures to col and row fields
         col.stats = me.dataset.stats.col;
         row.stats = me.dataset.stats.row;
         col.clustOrder = (me.colClustOrder || me.dataset.colnames);
@@ -1084,7 +1081,7 @@ class Heatmap {
 
     // parses the given string into the data structures used for generating the
     // heatmap
-    parseDataMatrix (file, parsed) {
+    parseDataset (file, parsed) {
         // TODO fix style...
         if (parsed) {
             var matrix = file.matrix;
