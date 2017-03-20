@@ -201,26 +201,6 @@ function heatmap (id, datasetFile, options) {
     // key.
     //--------------------------------------------------------------------------
 
-    class AnnoTooltip extends Tooltip {
-
-        show (d, rect) {
-            var me = this;
-            var box = rect.getBoundingClientRect();
-            var anchor = [
-                window.innerWidth - box.left - window.pageXOffset,
-                box.top + window.pageYOffset
-            ];
-
-            me.group
-                .style('right', anchor[0] + 'px')
-                .style('top', anchor[1] + 'px')
-                .classed('hidden', false);
-            me.group
-                .select('#value')
-                .text(d);
-        }
-    }
-
     var cellTooltip = d3.tip()
         .attr('class', 'd3-tip')
         .direction('e')
@@ -235,6 +215,7 @@ function heatmap (id, datasetFile, options) {
 
     // invoke tooltip
     container.svg.call(cellTooltip);
+
     tooltipSetupForDim(col);
     tooltipSetupForDim(row);
 
@@ -257,8 +238,6 @@ function heatmap (id, datasetFile, options) {
 
                     return html;
                 });
-            container.svg.call(dim.tooltip);
-
             dim.annoTooltip = d3.tip()
                 .attr('class', 'd3-tip')
                 .direction('w')
@@ -268,6 +247,9 @@ function heatmap (id, datasetFile, options) {
                         '<tr><td>' + undersToSpaces(dim.annoBy) + '</td><td>' + d + '</td></tr>' +
                         '</table>';
                 });
+
+            // invoke tooltips
+            container.svg.call(dim.tooltip);
             container.svg.call(dim.annoTooltip);
         }
     }
@@ -427,8 +409,8 @@ function heatmap (id, datasetFile, options) {
 
             if (!dim) {
                 me.selection
-                    .on('mouseover', function (d) { cellTooltip.show(d); })
-                    .on('mouseout', function () { cellTooltip.hide(); })
+                    .on('mouseover', cellTooltip.show)
+                    .on('mouseout', cellTooltip.hide)
                     .on('click', function () { toggleSettingsPanel(this, cellTooltip); });
             }
 
@@ -447,8 +429,8 @@ function heatmap (id, datasetFile, options) {
                 .data(dim.labelsAnnotated, key)
                 .enter()
                 .append('rect')
-                .on('mouseover', function (d) { dim.tooltip.show(d); })
-                .on('mouseout', function () { dim.tooltip.hide(); })
+                .on('mouseover', dim.tooltip.show)
+                .on('mouseout', dim.tooltip.hide)
                 .on('click', function () { toggleSettingsPanel(this, dim.tooltip); });
 
             me.updateVis(['x', 'y', 'width', 'height', 'fill']); // initialize
@@ -477,8 +459,8 @@ function heatmap (id, datasetFile, options) {
             		      .data(data, identity)
             			  .enter()
             			  .append('rect')
-            			  .on('mouseover', function (d) { dim.annoTooltip.show(d); })
-            			  .on('mouseout', function () { dim.annoTooltip.hide(); });
+            			  .on('mouseover', dim.annoTooltip.show)
+            			  .on('mouseout', dim.annoTooltip.hide);
                     me.updateVis(['x', 'y', 'width', 'height', 'fill']);
                 };
                 me.setup(dim.annotations[dim.annoBy]); // initialize
@@ -956,7 +938,9 @@ function heatmap (id, datasetFile, options) {
     // settingsHidden is true (else shows the settings panel)
     function toggleSettingsPanel (clickedRect, tooltip) {
         settingsHidden = !settingsHidden;
-        if (!settingsHidden) tooltip.hide();
+        if (!settingsHidden) {
+            tooltip.hide();
+        }
         var box = clickedRect.getBoundingClientRect();
         var anchor = [
             box.left + box.width + window.pageXOffset,
