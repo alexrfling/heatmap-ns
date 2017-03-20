@@ -167,12 +167,7 @@ class Heatmap {
         // axis/dimension.
         //--------------------------------------------------------------------------
 
-        /*me.marginAnnoColor;
-        me.marginAnnoLabel;
-        me.marginAnnoTitle;
-        me.marginColorKey;*/
-
-        me.marginsSetup(me.container.svgWidth, me.container.svgHeight); // initialize
+        me.marginsSetup(me.container.svgWidth, me.container.svgHeight);
 
         //--------------------------------------------------------------------------
         //                          TOOLTIPS/SETTINGS PANEL
@@ -234,8 +229,6 @@ class Heatmap {
             }
         }
 
-        //me.scaleBy;
-        //me.scalingDim;
         me.settingsHidden = true;
         me.settingsPanel = me.settingsPanelSetup();
 
