@@ -394,25 +394,6 @@ function heatmap (id, datasetFile, options) {
     // cells are relative their group, not to the SVG as a whole.
     //--------------------------------------------------------------------------
 
-    class SideColorsCells extends Cells {
-
-        updateData (data, key) {
-            var me = this;
-            var dim = me.options.dim;
-
-            me.selection = me.group
-                .selectAll('rect')
-                .data(dim.labelsAnnotated, key)
-                .enter()
-                .append('rect')
-                .on('mouseover', dim.tooltip.show)
-                .on('mouseout', dim.tooltip.hide)
-                .on('click', function () { toggleSettingsPanel(this, dim.tooltip); });
-
-            me.updateVis(['x', 'y', 'width', 'height', 'fill']); // initialize
-        }
-    }
-
     class AnnoColorsCells extends Cells {
 
         updateData (data, key) {
@@ -530,13 +511,26 @@ function heatmap (id, datasetFile, options) {
     if (row.annotated) sideAndAnnoColorsSetup(row);
 
     function sideAndAnnoColorsSetup (dim) {
-        dim.sideColors = new SideColorsCells(container.svg, dim.self + 'SideColors', null, null,
+        dim.sideColors = new Cells(
+            container.svg,
+            dim.self + 'SideColors',
+            dim.labelsAnnotated,
+            key,
             dim.self === 'col' ? function (d) { return col.scaleCell(d.key); } : function () { return 0; },
             dim.self === 'row' ? function (d) { return row.scaleCell(d.key); } : function () { return 0; },
             dim.self === 'col' ? cells.attrs.width : function () { return row.marginSideColor - sideColorPad; },
             dim.self === 'row' ? cells.attrs.height : function () { return col.marginSideColor - sideColorPad; },
-            function (d) { return dim.numToColor(dim.annoToNum(d.annos[dim.annoBy])); },
-            { dim: dim });
+            function (d) { return dim.numToColor(dim.annoToNum(d.annos[dim.annoBy])); }
+        );
+
+        // attach event listeners
+        dim.sideColors.selection
+            .on('mouseover', dim.tooltip.show)
+            .on('mouseout', dim.tooltip.hide)
+            .on('click', function () { toggleSettingsPanel(this, dim.tooltip); });
+
+        dim.sideColors.updateVis(['fill']);
+
         dim.annoColors = new AnnoColorsCells(container.svg, dim.self + 'AnnoColors', null, null,
             function () { return 0; },
             function (d) { return dim.scaleAnnoColor(d); },
