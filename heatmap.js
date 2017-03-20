@@ -75,17 +75,17 @@ class Heatmap {
             }
         }
 
-        //--------------------------------------------------------------------------
+        //----------------------------------------------------------------------
         //                              REFERENCES BY DIM
         //
-        // Note that the row and col objects are mirror images of each other; every
-        // field that col has, row also has, and vice-versa. They could be made into
-        // objects of the same new class, but its much easier to just build them as
-        // we go along and think of them more as growing lists containing everything
-        // that's relevant to their respective dimension.
+        // Note that the row and col objects are mirror images of each other;
+        // every field that col has, row also has, and vice-versa. They could be
+        // made into objects of the same new class, but its much easier to just
+        // build them as we go along and think of them more as growing lists
+        // containing everything that's relevant to their respective dimension.
         //
-        // For example, when we zoom and pan using the brush for the columns, the
-        // only things that need to get visually updated are:
+        // For example, when we zoom and pan using the brush for the columns,
+        // the only things that need to get visually updated are:
         //		* column labels
         //		* x-coordinates of the heatmap cells
         //		* widths of the heatmap cells
@@ -98,17 +98,17 @@ class Heatmap {
         //		* heights of the heatmap cells
         //		* y-coordinates of the row side colors
         //		* heights of the row side colors
-        // Grouping these another way, we see that there are different 'types' of
-        // things that get updated:
+        // Grouping these another way, we see that there are different 'types'
+        // of things that get updated:
         //		* labels (column, row)
         //		* coordinates (x, y)
         //		* lengths (width, height)
         //		* side colors (column, row)
         //		* heatmap cells
-        // For each of these types, col and row should store a reference (with the
-        // same name) to the value of that type that is relevant to them (note that
-        // we update the heatmap cells regardless, so we can just store this as a
-        // global variable):
+        // For each of these types, col and row should store a reference (with
+        // the same name) to the value of that type that is relevant to them
+        // (note that we update the heatmap cells regardless, so we can just
+        // store this as a global variable):
         //		* col.labels = column labels
         //			row.labels = row labels
         //		* col.coordinate = x
@@ -117,17 +117,18 @@ class Heatmap {
         //			row.length = height
         //		* col.sideColors = column side colors
         //			row.sideColors = row side colors
-        // We can thus create a function which handles the event where either dim
-        // has been zoomed/panned, needing only parameter, the dim, whose 'labels',
-        // 'coordinate', 'length', and 'sideColors' fields will be used (along with
-        // the global reference to the heatmap cells) to determine the visual
-        // updates. NOTE the function that actually does this modifies more
-        // variables than just those listed here, and additionally the actual field
-        // names may be different than they are here.
+        // We can thus create a function which handles the event where either
+        // dim has been zoomed/panned, needing only parameter, the dim, whose
+        // 'labels', 'coordinate', 'length', and 'sideColors' fields will be
+        // used (along with the global reference to the heatmap cells) to
+        // determine the visual updates. NOTE the function that actually does
+        // this modifies more variables than just those listed here, and
+        // additionally the actual field names may be different than they are
+        // here.
         //
         // And that's the concept behind the 'dim'.
         //
-        //--------------------------------------------------------------------------
+        //----------------------------------------------------------------------
 
         // set the current scope for each dimension (these get modified by
         // interactivity functions)
@@ -155,20 +156,20 @@ class Heatmap {
             dim.annoBy = dim.annotypes[0];
         }
 
-        //--------------------------------------------------------------------------
+        //----------------------------------------------------------------------
         //                                  MARGINS
         // A margin describes a visual element's length in pixels along one
         // axis/dimension.
-        //--------------------------------------------------------------------------
+        //----------------------------------------------------------------------
 
         me.marginsSetup();
 
-        //--------------------------------------------------------------------------
+        //----------------------------------------------------------------------
         //                          TOOLTIPS/SETTINGS PANEL
         // Tooltips provide information for rows, columns, matrix data, and
-        // annotations when hovering over the side colors, heatmap cells, and color
-        // key.
-        //--------------------------------------------------------------------------
+        // annotations when hovering over the side colors, heatmap cells, and
+        // color key.
+        //----------------------------------------------------------------------
 
         me.cellTooltip = d3.tip()
             .attr('class', 'd3-tip')
@@ -226,13 +227,13 @@ class Heatmap {
         me.settingsHidden = true;
         me.settingsPanel = me.settingsPanelSetup();
 
-        //--------------------------------------------------------------------------
+        //----------------------------------------------------------------------
         //                                  SCALES
-        // Scales are very useful for determining where visual elements should be
-        // placed relative to each other. For example, to determine the sizes and
-        // positions of the cells that make up the heatmap, a scale can map an array
-        // of row or column names to a continuous range of pixels.
-        //--------------------------------------------------------------------------
+        // Scales are very useful for determining where visual elements should
+        // be placed relative to each other. For example, to determine the sizes
+        // and positions of the cells that make up the heatmap, a scale can map
+        // an array of row or column names to a continuous range of pixels.
+        //----------------------------------------------------------------------
 
         // scales for determining cell color
         me.mainColorScale = d3.scaleQuantize()
@@ -266,11 +267,11 @@ class Heatmap {
 
         me.scalesSetup();
 
-        //--------------------------------------------------------------------------
+        //----------------------------------------------------------------------
         //                              COLOR KEY
-        // This holds all the elements that make up the color keys for the scaling
-        // options (row, col, none, and bucket).
-        //--------------------------------------------------------------------------
+        // This holds all the elements that make up the color keys for the
+        // scaling options (row, col, none, and bucket).
+        //----------------------------------------------------------------------
 
         me.colorKey = {
             anchors: {},
@@ -334,20 +335,20 @@ class Heatmap {
             }
         };
 
-        //--------------------------------------------------------------------------
+        //----------------------------------------------------------------------
         //                                  CELLS
-        // These represent groupings of colorful rectangles (row side colors, color
-        // keys, heatmap itself).
+        // These represent groupings of colorful rectangles (row side colors,
+        // color keys, heatmap itself).
         //
-        // In combination with the axes, these make up all the SVG elements. With
-        // the exception of the annotation titles and axes, every visual component
-        // can be decomposed into 2 parts:
+        // In combination with the axes, these make up all the SVG elements.
+        // With the exception of the annotation titles and axes, every visual
+        // component can be decomposed into 2 parts:
         //		* group - a g element which gets positioned at an anchor point
         //		* cells - rect elements which live inside the group
-        // When a group is tranlated to a new position, all the elements inside of
-        // it move as well, and this makes it so that the coordinates (x and y) of
-        // cells are relative their group, not to the SVG as a whole.
-        //--------------------------------------------------------------------------
+        // When a group is tranlated to a new position, all the elements inside
+        // of it move as well, and this makes it so that the coordinates (x and
+        // y) of cells are relative their group, not to the SVG as a whole.
+        //----------------------------------------------------------------------
 
         me.cells = new Cells(
             me.container.svg,
@@ -490,7 +491,7 @@ class Heatmap {
             dim.annoColors.updateVis(['fill']);
         }
 
-        //--------------------------------------------------------------------------
+        //----------------------------------------------------------------------
         //                                  LABELS
         // These make up all the tickmark-prefaced pieces of text next to cells.
         //
@@ -499,12 +500,12 @@ class Heatmap {
         //		* scale - a d3.scalePoint object whose domain is the labels and
         //                  range is the pixel
         //                  coordinate extent in which to display them
-        //		* axis component - a d3.axis object determining the axis orientation
-        //                          (top/bottom/left/right)
+        //		* axis component - a d3.axis object determining the axis
+        //                          orientation (top/bottom/left/right)
         //		* SVG element - a g element which makes the axis visible
-        // When an axis is to be visually updated, first update its scale, then call
-        // its axis component on its SVG element.
-        //--------------------------------------------------------------------------
+        // When an axis is to be visually updated, first update its scale, then
+        // call its axis component on its SVG element.
+        //----------------------------------------------------------------------
 
         row.labels = new Labels(me.container.svg, 'rLabs', 'axis', row.names, row.sizeHeatmap, me.cells.attrs.height, false, me.FONT_SIZE, 'right');
         col.labels = new Labels(me.container.svg, 'cLabs', 'axis', col.names, col.sizeHeatmap, me.cells.attrs.width, true, me.FONT_SIZE, 'bottom');
@@ -519,10 +520,10 @@ class Heatmap {
         me.colorKey.addLabels('row', [-me.dataset.stats.zMax.row.toFixed(2), 0, me.dataset.stats.zMax.row.toFixed(2)]);
         me.colorKey.addLabels('col', [-me.dataset.stats.zMax.col.toFixed(2), 0, me.dataset.stats.zMax.col.toFixed(2)]);
 
-        //--------------------------------------------------------------------------
+        //----------------------------------------------------------------------
         //                                  TITLES
         // These represent the titles on the columns of cells at the right.
-        //--------------------------------------------------------------------------
+        //----------------------------------------------------------------------
 
         if (col.annotated) col.annoTitle = new Title(me.container.svg, 'cTitle', 'annoTitle', undersToSpaces(col.annoBy), me.FONT_SIZE_CK);
         if (row.annotated) row.annoTitle = new Title(me.container.svg, 'rTitle', 'annoTitle', undersToSpaces(row.annoBy), me.FONT_SIZE_CK);
@@ -531,36 +532,36 @@ class Heatmap {
         me.colorKey.addTitle('row', 'Row Z-Score');
         me.colorKey.addTitle('col', 'Column Z-Score');
 
-        //--------------------------------------------------------------------------
+        //----------------------------------------------------------------------
         //                                  ANCHORS
-        // An anchor is a 2-element array describing the pixel coordinates (relative
-        // to the SVG, not the webpage as a whole) of the upper-left corner of a
-        // visual element. Using the 'transform' attribute of SVG elements, we can
-        // position each group of visual elements (for example, all the cells of the
-        // heatmap) by simply translating it to the right by its anchor at index 0,
-        // and down by its anchor at index 1. Anchors are determined by the margins.
-        //--------------------------------------------------------------------------
+        // An anchor is a 2-element array describing the pixel coordinates
+        // (relative to the SVG, not the webpage as a whole) of the upper-left
+        // corner of a visual element. Using the 'transform' attribute of SVG
+        // elements, we can position each group of visual elements (for example,
+        // all the cells of the heatmap) by simply translating it to the right
+        // by its anchor at index 0, and down by its anchor at index 1. Anchors
+        // are determined by the margins.
+        //----------------------------------------------------------------------
 
         me.anchorsSetup();
 
-        //--------------------------------------------------------------------------
+        //----------------------------------------------------------------------
         //                                  BRUSHES
         // The brushes provide a way to zoom and pan on the main heatmap by
-        // selecting regions on brushable heatmaps, and they are made up of 2 parts:
+        // selecting regions on brushable heatmaps, and they are made up of 2
+        // parts:
         //		* brush component - a d3.brush object (brushX of col, brushY for
-        //                          row) which defines important properties of the
-        //                          brush, namely its extent (the maximum pixel area
-        //                          that the user can brush) and its interactive
-        //                          behavior (what to do when the user starts/stops
-        //                          brushing, or while they are brushing)
+        //          row) which defines important properties of the brush, namely
+        //          its extent (the maximum pixel area that the user can brush)
+        //          and its interactive behavior (what to do when the user
+        //          starts/stops brushing, or while they are brushing)
         //		* SVG element - a g element which makes the brush visible and
-        //                      usable. By default, it contains 4 rect elements; an
-        //                      overlay which lets you create a selection, a
-        //                      selection which is draggable, and 2 'handles' on
-        //                      either side of the selection which allow it to be
-        //                      resized. The attributes of these elements can be
-        //                      programmatically controlled with CSS and JS
-        //--------------------------------------------------------------------------
+        //          usable. By default, it contains 4 rect elements; an overlay
+        //          which lets you create a selection, a selection which is
+        //          draggable, and 2 'handles' on either side of the selection
+        //          which allow it to be resized. The attributes of these
+        //          elements can be programmatically controlled with CSS and JS
+        //----------------------------------------------------------------------
 
         class Brush {
 
@@ -622,10 +623,10 @@ class Heatmap {
             function () { return row.cellsSub.anchor; },
             function () { return [row.cellsSub.anchor[0] + row.marginBrush, row.cellsSub.anchor[1] + row.sizeHeatmap()]; });
 
-        //--------------------------------------------------------------------------
+        //----------------------------------------------------------------------
         //                              INITIALIZATION
-        // One final call to resize completes the initial rendering of the widget.
-        //--------------------------------------------------------------------------
+        // One final resize completes the initial rendering of the widget.
+        //----------------------------------------------------------------------
 
         me.resize();
     }
