@@ -655,10 +655,13 @@ class Heatmap {
     brushed (dim) {
         var me = this;
 
-        me.settingsPanel.classed('hidden', true); // hide the settings panel in case it's visible
+        // hide the settings panel in case it's visible
+        me.settingsPanel.classed('hidden', true);
         me.settingsHidden = true;
+
         if (!me.renderOnBrushEnd) {
-            var inverses = d3.event.selection.map(dim.brusher.inverter); // bounds of brushed -> row/column
+            // bounds of brushed -> row/column
+            var inverses = d3.event.selection.map(dim.brusher.inverter);
             dim.currentScope = [dim.names.indexOf(inverses[0]), dim.names.indexOf(inverses[1]) + 1];
             me.renderScope(dim, false);
         }
@@ -671,22 +674,32 @@ class Heatmap {
         var me = this;
 
         if (d3.event.selection) {
+
             if (me.renderOnBrushEnd) {
-                var inverses = d3.event.selection.map(dim.brusher.inverter); // pixel bounds -> row/column
+                // pixel bounds -> row/column
+                var inverses = d3.event.selection.map(dim.brusher.inverter);
                 dim.currentScope = [dim.names.indexOf(inverses[0]), dim.names.indexOf(inverses[1]) + 1];
                 me.renderScope(dim, true);
             }
         } else {
-            me.settingsPanel.classed('hidden', true); // hide the settings panel in case it's visible
+
+            // hide the settings panel in case it's visible
+            me.settingsPanel.classed('hidden', true);
             me.settingsHidden = true;
+
+            // reset scope
           	dim.currentScope = [0, dim.names.length];
+
             // scale updates
             dim.scaleCell.domain(dim.names);
             dim.labels.updateNames(dim.names);
+
             // visual updates
             dim.labels.updateVis(me.animDuration);
             me.cells.updateVis([dim.pos, dim.size]);
-            if (dim.annotated) dim.sideColors.updateVis([dim.pos, dim.size]);
+            if (dim.annotated) {
+                dim.sideColors.updateVis([dim.pos, dim.size]);
+            }
         }
     }
 
@@ -697,14 +710,23 @@ class Heatmap {
         var me = this;
         var scopeArray = dim.names.slice(dim.currentScope[0], dim.currentScope[1]);
         var inScope = {};
+
         for (var j = 0; j < scopeArray.length; j++) {
-            inScope[scopeArray[j]] = true; // undefined is falsy
+            // NOTE undefined is falsy
+            inScope[scopeArray[j]] = true;
         }
+
         // scale updates
         dim.scaleCell.domain(scopeArray);
         dim.labels.updateNames(scopeArray);
+
         // visual updates
-        transition ? dim.labels.updateVis(me.animDuration) : dim.labels.updateVis();
+        // TODO make 'transition' a numerical parameter
+        if (transition) {
+            dim.labels.updateVis(me.animDuration);
+        } else {
+            dim.labels.updateVis();
+        }
         me.updateVisualScope(dim, inScope);
     }
 
@@ -731,9 +753,12 @@ class Heatmap {
         var me = this;
         dim.annoBy = newAnnotype;
         var values = dim.annotations[dim.annoBy];
+
         // scale updates
         dim.annoToNum.domain(values);
-        if (me.categorical) dim.annoToNum.range(d3.range(values.length));
+        if (me.categorical) {
+            dim.annoToNum.range(d3.range(values.length));
+        }
         if (values.every(function (value) { return !isNaN(value); }) && values.length > 2) {
             dim.numToColor = (me.categorical ? function (index) { return dim.annoHeat(index / values.length); } : dim.annoHeat);
         } else {
@@ -741,36 +766,49 @@ class Heatmap {
         }
         dim.scaleAnnoColor.domain(values);
         dim.labelsAnno.updateNames(values);
+
         // visual updates
         dim.annoTitle.setText(undersToSpaces(dim.annoBy));
         dim.annoColors.updateData(values, identity);
         dim.annoColors.updateVis(['x', 'y', 'width', 'height', 'fill']);
         dim.labelsAnno.updateVis();
-        dim.sideColors.selection.transition().duration(me.animDuration).attr('fill', dim.sideColors.attrs.fill);
+        dim.sideColors.selection
+            .transition()
+            .duration(me.animDuration)
+            .attr('fill', dim.sideColors.attrs.fill);
     }
 
     // sorts the rows/columns (depending on dim) of the 3 heatmaps according to
     // the currently selected sorting option for the given dimension
     sortUpdate (dim, annotype) {
         var me = this;
-        if (annotype != 'Clustered Order') { // sort the rows/columns by the chosen annotype
+
+        // sort the rows/columns by the chosen annotype
+        if (annotype !== 'Clustered Order') {
             var values = dim.annotations[annotype];
-            var valueToIndex = {}; // hashmap to determine priority for sorting
+
+            // hashmap to determine priority for sorting
+            var valueToIndex = {};
+
             for (var j = 0; j < values.length; j++) {
                 valueToIndex[values[j]] = j;
             }
+
             dim.labelsAnnotated.sort(function (a, b) {
                 var val1 = valueToIndex[a.annos[annotype]];
                 var val2 = valueToIndex[b.annos[annotype]];
                 return (val1 === val2 ? a.key.localeCompare(b.key) : val1 - val2);
             });
         }
+
         dim.names = (annotype === 'Clustered Order' ? dim.clustOrder : dim.labelsAnnotated.map(key));
+
         // update scales
         dim.scaleCell.domain(dim.names);
         dim.scaleCellSub.domain(dim.names);
         dim.brusher.inverter.range(dim.names);
         dim.labelsSub.updateNames(dim.names);
+
         // visual updates for the brushable heatmaps
         dim.labelsSub.updateVis(me.animDuration);
         dim.cellsSub.updateVis([dim.pos]);
@@ -783,10 +821,14 @@ class Heatmap {
     updateColorScaling (newScalingDim) {
         var me = this;
         me.scalingDim = newScalingDim;
-        if (me.scalingDim != 'bucket') {
+
+        // scale update
+        if (me.scalingDim !== 'bucket') {
             me.mainColorScale.domain(me.scalingDim === 'none' ? [me.dataset.stats.totalMin, me.dataset.stats.totalMax]
                 : [-me.dataset.stats.zMax[me.scalingDim], me.dataset.stats.zMax[me.scalingDim]]);
         }
+
+        // visual updates
         me.colorKey.change(me.scalingDim);
         me.cells.updateVis(['fill']);
         me.col.cellsSub.updateVis(['fill']);
@@ -810,6 +852,7 @@ class Heatmap {
         col.marginBrush = Math.floor(me.container.svgHeight / 10);
         row.marginBrush = Math.floor(me.container.svgHeight / 10);
         me.marginColorKey = Math.floor(me.container.svgHeight / 4) - me.marginAnnoTitle;
+
         sideAndAnnoMarginsSetup(col);
         sideAndAnnoMarginsSetup(row);
 
@@ -826,6 +869,7 @@ class Heatmap {
             var rM2 = (row.annoTitle ? row.annoTitle.getBox().width - me.marginAnnoColor + me.AXIS_PAD : 0);
             var ck1 = (me.colorKey ? me.colorKey.labels[me.scalingDim].getBox().width + 2 * me.AXIS_PAD : 0);
             var ck2 = (me.colorKey ? me.colorKey.titles[me.scalingDim].getBox().width - me.marginAnnoColor + me.AXIS_PAD : 0);
+
             return Math.max(cM1, rM1, cM2, rM2, ck1, ck2);
         }
     }
@@ -844,6 +888,7 @@ class Heatmap {
         row.cellsSub.anchor = [row.labels.anchor[0] + row.marginLabel, cells.anchor[1]];
         col.labelsSub.anchor = [cells.anchor[0], col.cellsSub.anchor[1] + col.marginBrush + me.AXIS_PAD];
         row.labelsSub.anchor = [row.cellsSub.anchor[0] + row.marginBrush + me.AXIS_PAD, cells.anchor[1]];
+
         if (col.annotated) {
             col.sideColors.anchor = [cells.anchor[0], 0];
             col.annoColors.anchor = [row.labelsSub.anchor[0] + row.marginLabelSub, me.marginAnnoTitle];
@@ -856,6 +901,7 @@ class Heatmap {
             row.annoTitle.anchor = [row.annoColors.anchor[0], row.annoColors.anchor[1] - me.ANNO_TITLE_PAD];
             row.labelsAnno.anchor = [row.annoColors.anchor[0] + me.marginAnnoColor + me.AXIS_PAD, row.annoColors.anchor[1]];
         }
+
         colorKey.anchors.cells = [row.labelsSub.anchor[0] + row.marginLabelSub, col.marginAnnoTotal + row.marginAnnoTotal + me.marginAnnoTitle];
         colorKey.anchors.labels = [colorKey.anchors.cells[0] + me.marginAnnoColor + me.AXIS_PAD, colorKey.anchors.cells[1]];
         colorKey.anchors.titles = [colorKey.anchors.cells[0], colorKey.anchors.cells[1] - me.ANNO_TITLE_PAD];
@@ -870,8 +916,14 @@ class Heatmap {
         row.scaleCell.domain(row.names).range([0, row.sizeHeatmap()]);
         col.scaleCellSub.domain(col.names).range([0, row.marginBrush]);
         row.scaleCellSub.domain(row.names).range([0, col.marginBrush]);
-        if (col.annotated) col.scaleAnnoColor.range([0, col.marginAnnoHeight]);
-        if (row.annotated) row.scaleAnnoColor.range([0, row.marginAnnoHeight]);
+
+        if (col.annotated) {
+            col.scaleAnnoColor.range([0, col.marginAnnoHeight]);
+        }
+        if (row.annotated) {
+            row.scaleAnnoColor.range([0, row.marginAnnoHeight]);
+        }
+
         me.scaleBucket.range([0, me.marginColorKey]);
         me.scaleGradient.range([0, me.marginColorKey]);
     }
@@ -885,13 +937,20 @@ class Heatmap {
         me.marginsSetup();
         me.anchorsSetup();
         me.scalesSetup();
+        // TODO position elements before extents setup?
         col.brusher.extentsSetup();
         row.brusher.extentsSetup();
         me.positionAllElements();
-        col.currentScope[0] != 0 || col.currentScope[1] != col.names.length ? col.brusher.brushToScope()
-            : col.brusher.clearBrush();
-        row.currentScope[0] != 0 || row.currentScope[1] != row.names.length ? row.brusher.brushToScope()
-            : row.brusher.clearBrush();
+        resizeBrush(col);
+        resizeBrush(row);
+
+        function resizeBrush (dim) {
+            if (dim.currentScope[0] !== 0 || dim.currentScope[1] !== dim.names.length) {
+                dim.brusher.brushToScope();
+            } else {
+                dim.brusher.clearBrush();
+            }
+        }
     }
 
     //--------------------------------------------------------------------------
@@ -900,6 +959,7 @@ class Heatmap {
     // elements in the heatmap.
     //--------------------------------------------------------------------------
 
+    // TODO clean this up, hopefully by converting to d3-tip
     settingsPanelSetup () {
         var me = this;
         var col = me.col;
@@ -998,6 +1058,7 @@ class Heatmap {
         me.colorKey.updateVisLabels();
         me.colorKey.positionElements('titles');
         me.colorKey.change(me.scalingDim);
+
         positionElementsForDim(me.col);
         positionElementsForDim(me.row);
 
@@ -1009,6 +1070,7 @@ class Heatmap {
             dim.cellsSub.position();
             dim.cellsSub.updateVis(['x', 'y', 'width', 'height']);
             dim.brusher.callBrush();
+
             if (dim.annotated) {
                 dim.labelsAnno.position();
                 dim.labelsAnno.updateVis();
