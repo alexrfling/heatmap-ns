@@ -167,7 +167,7 @@ class Heatmap {
         // axis/dimension.
         //--------------------------------------------------------------------------
 
-        me.marginsSetup(me.container.svgWidth, me.container.svgHeight);
+        me.marginsSetup();
 
         //--------------------------------------------------------------------------
         //                          TOOLTIPS/SETTINGS PANEL
@@ -270,7 +270,7 @@ class Heatmap {
         me.scaleBucket = d3.scaleBand().domain(me.bucketColors);
         me.scaleGradient = d3.scaleBand().domain(me.heatmapColors);
 
-        me.scalesSetup(me.container.svgWidth, me.container.svgHeight); // initialize
+        me.scalesSetup();
 
         //--------------------------------------------------------------------------
         //                              COLOR KEY
@@ -547,7 +547,7 @@ class Heatmap {
         // and down by its anchor at index 1. Anchors are determined by the margins.
         //--------------------------------------------------------------------------
 
-        me.anchorsSetup(me.container.svgWidth, me.container.svgHeight);
+        me.anchorsSetup();
 
         //--------------------------------------------------------------------------
         //                                  BRUSHES
@@ -793,29 +793,29 @@ class Heatmap {
         me.row.cellsSub.updateVis(['fill']);
     }
 
-    marginsSetup (w, h) {
+    marginsSetup () {
         var me = this;
         var col = me.col;
         var row = me.row;
 
-        me.marginAnnoColor = Math.floor(w / 50);
-        me.marginAnnoLabel = Math.min(Math.floor(w / 4), Math.floor(annoMax() + me.AXIS_PAD));
+        me.marginAnnoColor = Math.floor(me.container.svgWidth / 50);
+        me.marginAnnoLabel = Math.min(Math.floor(me.container.svgWidth / 4), Math.floor(annoMax() + me.AXIS_PAD));
         me.marginAnnoTitle = me.FONT_SIZE_CK + 2 * me.ANNO_TITLE_PAD;
-        col.marginTotal = h;
-        row.marginTotal = w;
+        col.marginTotal = me.container.svgHeight;
+        row.marginTotal = me.container.svgWidth;
         col.marginLabel = (col.labels ? Math.ceil(col.labels.getBox().height + 2 * me.AXIS_PAD) : 0);
         row.marginLabel = (row.labels ? Math.ceil(row.labels.getBox().width + 2 * me.AXIS_PAD) : 0);
         col.marginLabelSub = (col.labelsSub ? Math.ceil(col.labelsSub.getBox().height + 2 * me.AXIS_PAD) : 0);
         row.marginLabelSub = (row.labelsSub ? Math.ceil(row.labelsSub.getBox().width + 2 * me.AXIS_PAD) : 0);
-        col.marginBrush = Math.floor(h / 10);
-        row.marginBrush = Math.floor(h / 10);
-        me.marginColorKey = Math.floor(h / 4) - me.marginAnnoTitle;
+        col.marginBrush = Math.floor(me.container.svgHeight / 10);
+        row.marginBrush = Math.floor(me.container.svgHeight / 10);
+        me.marginColorKey = Math.floor(me.container.svgHeight / 4) - me.marginAnnoTitle;
         sideAndAnnoMarginsSetup(col);
         sideAndAnnoMarginsSetup(row);
 
         function sideAndAnnoMarginsSetup (dim) {
-            dim.marginSideColor = (dim.annotated ? Math.floor(h / 40) : 0);
-            dim.marginAnnoTotal = (dim.annotated ? Math.floor(3 * h / 8) : 0);
+            dim.marginSideColor = (dim.annotated ? Math.floor(me.container.svgHeight / 40) : 0);
+            dim.marginAnnoTotal = (dim.annotated ? Math.floor(3 * me.container.svgHeight / 8) : 0);
             dim.marginAnnoHeight = (dim.annotated ? dim.marginAnnoTotal - me.marginAnnoTitle : 0);
         }
 
@@ -830,7 +830,7 @@ class Heatmap {
         }
     }
 
-    anchorsSetup (w, h) { // w not yet used
+    anchorsSetup () {
         var me = this;
         var cells = me.cells;
         var col = me.col;
@@ -861,7 +861,7 @@ class Heatmap {
         colorKey.anchors.titles = [colorKey.anchors.cells[0], colorKey.anchors.cells[1] - me.ANNO_TITLE_PAD];
     }
 
-    scalesSetup (width, height) {
+    scalesSetup () {
         var me = this;
         var col = me.col;
         var row = me.row;
@@ -880,12 +880,11 @@ class Heatmap {
         var me = this;
         var col = me.col;
         var row = me.row;
-        var size = me.container.resize(me.initialHeight);
-        var w = size.svgWidth;
-        var h = size.svgHeight;
-        me.marginsSetup(w, h);
-        me.anchorsSetup(w, h);
-        me.scalesSetup(w, h);
+
+        me.container.resize(me.initialHeight);
+        me.marginsSetup();
+        me.anchorsSetup();
+        me.scalesSetup();
         col.brusher.extentsSetup();
         row.brusher.extentsSetup();
         me.positionAllElements();
