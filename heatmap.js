@@ -67,12 +67,14 @@ class Heatmap {
         annoSetup(row, options.rowAnnoFile);
 
         function annoSetup (dim, annoFile) {
-            if (dim.annotated) {
-                var annosParsed = me.parseAnnotations(annoFile);
-                dim.annotations = annosParsed.annotations;
-                dim.labelsAnnotated = annosParsed.labels;
-                me.colorsSetup(dim);
+            if (!dim.annotated) {
+                return;
             }
+
+            var annosParsed = me.parseAnnotations(annoFile);
+            dim.annotations = annosParsed.annotations;
+            dim.labelsAnnotated = annosParsed.labels;
+            me.colorsSetup(dim);
         }
 
         //----------------------------------------------------------------------
@@ -146,10 +148,15 @@ class Heatmap {
         row.size = 'height';
         col.sizeHeatmap = function() { return me.sizeHeatmap(row) - me.marginAnnoColor - me.marginAnnoLabel; };
         row.sizeHeatmap = function() { return me.sizeHeatmap(col); };
-        if (col.annotated) annotypesSetup(col);
-        if (row.annotated) annotypesSetup(row);
+
+        annotypesSetup(col);
+        annotypesSetup(row);
 
         function annotypesSetup (dim) {
+            if (!dim.annotated) {
+                return;
+            }
+
             dim.annotypes = Object.keys(dim.annotations).sort(function (a, b) {
                 return a.localeCompare(b);
             });
@@ -190,38 +197,40 @@ class Heatmap {
         tooltipSetupForDim(row);
 
         function tooltipSetupForDim (dim) {
-            if (dim.annotated) {
-                dim.tooltip = d3.tip()
-                    .attr('class', 'd3-tip')
-                    .direction('se')
-                    .offset([0, 0])
-                    .html(function (d) {
-                        var keys = Object.keys(d.annos);
-                        var labels = keys.map(undersToSpaces);
-                        var html = '<table>';
-
-                        for (var j = 0; j < keys.length; j++) {
-                            html += '<tr><td>' + labels[j] + '</td><td>' + d.annos[keys[j]] + '</td></tr>'
-                        }
-
-                        html += '</table>';
-
-                        return html;
-                    });
-                dim.annoTooltip = d3.tip()
-                    .attr('class', 'd3-tip')
-                    .direction('w')
-                    .offset([0, -10])
-                    .html(function (d) {
-                        return '<table>' +
-                            '<tr><td>' + undersToSpaces(dim.annoBy) + '</td><td>' + d + '</td></tr>' +
-                            '</table>';
-                    });
-
-                // invoke tooltips
-                me.container.svg.call(dim.tooltip);
-                me.container.svg.call(dim.annoTooltip);
+            if (!dim.annotated) {
+                return;
             }
+
+            dim.tooltip = d3.tip()
+                .attr('class', 'd3-tip')
+                .direction('se')
+                .offset([0, 0])
+                .html(function (d) {
+                    var keys = Object.keys(d.annos);
+                    var labels = keys.map(undersToSpaces);
+                    var html = '<table>';
+
+                    for (var j = 0; j < keys.length; j++) {
+                        html += '<tr><td>' + labels[j] + '</td><td>' + d.annos[keys[j]] + '</td></tr>'
+                    }
+
+                    html += '</table>';
+
+                    return html;
+                });
+            dim.annoTooltip = d3.tip()
+                .attr('class', 'd3-tip')
+                .direction('w')
+                .offset([0, -10])
+                .html(function (d) {
+                    return '<table>' +
+                        '<tr><td>' + undersToSpaces(dim.annoBy) + '</td><td>' + d + '</td></tr>' +
+                        '</table>';
+                });
+
+            // invoke tooltips
+            me.container.svg.call(dim.tooltip);
+            me.container.svg.call(dim.annoTooltip);
         }
 
         me.settingsHidden = true;
@@ -240,10 +249,15 @@ class Heatmap {
             .domain([-me.dataset.stats.zMax[me.scalingDim], me.dataset.stats.zMax[me.scalingDim]])
             .range(me.heatmapColors);
         me.bucketizer = new Bucketizer(me.bucketDividers, me.bucketColors);
-        if (col.annotated) colorScalesSetup(col);
-        if (row.annotated) colorScalesSetup(row);
+
+        colorScalesSetup(col);
+        colorScalesSetup(row);
 
         function colorScalesSetup (dim) {
+            if (!dim.annotated) {
+                return;
+            }
+
             dim.annoToNum = me.categorical ?
                 d3.scaleOrdinal()
                     .domain(dim.annotations[dim.annoBy])
@@ -260,8 +274,12 @@ class Heatmap {
         row.scaleCell = d3.scaleBand(); // row.names, row.sizeHeatmap -> y, height of cells
         col.scaleCellSub = d3.scaleBand(); // col.names, row.marginBrush -> x, width of cellsRight
         row.scaleCellSub = d3.scaleBand(); // row.names, col.marginBrush -> y, height of cellsBottom
-        if (col.annotated) col.scaleAnnoColor = d3.scaleBand().domain(col.annotations[col.annoBy]);
-        if (row.annotated) row.scaleAnnoColor = d3.scaleBand().domain(row.annotations[row.annoBy]);
+        if (col.annotated) {
+            col.scaleAnnoColor = d3.scaleBand().domain(col.annotations[col.annoBy]);
+        }
+        if (row.annotated) {
+            row.scaleAnnoColor = d3.scaleBand().domain(row.annotations[row.annoBy]);
+        }
         me.scaleBucket = d3.scaleBand().domain(me.bucketColors);
         me.scaleGradient = d3.scaleBand().domain(me.heatmapColors);
 
@@ -450,10 +468,14 @@ class Heatmap {
         me.colorKey.cells.row.updateVis(['fill']);
         me.colorKey.cells.bucket.updateVis(['fill']);
 
-        if (col.annotated) sideAndAnnoColorsSetup(col);
-        if (row.annotated) sideAndAnnoColorsSetup(row);
+        sideAndAnnoColorsSetup(col);
+        sideAndAnnoColorsSetup(row);
 
         function sideAndAnnoColorsSetup (dim) {
+            if (!dim.annotated) {
+                return;
+            }
+
             dim.sideColors = new Cells(
                 me.container.svg,
                 dim.self + 'SideColors',
@@ -507,26 +529,120 @@ class Heatmap {
         // call its axis component on its SVG element.
         //----------------------------------------------------------------------
 
-        row.labels = new Labels(me.container.svg, 'rLabs', 'axis', row.names, row.sizeHeatmap, me.cells.attrs.height, false, me.FONT_SIZE, 'right');
-        col.labels = new Labels(me.container.svg, 'cLabs', 'axis', col.names, col.sizeHeatmap, me.cells.attrs.width, true, me.FONT_SIZE, 'bottom');
-        row.labelsSub = new Labels(me.container.svg, 'rSubs', 'axis', row.names, row.sizeHeatmap, me.cells.attrs.height, false, me.FONT_SIZE, 'right');
-        col.labelsSub = new Labels(me.container.svg, 'cSubs', 'axis', col.names, col.sizeHeatmap, me.cells.attrs.width, true, me.FONT_SIZE, 'bottom');
-        if (row.annotated) row.labelsAnno = new Labels(me.container.svg, 'rAnnos', 'axis', row.annotations[row.annoBy],
-            function () { return row.marginAnnoHeight; }, row.annoColors.attrs.height, false, me.FONT_SIZE, 'right');
-        if (col.annotated) col.labelsAnno = new Labels(me.container.svg, 'cAnnos', 'axis', col.annotations[col.annoBy],
-            function () { return col.marginAnnoHeight; }, col.annoColors.attrs.height, false, me.FONT_SIZE, 'right');
-        me.colorKey.addLabels('bucket', me.bucketDividers.concat([me.bucketDividers[me.bucketDividers.length - 1]]).map(function (d, i) { return i < me.bucketDividers.length ? '< ' + d : '>= ' + d; }));
-        me.colorKey.addLabels('none', [me.dataset.stats.totalMin, (me.dataset.stats.totalMin + me.dataset.stats.totalMax ) / 2, me.dataset.stats.totalMax]);
-        me.colorKey.addLabels('row', [-me.dataset.stats.zMax.row.toFixed(2), 0, me.dataset.stats.zMax.row.toFixed(2)]);
-        me.colorKey.addLabels('col', [-me.dataset.stats.zMax.col.toFixed(2), 0, me.dataset.stats.zMax.col.toFixed(2)]);
+        row.labels = new Labels(
+            me.container.svg,
+            'rLabs',
+            'axis',
+            row.names,
+            row.sizeHeatmap,
+            me.cells.attrs.height,
+            false,
+            me.FONT_SIZE,
+            'right'
+        );
+        col.labels = new Labels(
+            me.container.svg,
+            'cLabs',
+            'axis',
+            col.names,
+            col.sizeHeatmap,
+            me.cells.attrs.width,
+            true,
+            me.FONT_SIZE,
+            'bottom'
+        );
+        row.labelsSub = new Labels(
+            me.container.svg,
+            'rSubs',
+            'axis',
+            row.names,
+            row.sizeHeatmap,
+            me.cells.attrs.height,
+            false,
+            me.FONT_SIZE,
+            'right'
+        );
+        col.labelsSub = new Labels(
+            me.container.svg,
+            'cSubs',
+            'axis',
+            col.names,
+            col.sizeHeatmap,
+            me.cells.attrs.width,
+            true,
+            me.FONT_SIZE,
+            'bottom'
+        );
+
+        if (row.annotated) {
+            row.labelsAnno = new Labels(
+                me.container.svg,
+                'rAnnos',
+                'axis',
+                row.annotations[row.annoBy],
+                function () { return row.marginAnnoHeight; },
+                row.annoColors.attrs.height,
+                false,
+                me.FONT_SIZE,
+                'right'
+            );
+        }
+        if (col.annotated) {
+            col.labelsAnno = new Labels(
+                me.container.svg,
+                'cAnnos',
+                'axis',
+                col.annotations[col.annoBy],
+                function () { return col.marginAnnoHeight; },
+                col.annoColors.attrs.height,
+                false,
+                me.FONT_SIZE,
+                'right'
+            );
+        }
+
+        me.colorKey.addLabels(
+            'bucket',
+            me.bucketDividers.concat([me.bucketDividers[me.bucketDividers.length - 1]]).map(function (d, i) {
+                return i < me.bucketDividers.length ? '< ' + d : '>= ' + d;
+            })
+        );
+        me.colorKey.addLabels(
+            'none',
+            [me.dataset.stats.totalMin, (me.dataset.stats.totalMin + me.dataset.stats.totalMax ) / 2, me.dataset.stats.totalMax]
+        );
+        me.colorKey.addLabels(
+            'row',
+            [-me.dataset.stats.zMax.row.toFixed(2), 0, me.dataset.stats.zMax.row.toFixed(2)]
+        );
+        me.colorKey.addLabels(
+            'col',
+            [-me.dataset.stats.zMax.col.toFixed(2), 0, me.dataset.stats.zMax.col.toFixed(2)]
+        );
 
         //----------------------------------------------------------------------
         //                                  TITLES
         // These represent the titles on the columns of cells at the right.
         //----------------------------------------------------------------------
 
-        if (col.annotated) col.annoTitle = new Title(me.container.svg, 'cTitle', 'annoTitle', undersToSpaces(col.annoBy), me.FONT_SIZE_CK);
-        if (row.annotated) row.annoTitle = new Title(me.container.svg, 'rTitle', 'annoTitle', undersToSpaces(row.annoBy), me.FONT_SIZE_CK);
+        if (col.annotated) {
+            col.annoTitle = new Title(
+                me.container.svg,
+                'cTitle',
+                'annoTitle',
+                undersToSpaces(col.annoBy),
+                me.FONT_SIZE_CK
+            );
+        }
+        if (row.annotated) {
+            row.annoTitle = new Title(
+                me.container.svg,
+                'rTitle',
+                'annoTitle',
+                undersToSpaces(row.annoBy),
+                me.FONT_SIZE_CK
+            );
+        }
         me.colorKey.addTitle('bucket', 'Buckets');
         me.colorKey.addTitle('none', 'Linear Gradient');
         me.colorKey.addTitle('row', 'Row Z-Score');
@@ -612,16 +728,21 @@ class Heatmap {
             }
         }
 
-        col.brusher = new Brush(me.container.svg, col,
+        col.brusher = new Brush(
+            me.container.svg,
+            col,
             function () { me.brushed(col); },
             function () { me.ended(col); },
             function () { return col.cellsSub.anchor; },
-            function () { return [col.cellsSub.anchor[0] + col.sizeHeatmap(), col.cellsSub.anchor[1] + col.marginBrush]; });
-        row.brusher = new Brush(me.container.svg, row,
+            function () { return [col.cellsSub.anchor[0] + col.sizeHeatmap(), col.cellsSub.anchor[1] + col.marginBrush]; }
+        );
+        row.brusher = new Brush(me.container.svg,
+            row,
             function () { me.brushed(row); },
             function () { me.ended(row); },
             function () { return row.cellsSub.anchor; },
-            function () { return [row.cellsSub.anchor[0] + row.marginBrush, row.cellsSub.anchor[1] + row.sizeHeatmap()]; });
+            function () { return [row.cellsSub.anchor[0] + row.marginBrush, row.cellsSub.anchor[1] + row.sizeHeatmap()]; }
+        );
 
         //----------------------------------------------------------------------
         //                              INITIALIZATION
