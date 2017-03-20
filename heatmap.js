@@ -16,22 +16,11 @@ class Heatmap {
     initializeVis (datasetFile, options) {
         var me = this;
         options = (options || {});
-
         me.dataset = me.parseDataset(datasetFile, options.parsed);
-        me.colAnnoFile = options.colAnnoFile;
-        me.rowAnnoFile = options.rowAnnoFile;
         me.colClustOrder = options.colClustOrder;
         me.rowClustOrder = options.rowClustOrder;
         me.renderOnBrushEnd = options.renderOnBrushEnd;
         me.categorical = options.categorical;
-
-        // assign parameters to defaults if not given
-        me.colCatScheme = (options.colCatScheme || 'rainbow');
-        me.colConScheme = (options.colConScheme || 'rainbow');
-        me.colAnnoHeatScheme = (options.colAnnoHeatScheme || 'plasma');
-        me.rowCatScheme = (options.rowCatScheme || 'google');
-        me.rowConScheme = (options.rowConScheme || 'cubehelix');
-        me.rowAnnoHeatScheme = (options.rowAnnoHeatScheme || 'magma');
         me.bucketDividers = (options.bucketDividers || [25, 50, 100, 500]);
         me.bucketColors = (options.bucketColors || ['red', 'orange', 'yellow', 'gray', 'cornflowerblue']);
         me.animDuration = (options.animDuration || 1200);
@@ -39,8 +28,6 @@ class Heatmap {
         me.midColor = (options.midColor || 'black');
         me.highColor = (options.highColor || 'orange');
         me.numColors = (options.numColors || 256);
-
-        // the array of colors used for the heatmap
         me.heatmapColors = interpolateColors(me.lowColor, me.midColor, me.highColor, me.numColors);
 
         // clear out DOM elements inside parent
@@ -56,29 +43,36 @@ class Heatmap {
             me.initialHeight
         );
 
-        // the 'dims' will hold all elements relevant to the columns and rows of the
+        // the 'dims' hold all elements relevant to the columns and rows of the
         // data, separately
         var col = me.col = {};
         var row = me.row = {};
 
-        // assign data structures to col and row fields
         col.stats = me.dataset.stats.col;
         row.stats = me.dataset.stats.row;
         col.clustOrder = (me.colClustOrder || me.dataset.colnames);
         row.clustOrder = (me.rowClustOrder || me.dataset.rownames);
         col.names = (me.colClustOrder || me.dataset.colnames);
         row.names = (me.rowClustOrder || me.dataset.rownames);
-        col.annotated = (me.colAnnoFile ? true : false);
-        row.annotated = (me.rowAnnoFile ? true : false);
-        if (col.annotated) annoSetup(col, me.colAnnoFile);
-        if (row.annotated) annoSetup(row, me.rowAnnoFile);
-        if (col.annotated) me.colorsSetup(col, me.categorical, me.colCatScheme, me.colConScheme, me.colAnnoHeatScheme);
-        if (row.annotated) me.colorsSetup(row, me.categorical, me.rowCatScheme, me.rowConScheme, me.rowAnnoHeatScheme);
+        col.catScheme = (options.colCatScheme || 'rainbow');
+        col.conScheme = (options.colConScheme || 'rainbow');
+        col.annoHeatScheme = (options.colAnnoHeatScheme || 'plasma');
+        row.catScheme = (options.rowCatScheme || 'google');
+        row.conScheme = (options.rowConScheme || 'cubehelix');
+        row.annoHeatScheme = (options.rowAnnoHeatScheme || 'magma');
+        col.annotated = (options.colAnnoFile ? true : false);
+        row.annotated = (options.rowAnnoFile ? true : false);
+
+        annoSetup(col, options.colAnnoFile);
+        annoSetup(row, options.rowAnnoFile);
 
         function annoSetup (dim, annoFile) {
-            var annosParsed = me.parseAnnotations(annoFile);
-            dim.annotations = annosParsed.annotations;
-            dim.labelsAnnotated = annosParsed.labels;
+            if (dim.annotated) {
+                var annosParsed = me.parseAnnotations(annoFile);
+                dim.annotations = annosParsed.annotations;
+                dim.labelsAnnotated = annosParsed.labels;
+                me.colorsSetup(dim);
+            }
         }
 
         //--------------------------------------------------------------------------
@@ -1087,7 +1081,9 @@ class Heatmap {
     //                          OTHER HELPER FUNCTIONS
     //--------------------------------------------------------------------------
 
-    colorsSetup (dim, cat, categoricalScheme, continuousScheme, annoHeatScheme) {
+    colorsSetup (dim) {
+        var me = this;
+
         var categoricalSchemes = {
             ns: [
                 '#7fff00', '#eead0e', '#00b2ee', '#ee2c2c', '#bf3eff',
@@ -1122,10 +1118,10 @@ class Heatmap {
             warm: d3.interpolateWarm,
             cool: d3.interpolateCool
         };
-        var catColors = categoricalSchemes[categoricalScheme];
-        var conColors = continuousSchemes[continuousScheme];
-        dim.annoReg = (cat ? function (index) { return catColors[index % catColors.length]; } : conColors);
-        dim.annoHeat = annoHeatSchemes[annoHeatScheme];
+        var catColors = categoricalSchemes[dim.catScheme];
+        var conColors = continuousSchemes[dim.conScheme];
+        dim.annoReg = (me.categorical ? function (index) { return catColors[index % catColors.length]; } : conColors);
+        dim.annoHeat = annoHeatSchemes[dim.annoHeatScheme];
     }
 
     // returns the size, in pixels, of the heatmap along the given dim
