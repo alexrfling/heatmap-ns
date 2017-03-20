@@ -36,6 +36,9 @@ function heatmap (id, datasetFile, options) {
     // margin convention for D3
     var margin = {top: 3, right: 3, bottom: 3, left: 3};
 
+    // clear out DOM elements inside parent
+    flushContents(id);
+
     var container = new SVGContainer(id, 'heatmap', '', resize, margin, height);
 
     var width = container.svgWidth;
