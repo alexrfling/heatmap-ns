@@ -736,7 +736,8 @@ class Heatmap {
             function () { return col.cellsSub.anchor; },
             function () { return [col.cellsSub.anchor[0] + col.sizeHeatmap(), col.cellsSub.anchor[1] + col.marginBrush]; }
         );
-        row.brusher = new Brush(me.container.svg,
+        row.brusher = new Brush(
+            me.container.svg,
             row,
             function () { me.brushed(row); },
             function () { me.ended(row); },
