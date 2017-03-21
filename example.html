@@ -6,7 +6,6 @@
 	<script src='d3-helpers/bucketizer.js'></script>
 	<script src='d3-helpers/graphicalElement.js'></script>
 	<script src='d3-helpers/cells.js'></script>
-	<script src='d3-helpers/flushContents.js'></script>
 	<script src='d3-helpers/identity.js'></script>
 	<script src='d3-helpers/interpolateColors.js'></script>
 	<script src='d3-helpers/key.js'></script>
@@ -15,6 +14,7 @@
 	<script src='d3-helpers/sample.js'></script>
 	<script src='d3-helpers/svgContainer.js'></script>
 	<script src='d3-helpers/title.js'></script>
+	<script src='d3-helpers/widget.js'></script>
 	<script src='heatmap.js'></script>
 	<script src='example-data.js'></script>
 	<link rel='stylesheet' type='text/css' href='d3-helpers/d3-tip/examples/example-styles.css'>
@@ -47,7 +47,7 @@
 			bucketColors: ['red', 'orange', 'yellow', 'gray', 'cornflowerblue']
 		};
 
-		var heatmap = new Heatmap('heatmap', 600);
+		var heatmap = new Heatmap('heatmap');
 		heatmap.initializeVis(heatmapString[TEST_SET_INDEX], options);
 	</script>
 </body>

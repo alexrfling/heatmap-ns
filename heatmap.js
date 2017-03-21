@@ -1,21 +1,27 @@
-class Heatmap {
+class Heatmap extends Widget {
 
-    constructor (id, height) {
-        var me = this;
-        me.parentId = id;
-        me.initialHeight = (height || 600);
-
-        me.SVG_MARGINS = { top: 10, bottom: 10, left: 10, right: 10 };
-        me.AXIS_PAD = 5;
-        me.SIDE_COLOR_PAD = 3;
-        me.ANNO_TITLE_PAD = 7;
-        me.FONT_SIZE = 9;
-        me.FONT_SIZE_CK = 11;
+    constructor (id) {
+        super(id, {
+            SVG_MARGINS: {
+                top: 10,
+                bottom: 10,
+                left: 10,
+                right: 10
+            },
+            ANIM_DURATION: 1200,
+            ANNO_TITLE_OFFSET: 7,
+            AXIS_OFFSET: 5,
+            DEFAULT_HEIGHT: 400,
+            FONT_SIZE: 9,
+            FONT_SIZE_CK: 11,
+            SIDE_COLOR_OFFSET: 3
+        });
     }
 
     initializeVis (datasetFile, options) {
         var me = this;
         options = (options || {});
+
         me.dataset = me.parseDataset(datasetFile, options.parsed);
         me.colClustOrder = options.colClustOrder;
         me.rowClustOrder = options.rowClustOrder;
@@ -23,7 +29,6 @@ class Heatmap {
         me.categorical = options.categorical;
         me.bucketDividers = (options.bucketDividers || [25, 50, 100, 500]);
         me.bucketColors = (options.bucketColors || ['red', 'orange', 'yellow', 'gray', 'cornflowerblue']);
-        me.animDuration = (options.animDuration || 1200);
         me.lowColor = (options.lowColor || 'cornflowerblue');
         me.midColor = (options.midColor || 'black');
         me.highColor = (options.highColor || 'orange');
@@ -31,16 +36,16 @@ class Heatmap {
         me.heatmapColors = interpolateColors(me.lowColor, me.midColor, me.highColor, me.numColors);
 
         // clear out DOM elements inside parent
-        flushContents(me.parentId);
+        me.destroy();
 
         // holds all HTML and SVG elements
         me.container = new SVGContainer(
-            me.parentId,
+            me.id,
             'heatmap',
             'heatmapSVG',
             function () { me.resize.call(me); },
-            me.SVG_MARGINS,
-            me.initialHeight
+            me.options.SVG_MARGINS,
+            (options.height || me.options.DEFAULT_HEIGHT)
         );
 
         // the 'dims' hold all elements relevant to the columns and rows of the
@@ -489,8 +494,8 @@ class Heatmap {
                 key,
                 (dim.self === 'col' ? function (d) { return col.scaleCell(d.key); } : function () { return 0; }),
                 (dim.self === 'row' ? function (d) { return row.scaleCell(d.key); } : function () { return 0; }),
-                (dim.self === 'col' ? me.cells.attrs.width : function () { return row.marginSideColor - me.SIDE_COLOR_PAD; }),
-                (dim.self === 'row' ? me.cells.attrs.height : function () { return col.marginSideColor - me.SIDE_COLOR_PAD; }),
+                (dim.self === 'col' ? me.cells.attrs.width : function () { return row.marginSideColor - me.options.SIDE_COLOR_OFFSET; }),
+                (dim.self === 'row' ? me.cells.attrs.height : function () { return col.marginSideColor - me.options.SIDE_COLOR_OFFSET; }),
                 function (d) { return dim.numToColor(dim.annoToNum(d.annos[dim.annoBy])); }
             );
             dim.annoColors = new Cells(
@@ -542,7 +547,7 @@ class Heatmap {
             row.sizeHeatmap,
             me.cells.attrs.height,
             false,
-            me.FONT_SIZE,
+            me.options.FONT_SIZE,
             'right'
         );
         col.labels = new Labels(
@@ -552,7 +557,7 @@ class Heatmap {
             col.sizeHeatmap,
             me.cells.attrs.width,
             true,
-            me.FONT_SIZE,
+            me.options.FONT_SIZE,
             'bottom'
         );
         row.labelsSub = new Labels(
@@ -562,7 +567,7 @@ class Heatmap {
             row.sizeHeatmap,
             me.cells.attrs.height,
             false,
-            me.FONT_SIZE,
+            me.options.FONT_SIZE,
             'right'
         );
         col.labelsSub = new Labels(
@@ -572,7 +577,7 @@ class Heatmap {
             col.sizeHeatmap,
             me.cells.attrs.width,
             true,
-            me.FONT_SIZE,
+            me.options.FONT_SIZE,
             'bottom'
         );
 
@@ -584,7 +589,7 @@ class Heatmap {
                 function () { return row.marginAnnoHeight; },
                 row.annoColors.attrs.height,
                 false,
-                me.FONT_SIZE,
+                me.options.FONT_SIZE,
                 'right'
             );
         }
@@ -596,7 +601,7 @@ class Heatmap {
                 function () { return col.marginAnnoHeight; },
                 col.annoColors.attrs.height,
                 false,
-                me.FONT_SIZE,
+                me.options.FONT_SIZE,
                 'right'
             );
         }
@@ -608,28 +613,28 @@ class Heatmap {
                 return i < me.bucketDividers.length ? '< ' + d : '>= ' + d;
             }),
             function () { return me.marginColorKey; },
-            me.FONT_SIZE
+            me.options.FONT_SIZE
         );
         me.colorKey.addLabels(
             me.container.svg,
             'none',
             [me.dataset.stats.totalMin, (me.dataset.stats.totalMin + me.dataset.stats.totalMax ) / 2, me.dataset.stats.totalMax],
             function () { return me.marginColorKey; },
-            me.FONT_SIZE
+            me.options.FONT_SIZE
         );
         me.colorKey.addLabels(
             me.container.svg,
             'row',
             [-me.dataset.stats.zMax.row.toFixed(2), 0, me.dataset.stats.zMax.row.toFixed(2)],
             function () { return me.marginColorKey; },
-            me.FONT_SIZE
+            me.options.FONT_SIZE
         );
         me.colorKey.addLabels(
             me.container.svg,
             'col',
             [-me.dataset.stats.zMax.col.toFixed(2), 0, me.dataset.stats.zMax.col.toFixed(2)],
             function () { return me.marginColorKey; },
-            me.FONT_SIZE
+            me.options.FONT_SIZE
         );
 
         //----------------------------------------------------------------------
@@ -649,14 +654,14 @@ class Heatmap {
                 me.container.svg,
                 'annoTitle',
                 undersToSpaces(dim.annoBy),
-                me.FONT_SIZE_CK
+                me.options.FONT_SIZE_CK
             );
         }
 
-        me.colorKey.addTitle(me.container.svg, 'bucket', 'Buckets', me.FONT_SIZE_CK);
-        me.colorKey.addTitle(me.container.svg, 'none', 'Linear Gradient', me.FONT_SIZE_CK);
-        me.colorKey.addTitle(me.container.svg, 'row', 'Row Z-Score', me.FONT_SIZE_CK);
-        me.colorKey.addTitle(me.container.svg, 'col', 'Column Z-Score', me.FONT_SIZE_CK);
+        me.colorKey.addTitle(me.container.svg, 'bucket', 'Buckets', me.options.FONT_SIZE_CK);
+        me.colorKey.addTitle(me.container.svg, 'none', 'Linear Gradient', me.options.FONT_SIZE_CK);
+        me.colorKey.addTitle(me.container.svg, 'row', 'Row Z-Score', me.options.FONT_SIZE_CK);
+        me.colorKey.addTitle(me.container.svg, 'col', 'Column Z-Score', me.options.FONT_SIZE_CK);
 
         //----------------------------------------------------------------------
         //                                  ANCHORS
@@ -830,7 +835,7 @@ class Heatmap {
             dim.labels.updateNames(dim.names);
 
             // visual updates
-            dim.labels.updateVis(me.animDuration);
+            dim.labels.updateVis(me.options.ANIM_DURATION);
             me.cells.updateVis([dim.pos, dim.size]);
             if (dim.annotated) {
                 dim.sideColors.updateVis([dim.pos, dim.size]);
@@ -858,7 +863,7 @@ class Heatmap {
         // visual updates
         // TODO make 'transition' a numerical parameter
         if (transition) {
-            dim.labels.updateVis(me.animDuration);
+            dim.labels.updateVis(me.options.ANIM_DURATION);
         } else {
             dim.labels.updateVis();
         }
@@ -909,7 +914,7 @@ class Heatmap {
         dim.labelsAnno.updateVis();
         dim.sideColors.selection
             .transition()
-            .duration(me.animDuration)
+            .duration(me.options.ANIM_DURATION)
             .attr('fill', dim.sideColors.attrs.fill);
     }
 
@@ -945,7 +950,7 @@ class Heatmap {
         dim.labelsSub.updateNames(dim.names);
 
         // visual updates for the brushable heatmaps
-        dim.labelsSub.updateVis(me.animDuration);
+        dim.labelsSub.updateVis(me.options.ANIM_DURATION);
         dim.cellsSub.updateVis([dim.pos]);
         dim.other.cellsSub.updateVis([dim.pos]);
         me.renderScope(dim, true);
@@ -976,14 +981,14 @@ class Heatmap {
         var row = me.row;
 
         me.marginAnnoColor = Math.floor(me.container.svgWidth / 50);
-        me.marginAnnoLabel = Math.min(Math.floor(me.container.svgWidth / 4), Math.floor(annoMax() + me.AXIS_PAD));
-        me.marginAnnoTitle = me.FONT_SIZE_CK + 2 * me.ANNO_TITLE_PAD;
+        me.marginAnnoLabel = Math.min(Math.floor(me.container.svgWidth / 4), Math.floor(annoMax() + me.options.AXIS_OFFSET));
+        me.marginAnnoTitle = me.options.FONT_SIZE_CK + 2 * me.options.ANNO_TITLE_OFFSET;
         col.marginTotal = me.container.svgHeight;
         row.marginTotal = me.container.svgWidth;
-        col.marginLabel = (col.labels ? Math.ceil(col.labels.getBox().height + 2 * me.AXIS_PAD) : 0);
-        row.marginLabel = (row.labels ? Math.ceil(row.labels.getBox().width + 2 * me.AXIS_PAD) : 0);
-        col.marginLabelSub = (col.labelsSub ? Math.ceil(col.labelsSub.getBox().height + 2 * me.AXIS_PAD) : 0);
-        row.marginLabelSub = (row.labelsSub ? Math.ceil(row.labelsSub.getBox().width + 2 * me.AXIS_PAD) : 0);
+        col.marginLabel = (col.labels ? Math.ceil(col.labels.getBox().height + 2 * me.options.AXIS_OFFSET) : 0);
+        row.marginLabel = (row.labels ? Math.ceil(row.labels.getBox().width + 2 * me.options.AXIS_OFFSET) : 0);
+        col.marginLabelSub = (col.labelsSub ? Math.ceil(col.labelsSub.getBox().height + 2 * me.options.AXIS_OFFSET) : 0);
+        row.marginLabelSub = (row.labelsSub ? Math.ceil(row.labelsSub.getBox().width + 2 * me.options.AXIS_OFFSET) : 0);
         col.marginBrush = Math.floor(me.container.svgHeight / 10);
         row.marginBrush = Math.floor(me.container.svgHeight / 10);
         me.marginColorKey = Math.floor(me.container.svgHeight / 4) - me.marginAnnoTitle;
@@ -998,12 +1003,12 @@ class Heatmap {
         }
 
         function annoMax () {
-            var cM1 = (col.labelsAnno ? col.labelsAnno.getBox().width + 2 * me.AXIS_PAD : 0);
-            var rM1 = (row.labelsAnno ? row.labelsAnno.getBox().width + 2 * me.AXIS_PAD : 0);
-            var cM2 = (col.annoTitle ? col.annoTitle.getBox().width - me.marginAnnoColor + me.AXIS_PAD : 0);
-            var rM2 = (row.annoTitle ? row.annoTitle.getBox().width - me.marginAnnoColor + me.AXIS_PAD : 0);
-            var ck1 = (me.colorKey ? me.colorKey.labels[me.scalingDim].getBox().width + 2 * me.AXIS_PAD : 0);
-            var ck2 = (me.colorKey ? me.colorKey.titles[me.scalingDim].getBox().width - me.marginAnnoColor + me.AXIS_PAD : 0);
+            var cM1 = (col.labelsAnno ? col.labelsAnno.getBox().width + 2 * me.options.AXIS_OFFSET : 0);
+            var rM1 = (row.labelsAnno ? row.labelsAnno.getBox().width + 2 * me.options.AXIS_OFFSET : 0);
+            var cM2 = (col.annoTitle ? col.annoTitle.getBox().width - me.marginAnnoColor + me.options.AXIS_OFFSET : 0);
+            var rM2 = (row.annoTitle ? row.annoTitle.getBox().width - me.marginAnnoColor + me.options.AXIS_OFFSET : 0);
+            var ck1 = (me.colorKey ? me.colorKey.labels[me.scalingDim].getBox().width + 2 * me.options.AXIS_OFFSET : 0);
+            var ck2 = (me.colorKey ? me.colorKey.titles[me.scalingDim].getBox().width - me.marginAnnoColor + me.options.AXIS_OFFSET : 0);
 
             return Math.max(cM1, rM1, cM2, rM2, ck1, ck2);
         }
@@ -1017,29 +1022,29 @@ class Heatmap {
         var colorKey = me.colorKey;
 
         cells.anchor = [row.marginSideColor, col.marginSideColor];
-        col.labels.anchor = [cells.anchor[0], cells.anchor[1] + row.sizeHeatmap() + me.AXIS_PAD];
-        row.labels.anchor = [cells.anchor[0] + col.sizeHeatmap() + me.AXIS_PAD, cells.anchor[1]];
+        col.labels.anchor = [cells.anchor[0], cells.anchor[1] + row.sizeHeatmap() + me.options.AXIS_OFFSET];
+        row.labels.anchor = [cells.anchor[0] + col.sizeHeatmap() + me.options.AXIS_OFFSET, cells.anchor[1]];
         col.cellsSub.anchor = [cells.anchor[0], col.labels.anchor[1] + col.marginLabel];
         row.cellsSub.anchor = [row.labels.anchor[0] + row.marginLabel, cells.anchor[1]];
-        col.labelsSub.anchor = [cells.anchor[0], col.cellsSub.anchor[1] + col.marginBrush + me.AXIS_PAD];
-        row.labelsSub.anchor = [row.cellsSub.anchor[0] + row.marginBrush + me.AXIS_PAD, cells.anchor[1]];
+        col.labelsSub.anchor = [cells.anchor[0], col.cellsSub.anchor[1] + col.marginBrush + me.options.AXIS_OFFSET];
+        row.labelsSub.anchor = [row.cellsSub.anchor[0] + row.marginBrush + me.options.AXIS_OFFSET, cells.anchor[1]];
 
         if (col.annotated) {
             col.sideColors.anchor = [cells.anchor[0], 0];
             col.annoColors.anchor = [row.labelsSub.anchor[0] + row.marginLabelSub, me.marginAnnoTitle];
-            col.annoTitle.anchor = [col.annoColors.anchor[0], col.annoColors.anchor[1] - me.ANNO_TITLE_PAD];
-            col.labelsAnno.anchor = [col.annoColors.anchor[0] + me.marginAnnoColor + me.AXIS_PAD, col.annoColors.anchor[1]];
+            col.annoTitle.anchor = [col.annoColors.anchor[0], col.annoColors.anchor[1] - me.options.ANNO_TITLE_OFFSET];
+            col.labelsAnno.anchor = [col.annoColors.anchor[0] + me.marginAnnoColor + me.options.AXIS_OFFSET, col.annoColors.anchor[1]];
         }
         if (row.annotated) {
             row.sideColors.anchor = [0, cells.anchor[1]];
             row.annoColors.anchor = [row.labelsSub.anchor[0] + row.marginLabelSub, col.marginAnnoTotal + me.marginAnnoTitle];
-            row.annoTitle.anchor = [row.annoColors.anchor[0], row.annoColors.anchor[1] - me.ANNO_TITLE_PAD];
-            row.labelsAnno.anchor = [row.annoColors.anchor[0] + me.marginAnnoColor + me.AXIS_PAD, row.annoColors.anchor[1]];
+            row.annoTitle.anchor = [row.annoColors.anchor[0], row.annoColors.anchor[1] - me.options.ANNO_TITLE_OFFSET];
+            row.labelsAnno.anchor = [row.annoColors.anchor[0] + me.marginAnnoColor + me.options.AXIS_OFFSET, row.annoColors.anchor[1]];
         }
 
         colorKey.anchors.cells = [row.labelsSub.anchor[0] + row.marginLabelSub, col.marginAnnoTotal + row.marginAnnoTotal + me.marginAnnoTitle];
-        colorKey.anchors.labels = [colorKey.anchors.cells[0] + me.marginAnnoColor + me.AXIS_PAD, colorKey.anchors.cells[1]];
-        colorKey.anchors.titles = [colorKey.anchors.cells[0], colorKey.anchors.cells[1] - me.ANNO_TITLE_PAD];
+        colorKey.anchors.labels = [colorKey.anchors.cells[0] + me.marginAnnoColor + me.options.AXIS_OFFSET, colorKey.anchors.cells[1]];
+        colorKey.anchors.titles = [colorKey.anchors.cells[0], colorKey.anchors.cells[1] - me.options.ANNO_TITLE_OFFSET];
     }
 
     scalesSetup () {
