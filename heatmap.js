@@ -701,21 +701,21 @@ class Heatmap {
 
         class Brush {
 
-            constructor (svg, dim, brush, onBrushed, onEnded, upperLeft, lowerRight, index) {
+            constructor (svg, dim, brush, onBrush, onEnd, upperLeft, lowerRight, index) {
                 var me = this;
 
                 me.dim = dim;
                 me.brush = brush;
-                me.onBrushed = onBrushed;
-                me.onEnded = onEnded;
+                me.onBrush = onBrush;
+                me.onEnd = onEnd;
                 me.upperLeft = upperLeft;
                 me.lowerRight = lowerRight;
                 me.index = index;
                 me.inverter = d3.scaleQuantize()
                     .range(me.dim.names);
                 me.brush
-                    .on('brush', me.onBrushed)
-                    .on('end', me.onEnded);
+                    .on('brush', me.onBrush)
+                    .on('end', me.onEnd);
                 me.group = svg
                     .append('g')
                     .attr('class', 'brush');
@@ -755,8 +755,8 @@ class Heatmap {
             me.container.svg,
             col,
             d3.brushX(),
-            function () { me.brushed(col); },
-            function () { me.ended(col); },
+            function () { me.onBrush(col); },
+            function () { me.onEnd(col); },
             function () { return col.cellsSub.anchor; },
             function () { return [col.cellsSub.anchor[0] + col.sizeHeatmap(), col.cellsSub.anchor[1] + col.marginBrush]; },
             0
@@ -765,8 +765,8 @@ class Heatmap {
             me.container.svg,
             row,
             d3.brushY(),
-            function () { me.brushed(row); },
-            function () { me.ended(row); },
+            function () { me.onBrush(row); },
+            function () { me.onEnd(row); },
             function () { return row.cellsSub.anchor; },
             function () { return [row.cellsSub.anchor[0] + row.marginBrush, row.cellsSub.anchor[1] + row.sizeHeatmap()]; },
             1
@@ -786,7 +786,7 @@ class Heatmap {
     // once it is initially rendered.
     //
     // For the brushes (the tools used to zoom/pan), there are 2 functions,
-    // brushed and ended, which handle all the updates to the data structures
+    // onBrush and onEnd, which handle all the updates to the data structures
     // and DOM that are necessary to perform zoom/pan (with the help of helper
     // functions).
     //
@@ -796,7 +796,7 @@ class Heatmap {
 
     // updates the current scope of the given dimension and, if renderOnBrushEnd
     // is false, performs visual updates on the main heatmap and side colors
-    brushed (dim) {
+    onBrush (dim) {
         var me = this;
 
         // hide the settings panel in case it's visible
@@ -814,7 +814,7 @@ class Heatmap {
     // resets the scope of the given dim only if there is no current selection
     // (i.e., the user clicks off of the selected area, otherwise renders the
     // dim's current scope if renderOnBrushEnd is true
-    ended (dim) {
+    onEnd (dim) {
         var me = this;
 
         if (d3.event.selection) {
