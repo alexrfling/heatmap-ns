@@ -377,7 +377,7 @@ class Heatmap {
 
         me.cells = new Cells(
             me.container.svg,
-            'mainCells',
+            'heatmapCells',
             me.dataset.matrix,
             key,
             function (d) { return col.scaleCell(d.col); },
@@ -450,7 +450,7 @@ class Heatmap {
         );
         me.colorKey.cells.bucket = new Cells(
             me.container.svg,
-            'colorKeyCellsBuckets',
+            'colorKeyCellsBucket',
             me.bucketColors,
             identity,
             function () { return 0; },
@@ -538,7 +538,7 @@ class Heatmap {
 
         row.labels = new Labels(
             me.container.svg,
-            'rLabs',
+            'rowLabels',
             'axis',
             row.names,
             row.sizeHeatmap,
@@ -549,7 +549,7 @@ class Heatmap {
         );
         col.labels = new Labels(
             me.container.svg,
-            'cLabs',
+            'colLabels',
             'axis',
             col.names,
             col.sizeHeatmap,
@@ -560,7 +560,7 @@ class Heatmap {
         );
         row.labelsSub = new Labels(
             me.container.svg,
-            'rSubs',
+            'rowLabelsSub',
             'axis',
             row.names,
             row.sizeHeatmap,
@@ -571,7 +571,7 @@ class Heatmap {
         );
         col.labelsSub = new Labels(
             me.container.svg,
-            'cSubs',
+            'colLabelsSub',
             'axis',
             col.names,
             col.sizeHeatmap,
@@ -584,7 +584,7 @@ class Heatmap {
         if (row.annotated) {
             row.labelsAnno = new Labels(
                 me.container.svg,
-                'rAnnos',
+                'rowLabelsAnno',
                 'axis',
                 row.annotations[row.annoBy],
                 function () { return row.marginAnnoHeight; },
@@ -597,7 +597,7 @@ class Heatmap {
         if (col.annotated) {
             col.labelsAnno = new Labels(
                 me.container.svg,
-                'cAnnos',
+                'colLabelsAnno',
                 'axis',
                 col.annotations[col.annoBy],
                 function () { return col.marginAnnoHeight; },
@@ -647,7 +647,7 @@ class Heatmap {
         if (col.annotated) {
             col.annoTitle = new Title(
                 me.container.svg,
-                'cTitle',
+                'colAnnoTitle',
                 'annoTitle',
                 undersToSpaces(col.annoBy),
                 me.FONT_SIZE_CK
@@ -656,7 +656,7 @@ class Heatmap {
         if (row.annotated) {
             row.annoTitle = new Title(
                 me.container.svg,
-                'rTitle',
+                'rowAnnoTitle',
                 'annoTitle',
                 undersToSpaces(row.annoBy),
                 me.FONT_SIZE_CK
@@ -699,6 +699,7 @@ class Heatmap {
         //          elements can be programmatically controlled with CSS and JS
         //----------------------------------------------------------------------
 
+        // TODO make this more general and move it to d3-helpers
         class Brush {
 
             constructor (svg, dim, brush, onBrush, onEnd, upperLeft, lowerRight, index) {
