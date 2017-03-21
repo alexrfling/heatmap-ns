@@ -1421,23 +1421,38 @@ class Heatmap extends Widget {
         };
     }
 
-    // parses the given string into the data structures used for
-    // annotating/sorting the heatmap
+    // parses the given string into the data structures used for annotating and
+    // sorting the heatmap
     parseAnnotations (file) {
-        file = file.charAt(0) === ',' ? 'Name' + file : file; // add a nameKey if there isn't one
-        var na = '{ no data }'; // this will be used as a readable name if a cell only holds ''
-        var parsedRows = d3.csvParseRows(file); // parse the file into an array of arrays
+        // add a nameKey if there isn't one
+        file = (file.charAt(0) === ',' ? 'Name' + file : file);
+
+        // this will be used as a readable name if a cell only holds ''
+        var NA = '{ no data }';
+
+        // parse the file into an array of arrays
+        var parsedRows = d3.csvParseRows(file);
+
         // the names of the different kinds of annotations should be stored in
         // the first row of the file
-        var annotypes = parsedRows.shift(); // pops off the first element (ACTUALLY modifies parsedRows)
-        annotypes = annotypes.map(dotsToUnders); // periods in names of annotypes will mess up JS code
-        var nameKey = annotypes.shift(); // trims annotypes down to JUST the actual annotation types
-        var annotations = {}; // each type of annotation will map to a sorted array of its unique values
-        for (var j = 0; j < annotypes.length; j++) annotations[annotypes[j]] = [];
+        var annotypes = parsedRows.shift(); // NOTE modifies parsedRows as well
 
-        // in these nested loops, examine all values for each annotation type
-        // and add them to the hashmap of annotation types -> array of unique
+        // periods in names of annotypes will mess up JS code
+        annotypes = annotypes.map(dotsToUnders);
+
+        // trims annotypes down to JUST the actual annotation types
+        var nameKey = annotypes.shift();
+
+        // each type of annotation will map to a sorted array of its unique
         // values
+        var annotations = {};
+
+        for (var j = 0; j < annotypes.length; j++) {
+            annotations[annotypes[j]] = [];
+        }
+
+        // examine all values for each annotation type and add them to the
+        // hashmap of annotation types -> array of unique values
         for (var j = 0; j < parsedRows.length; j++) {
             // toss out the first element in the row (the name of the dimension
             // for this value); what's left is an array of the same length as
@@ -1445,21 +1460,30 @@ class Heatmap extends Widget {
             // annotation type annotypes[k]
             parsedRows[j].shift();
             var values = parsedRows[j];
+
             // associate new unique values with their corresponding annotation
             // types as necessary
             for (var k = 0; k < annotypes.length; k++) {
-                var value = values[k] || na; // give a readable name if blank
+                // give a readable name if blank
+                var value = (values[k] || NA);
+
                 // add this value into the array of unique values for its
                 // corresponding annotation type
-                if (annotations[annotypes[k]].indexOf(value) < 0) annotations[annotypes[k]].push(value);
+                if (annotations[annotypes[k]].indexOf(value) < 0) {
+                    annotations[annotypes[k]].push(value);
+                }
             }
         }
 
         // sort each annotation type's values (numerically if both numbers,
         // otherwise lexicographically)
         for (var j = 0; j < annotypes.length; j++) {
+
             annotations[annotypes[j]].sort(function (a, b) {
-                if (!isNaN(a) && !isNaN(b)) return (+a) - (+b); // the '+' converts a and b to numbers
+                if (!isNaN(a) && !isNaN(b)) {
+                    return (+a) - (+b);
+                }
+
                 return a.localeCompare(b);
             });
         }
@@ -1475,17 +1499,22 @@ class Heatmap extends Widget {
         var labels = d3.csvParse(file).map(function (obj) {
             // reformat so that keys contain no periods and values are renamed
             // if blank
-            var objClean = {}, keys = Object.keys(obj);
-            for (var j = 0; j < keys.length; j++) objClean[dotsToUnders(keys[j])] = obj[keys[j]] || na;
+            var objClean = {};
+            var keys = Object.keys(obj);
+
+            for (var j = 0; j < keys.length; j++) {
+                objClean[dotsToUnders(keys[j])] = (obj[keys[j]] || NA);
+            }
+
             return {
-                key: objClean[nameKey], // this corresponds to the name of the row/column
+                key: objClean[nameKey], // corresponds to name of the row/column
                 annos: objClean
             };
         });
 
         return {
-            annotations: annotations, // hashmap string to string[] (annotation types -> values)
-            labels: labels // array of objects (list of annotated dimension names)
+            annotations: annotations, // hash str -> str[] (annotypes -> values)
+            labels: labels // array of objects (annotated dimension names)
         };
     }
 }
