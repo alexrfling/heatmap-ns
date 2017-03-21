@@ -1286,115 +1286,130 @@ class Heatmap extends Widget {
     // parses the given string into the data structures used for generating the
     // heatmap
     parseDataset (file, parsed) {
-        // TODO fix style...
-        if (parsed) {
-            var matrix = file.matrix;
-            var rownames = file.rownames;
-            var colnames = file.colnames;
+        var matrix, colnames, rownames;
 
-            var stats = {
-                col: {},
-                row: {},
-                zMax: { col: 0, row: 0 },
-                totalMin: Number.POSITIVE_INFINITY,
-                totalMax: Number.NEGATIVE_INFINITY
-            };
+        // this will hold all relevant statistics for the dataset
+        var stats = {
+            col: {},
+            row: {},
+            zMax: {
+                col: 0,
+                row: 0
+            },
+            totalMin: Number.POSITIVE_INFINITY,
+            totalMax: Number.NEGATIVE_INFINITY
+        };
 
-            matrix.forEach(function (array) {
-                array.forEach(function (element) {
-                    updateStats(stats, 'col', dotsToUnders(element.col), element.value);
-                    updateStats(stats, 'row', dotsToUnders(element.row), element.value);
-                });
-            });
-        } else {
-            var parsedRows = d3.csvParseRows(file); // parses the string into an array of arrays
-            var colnames = parsedRows.shift(); // column names should be stored in the first row
-            colnames.shift(); // removes whatever name was given to the column containing the row names
-            var rownames = []; // the array of rownames will grow as we process each row
-            // stats will hold all relevant statistics for the dataset
-            var stats = {
-                col: {},
-                row: {},
-                zMax: { col: 0, row: 0 },
-                totalMin: Number.POSITIVE_INFINITY,
-                totalMax: Number.NEGATIVE_INFINITY
-            };
+        // get matrix, colnames, rownames
+        // TODO handle the case where 'file' is an array???
+        if (typeof file === 'object') {
+
+            // NOTE assume these have already been parsed
+            matrix = file.matrix;
+            colnames = file.colnames;
+            rownames = file.rownames;
+        } else if (typeof file === 'string') {
+
+            // parse the string into an array of arrays
+            var parsedRows = d3.csvParseRows(file);
+
+            // column names should be stored in the first row
+            colnames = parsedRows.shift();
+
+            // remove whatever name was given to the column containing the row
+            // names
+            colnames.shift();
+
+            // the array of rownames will grow as we process each row
+            rownames = [];
 
             // traverse the parsed rows to create the matrix (a doubly-nested
             // array) for the heatmap, adding to the rownames array and updating
             // the stats object as we go
-            var matrix = d3.range(parsedRows.length).map(function (j) { // j = index of parsedRows
+            matrix = d3.range(parsedRows.length).map(function (j) {
                 // grab the row name out of the parsed row. This makes
                 // parsedRows[j] the same length as colnames, with
                 // parsedRows[j][k] being the value in row 'rowname'
                 // and column 'colnames[k]'
                 var rowname = parsedRows[j].shift();
+
                 // add the new row name to the list of row names
                 rownames.push(rowname);
+
                 // traverse the parsed row, reformatting each element (a number)
-                // and updating stats
-                return d3.range(colnames.length).map(function (k) { // k = index of colnames
-                    // the '+' converts parsedRows[j][k] to a number (since it
-                    // was parsed as a string)
-                    var value = +parsedRows[j][k];
-                    // update the stats for the current column and the current
-                    // row with this value
-                    updateStats(stats, 'col', dotsToUnders(colnames[k]), value);
-                    updateStats(stats, 'row', dotsToUnders(rowname), value);
+                return d3.range(colnames.length).map(function (k) {
                     return {
                         key: j + ' ' + k, // useful for d3 data joins
-                        row: rowname, // determines cell attributes (position (y), size (height))
-                        col: colnames[k], // determines cell attributes (position (x), size (width))
-                        value: value // determines cell attributes (fill)
+                        col: colnames[k], // position (x), size (width), fill
+                        row: rowname, // position (y), size (height), fill
+                        value: +parsedRows[j][k] // fill
                     };
                 });
             });
         }
 
+        matrix.forEach(function (array) {
+            array.forEach(function (element) {
+                updateStats(stats, 'col', dotsToUnders(element.col), element.value);
+                updateStats(stats, 'row', dotsToUnders(element.row), element.value);
+            });
+        });
+
         // perform final calculations of the stats for each column, and find the
         // totalMin and totalMax of the dataset (this could also be done in the
         // final calculations for the row stats)
         var cStatNames = Object.keys(stats.col);
+
         for (var j = 0; j < cStatNames.length; j++) {
             finalCalculations(stats, 'col', cStatNames[j], rownames.length);
-            stats.totalMin = Math.min(stats.totalMin, stats.col[cStatNames[j]].min); // reassign if needed
-            stats.totalMax = Math.max(stats.totalMax, stats.col[cStatNames[j]].max); // reassign if needed
+
+            // reassign min/max if necessary
+            stats.totalMin = Math.min(stats.totalMin, stats.col[cStatNames[j]].min);
+            stats.totalMax = Math.max(stats.totalMax, stats.col[cStatNames[j]].max);
         }
+
         // perform final calculations of the stats for each row
         var rStatNames = Object.keys(stats.row);
+
         for (var j = 0; j < rStatNames.length; j++) {
             finalCalculations(stats, 'row', rStatNames[j], colnames.length);
         }
+
         // find the z-score in the dataset with the largest magnitude
         for (var j = 0; j < matrix.length; j++) {
             for (var k = 0; k < matrix[j].length; k++) {
-                var value = matrix[j][k].value; // grab the value and compute its z-score for to its row/col
+                // grab the value and compute its z-score for to its row/col
+                var value = matrix[j][k].value;
                 var colname = dotsToUnders(colnames[k]);
                 var rowname = dotsToUnders(rownames[j]);
                 var colZ = (value - stats.col[colname].mean) / stats.col[colname].stdev;
                 var rowZ = (value - stats.row[rowname].mean) / stats.row[rowname].stdev;
-                stats.zMax.col = Math.max(stats.zMax.col, Math.abs(colZ)); // reassign max if necessary
-                stats.zMax.row = Math.max(stats.zMax.row, Math.abs(rowZ)); // reassign max if necessary
+
+                // reassign maxes if necessary
+                stats.zMax.col = Math.max(stats.zMax.col, Math.abs(colZ));
+                stats.zMax.row = Math.max(stats.zMax.row, Math.abs(rowZ));
             }
         }
 
         // updates the stats object for the given dimension at the given name
         // with the given value
         function updateStats (stats, dim, name, value) {
-            if (stats[dim][name] === undefined) { // if unseen, give it a fresh new stats object
-                // an stdev field will be added to this object during final
+            if (stats[dim][name] === undefined) {
+                // if not yet seen, give it a fresh new stats object
+                // NOTE an stdev field will be added to this object during final
                 // calculations
                 stats[dim][name] = {
                     min: value, // helps to find most negative z-score
                     max: value, // helps to find most positive z-score
-                    mean: 0, // used in calculating standard deviation/z-scores for cell fills
+                    mean: 0, // used in calculating standard deviation/z-scores
                     meanOfSquares: 0 // used in calculating standard deviation
                 };
             }
-            if (value < stats[dim][name].min) stats[dim][name].min = value; // reassign min if necessary
-            if (value > stats[dim][name].max) stats[dim][name].max = value; // reassign max if necessary
+
+            stats[dim][name].min = Math.min(stats[dim][name].min, value);
+            stats[dim][name].max = Math.max(stats[dim][name].max, value);
             stats[dim][name].mean += value; // this will be averaged later
-            stats[dim][name].meanOfSquares += value * value; // this will be averaged later
+            stats[dim][name].meanOfSquares += value * value; // averaged later
         }
 
         // adds the stdev field to the stats object for the dimension at the
@@ -1412,12 +1427,13 @@ class Heatmap extends Widget {
         }
 
         return {
-            matrix: flatten(matrix), // array of arrays of objects (cells have value, row, col, key)
-            rownames: rownames, // arrays of strings (list of all row names, assumed to be clustered)
-            colnames: colnames, // arrays of strings (list of all column names, assumed to be clustered)
-            stats: stats // object with 5 fields: row and col (hashmaps from row/col name to object
-          	     // of statistics, zMax stores largest z-score (by magnitude) for both row
-                 // and col, and totalMin/totalMax store min and max of the entire dataset
+            matrix: flatten(matrix), // array of objects (key, col, row, value)
+            rownames: rownames, // array of strings
+            colnames: colnames, // array of strings
+            stats: stats // object with 5 fields: row and col (hashmaps from
+                // row/col name to object of statistics, zMax stores largest
+                // z-score (by magnitude) for both row and col, and
+                // totalMin/totalMax store min and max of the entire dataset
         };
     }
 
