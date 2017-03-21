@@ -329,7 +329,7 @@ class Heatmap {
             addTitle: function (svg, name, text, fontSize) {
                 var me = this;
 
-                me.titles[name] = new Title(svg, name + 'CKTitle', 'annoTitle', text, fontSize);
+                me.titles[name] = new Title(svg, 'annoTitle', text, fontSize);
             },
 
             addLabels: function (svg, name, labels, margin, fontSize) {
@@ -337,7 +337,6 @@ class Heatmap {
 
                 me.labels[name] = new Labels(
                     svg,
-                    name + 'CKLabels',
                     'axis',
                     labels,
                     margin,
@@ -377,7 +376,7 @@ class Heatmap {
 
         me.cells = new Cells(
             me.container.svg,
-            'heatmapCells',
+            'heatmap-cells',
             me.dataset.matrix,
             key,
             function (d) { return col.scaleCell(d.col); },
@@ -394,7 +393,7 @@ class Heatmap {
 
         col.cellsSub = new Cells(
             me.container.svg,
-            'colCellsSub',
+            'col-cells-sub',
             me.dataset.matrix,
             key,
             me.cells.attrs.x, // inherit x attribute from cells
@@ -405,7 +404,7 @@ class Heatmap {
         );
         row.cellsSub = new Cells(
             me.container.svg,
-            'rowCellsSub',
+            'row-cells-sub',
             me.dataset.matrix,
             key,
             function (d) { return col.scaleCellSub(d.col); },
@@ -417,7 +416,7 @@ class Heatmap {
 
         me.colorKey.cells.none = new Cells(
             me.container.svg,
-            'colorKeyCellsNone',
+            'color-key-cells-none',
             me.heatmapColors,
             identity,
             function () { return 0; },
@@ -428,7 +427,7 @@ class Heatmap {
         );
         me.colorKey.cells.col = new Cells(
             me.container.svg,
-            'colorKeyCellsCol',
+            'color-key-cells-col',
             me.heatmapColors,
             identity,
             function () { return 0; },
@@ -439,7 +438,7 @@ class Heatmap {
         );
         me.colorKey.cells.row = new Cells(
             me.container.svg,
-            'colorKeyCellsRow',
+            'color-key-cells-row',
             me.heatmapColors,
             identity,
             function () { return 0; },
@@ -450,7 +449,7 @@ class Heatmap {
         );
         me.colorKey.cells.bucket = new Cells(
             me.container.svg,
-            'colorKeyCellsBucket',
+            'color-key-cells-bucket',
             me.bucketColors,
             identity,
             function () { return 0; },
@@ -485,7 +484,7 @@ class Heatmap {
 
             dim.sideColors = new Cells(
                 me.container.svg,
-                dim.self + 'SideColors',
+                dim.self + '-side-colors',
                 dim.labelsAnnotated,
                 key,
                 (dim.self === 'col' ? function (d) { return col.scaleCell(d.key); } : function () { return 0; }),
@@ -496,7 +495,7 @@ class Heatmap {
             );
             dim.annoColors = new Cells(
                 me.container.svg,
-                dim.self + 'AnnoColors',
+                dim.self + '-anno-colors',
                 dim.annotations[dim.annoBy],
                 identity,
                 function () { return 0; },
@@ -538,7 +537,6 @@ class Heatmap {
 
         row.labels = new Labels(
             me.container.svg,
-            'rowLabels',
             'axis',
             row.names,
             row.sizeHeatmap,
@@ -549,7 +547,6 @@ class Heatmap {
         );
         col.labels = new Labels(
             me.container.svg,
-            'colLabels',
             'axis',
             col.names,
             col.sizeHeatmap,
@@ -560,7 +557,6 @@ class Heatmap {
         );
         row.labelsSub = new Labels(
             me.container.svg,
-            'rowLabelsSub',
             'axis',
             row.names,
             row.sizeHeatmap,
@@ -571,7 +567,6 @@ class Heatmap {
         );
         col.labelsSub = new Labels(
             me.container.svg,
-            'colLabelsSub',
             'axis',
             col.names,
             col.sizeHeatmap,
@@ -584,7 +579,6 @@ class Heatmap {
         if (row.annotated) {
             row.labelsAnno = new Labels(
                 me.container.svg,
-                'rowLabelsAnno',
                 'axis',
                 row.annotations[row.annoBy],
                 function () { return row.marginAnnoHeight; },
@@ -597,7 +591,6 @@ class Heatmap {
         if (col.annotated) {
             col.labelsAnno = new Labels(
                 me.container.svg,
-                'colLabelsAnno',
                 'axis',
                 col.annotations[col.annoBy],
                 function () { return col.marginAnnoHeight; },
@@ -644,21 +637,18 @@ class Heatmap {
         // These represent the titles on the columns of cells at the right.
         //----------------------------------------------------------------------
 
-        if (col.annotated) {
-            col.annoTitle = new Title(
+        annoTitleSetup(col);
+        annoTitleSetup(row);
+
+        function annoTitleSetup (dim) {
+            if (!dim.annotated) {
+                return;
+            }
+
+            dim.annoTitle = new Title(
                 me.container.svg,
-                'colAnnoTitle',
                 'annoTitle',
-                undersToSpaces(col.annoBy),
-                me.FONT_SIZE_CK
-            );
-        }
-        if (row.annotated) {
-            row.annoTitle = new Title(
-                me.container.svg,
-                'rowAnnoTitle',
-                'annoTitle',
-                undersToSpaces(row.annoBy),
+                undersToSpaces(dim.annoBy),
                 me.FONT_SIZE_CK
             );
         }
