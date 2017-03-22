@@ -41,8 +41,8 @@ class Heatmap extends Widget {
         // holds all HTML and SVG elements
         me.container = new SVGContainer(
             me.id,
-            'heatmap',
-            'heatmapSVG',
+            'd3-helpers-widget-div',
+            'd3-helpers-widget-svg',
             function () { me.resize.call(me); },
             me.options.SVG_MARGINS,
             (options.height || me.options.DEFAULT_HEIGHT)
@@ -154,6 +154,8 @@ class Heatmap extends Widget {
         col.sizeHeatmap = function() { return me.sizeHeatmap(row) - me.marginAnnoColor - me.marginAnnoLabel; };
         row.sizeHeatmap = function() { return me.sizeHeatmap(col); };
 
+        me.scalingDim = col.self;
+
         annotypesSetup(col);
         annotypesSetup(row);
 
@@ -237,9 +239,6 @@ class Heatmap extends Widget {
             me.container.svg.call(dim.tooltip);
             me.container.svg.call(dim.annoTooltip);
         }
-
-        me.settingsHidden = true;
-        me.settingsPanel = me.settingsPanelSetup();
 
         //----------------------------------------------------------------------
         //                                  SCALES
@@ -334,7 +333,7 @@ class Heatmap extends Widget {
             addTitle: function (svg, name, text, fontSize) {
                 var me = this;
 
-                me.titles[name] = new Title(svg, 'annoTitle', text, fontSize);
+                me.titles[name] = new Title(svg, 'bold', text, fontSize);
             },
 
             addLabels: function (svg, name, labels, margin, fontSize) {
@@ -466,9 +465,16 @@ class Heatmap extends Widget {
 
         // attach event listeners
         me.cells.selection
-            .on('mouseover', me.cellTooltip.show)
-            .on('mouseout', me.cellTooltip.hide)
-            .on('click', function () { me.toggleSettingsPanel(this, me.cellTooltip); });
+            .on('mouseover', function (d) {
+                d3.select(this)
+                    .style('opacity', 0.5);
+                me.cellTooltip.show(d);
+            })
+            .on('mouseout', function () {
+                d3.select(this)
+                    .style('opacity', 1);
+                me.cellTooltip.hide();
+            });
 
         // initialize fills
         me.cells.updateVis(['fill']);
@@ -512,12 +518,27 @@ class Heatmap extends Widget {
 
             // attach event listeners
             dim.sideColors.selection
-                .on('mouseover', dim.tooltip.show)
-                .on('mouseout', dim.tooltip.hide)
-                .on('click', function () { me.toggleSettingsPanel(this, dim.tooltip); });
+                .on('mouseover', function (d) {
+                    d3.select(this)
+                        .style('opacity', 0.5);
+                    dim.tooltip.show(d);
+                })
+                .on('mouseout', function () {
+                    d3.select(this)
+                        .style('opacity', 1);
+                    dim.tooltip.hide();
+                });
             dim.annoColors.selection
-                .on('mouseover', dim.annoTooltip.show)
-                .on('mouseout', dim.annoTooltip.hide);
+                .on('mouseover', function (d) {
+                    d3.select(this)
+                        .style('opacity', 0.5);
+                    dim.annoTooltip.show(d);
+                })
+                .on('mouseout', function () {
+                    d3.select(this)
+                        .style('opacity', 1);
+                    dim.annoTooltip.hide();
+                });
 
             // initialize fills
             dim.sideColors.updateVis(['fill']);
@@ -652,7 +673,7 @@ class Heatmap extends Widget {
 
             dim.annoTitle = new Title(
                 me.container.svg,
-                'annoTitle',
+                'bold',
                 undersToSpaces(dim.annoBy),
                 me.options.FONT_SIZE_CK
             );
@@ -795,10 +816,6 @@ class Heatmap extends Widget {
     onBrush (dim) {
         var me = this;
 
-        // hide the settings panel in case it's visible
-        me.settingsPanel.classed('hidden', true);
-        me.settingsHidden = true;
-
         if (!me.renderOnBrushEnd) {
             // bounds of brushed -> row/column
             var inverses = d3.event.selection.map(dim.brusher.inverter);
@@ -822,10 +839,6 @@ class Heatmap extends Widget {
                 me.renderScope(dim, true);
             }
         } else {
-
-            // hide the settings panel in case it's visible
-            me.settingsPanel.classed('hidden', true);
-            me.settingsHidden = true;
 
             // reset scope
           	dim.currentScope = [0, dim.names.length];
@@ -1099,94 +1112,6 @@ class Heatmap extends Widget {
     // These handle the setup and displaying of various visual/interactive
     // elements in the heatmap.
     //--------------------------------------------------------------------------
-
-    // TODO clean this up, hopefully by converting to d3-tip
-    settingsPanelSetup () {
-        var me = this;
-        var col = me.col;
-        var row = me.row;
-
-        var panel = me.container.div
-            .append('div')
-            .attr('id', 'settings')
-    		.attr('class', 'tooltip')
-            .classed('hidden', true);
-        panel.append('p').text('Settings');
-        panel.append('button').text('Fit to Labels').on('click', function () { me.resize.call(me); });
-        panel.append('button').text('Close Settings').on('click', function () {
-            me.settingsHidden = !me.settingsHidden;
-            panel.classed('hidden', me.settingsHidden);
-        });
-    	var table = panel.append('table');
-    	var row1 = table.append('tr');
-        row1.append('td').append('p').text('Scale by');
-        var scaleBy = row1.append('td').append('select')
-    	   .on('change', function () { me.updateColorScaling(this.value); });
-    	scaleBy.selectAll('option')
-            .data([
-                { value: col.self, text: col.title },
-                { value: row.self, text: row.title },
-                { value: 'none', text: 'None' },
-                { value: 'bucket', text: 'Buckets' }
-            ])
-            .enter()
-            .append('option')
-            .attr('value', function (d) { return d.value; })
-            .text(function (d) { return d.text; });
-    	me.scalingDim = col.self;
-
-        if (row.annotated) controlsSetup(row);
-        if (col.annotated) controlsSetup(col);
-
-        function controlsSetup (dim) {
-            var r1 = table.append('tr');
-            var r2 = table.append('tr');
-            r1.append('td').append('p').text(dim.title + 's: annotate by');
-            r2.append('td').append('p').text(dim.title + 's: sort by');
-            dim.annoByDropdown = selectorSetup(r1, dim, me.annoUpdate);
-            dim.sortByDropdown = selectorSetup(r2, dim, me.sortUpdate);
-            dim.annoByDropdown.selectAll('option')
-                .data(dim.annotypes)
-                .enter()
-                .append('option')
-                .attr('value', identity)
-                .text(function (d) { return undersToSpaces(d); });
-            dim.sortByDropdown.selectAll('option')
-                .data(['Clustered Order'].concat(dim.annotypes))
-                .enter()
-                .append('option')
-                .attr('value', identity)
-                .text(function (d) { return undersToSpaces(d); });
-        }
-
-        function selectorSetup (s, dim, update) {
-            return s.append('td').append('select').on('change', function () { update.call(me, dim, this.value); });
-        }
-
-        return panel;
-    }
-
-    // positions the settings panel at the lower-right corner of the cell
-    // (clickedRect). Sets settingsHidden to !settingsHidden and then hides the
-    // given tooltip if settingsHidden is false and hides the settings panel if
-    // settingsHidden is true (else shows the settings panel)
-    toggleSettingsPanel (clickedRect, tooltip) {
-        var me = this;
-
-        me.settingsHidden = !me.settingsHidden;
-        if (!me.settingsHidden) {
-            tooltip.hide();
-        }
-        var box = clickedRect.getBoundingClientRect();
-        var anchor = [
-            box.left + box.width + window.pageXOffset,
-            box.top + box.height + window.pageYOffset
-        ];
-        me.settingsPanel
-            .style('left', anchor[0] + 'px')
-            .style('top', anchor[1] + 'px')
-            .classed('hidden', me.settingsHidden);
-    }
 
     positionAllElements () {
         var me = this;
