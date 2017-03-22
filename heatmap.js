@@ -889,9 +889,9 @@ class Heatmap extends Widget {
     // annotates the rows/columns (depending on dim) and updates the respective
     // annotation colors by the currently selected annotation option for the
     // given dimension
-    annoUpdate (dim, newAnnotype) {
+    annoUpdate (dim, annotype) {
         var me = this;
-        dim.annoBy = newAnnotype;
+        dim.annoBy = annotype;
         var values = dim.annotations[dim.annoBy];
 
         // scale updates
@@ -958,14 +958,15 @@ class Heatmap extends Widget {
 
     // updates the fill of the heatmap cells based on the currently selected
     // scaling option
-    updateColorScaling (newScalingDim) {
+    updateColorScaling (scalingDim) {
         var me = this;
-        me.scalingDim = newScalingDim;
+        me.scalingDim = scalingDim;
 
-        // scale update
-        if (me.scalingDim !== 'bucket') {
-            me.mainColorScale.domain(me.scalingDim === 'none' ? [me.dataset.stats.totalMin, me.dataset.stats.totalMax]
-                : [-me.dataset.stats.zMax[me.scalingDim], me.dataset.stats.zMax[me.scalingDim]]);
+        // scale update (NOTE no scale update for 'bucket')
+        if (me.scalingDim === 'none') {
+            me.mainColorScale.domain([me.dataset.stats.totalMin, me.dataset.stats.totalMax]);
+        } else if (me.scalingDim === 'col' || me.scalingDim === 'row') {
+            me.mainColorScale.domain([-me.dataset.stats.zMax[me.scalingDim], me.dataset.stats.zMax[me.scalingDim]]);
         }
 
         // visual updates
