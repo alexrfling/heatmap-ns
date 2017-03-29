@@ -33,7 +33,7 @@ class Heatmap extends Widget {
         me.midColor = (options.midColor || 'black');
         me.highColor = (options.highColor || 'orange');
         me.numColors = (options.numColors || 256);
-        me.heatmapColors = interpolateColors(me.lowColor, me.midColor, me.highColor, me.numColors);
+        me.heatmapColors = me.interpolateColors(me.lowColor, me.midColor, me.highColor, me.numColors);
 
         // clear out DOM elements inside parent
         me.destroy();
@@ -214,11 +214,10 @@ class Heatmap extends Widget {
                 .offset([0, 0])
                 .html(function (d) {
                     var keys = Object.keys(d.annos);
-                    var labels = keys.map(undersToSpaces);
                     var html = '<table>';
 
                     for (var j = 0; j < keys.length; j++) {
-                        html += '<tr><td>' + labels[j] + '</td><td>' + d.annos[keys[j]] + '</td></tr>'
+                        html += '<tr><td>' + keys[j] + '</td><td>' + d.annos[keys[j]] + '</td></tr>'
                     }
 
                     html += '</table>';
@@ -231,7 +230,7 @@ class Heatmap extends Widget {
                 .offset([0, -10])
                 .html(function (d) {
                     return '<table>' +
-                        '<tr><td>' + undersToSpaces(dim.annoBy) + '</td><td>' + d + '</td></tr>' +
+                        '<tr><td>' + dim.annoBy + '</td><td>' + d + '</td></tr>' +
                         '</table>';
                 });
 
@@ -382,7 +381,7 @@ class Heatmap extends Widget {
             me.container.svg,
             'heatmap-cells',
             me.dataset.matrix,
-            key,
+            me.key,
             function (d) { return col.scaleCell(d.col); },
             function (d) { return row.scaleCell(d.row); },
             function () { return col.scaleCell.bandwidth(); },
@@ -390,7 +389,7 @@ class Heatmap extends Widget {
             function (d) {
                 if (me.scalingDim === 'none') return me.mainColorScale(d.value);
                 if (me.scalingDim === 'bucket') return me.bucketizer.bucketize(d.value);
-                var ref = me.dataset.stats[me.scalingDim][dotsToUnders(d[me.scalingDim])];
+                var ref = me.dataset.stats[me.scalingDim][me.htmlEscape(d[me.scalingDim])];
                 return me.mainColorScale((d.value - ref.mean) / ref.stdev);
             }
         );
@@ -399,7 +398,7 @@ class Heatmap extends Widget {
             me.container.svg,
             'col-cells-sub',
             me.dataset.matrix,
-            key,
+            me.key,
             me.cells.attrs.x, // inherit x attribute from cells
             function (d) { return row.scaleCellSub(d.row); },
             me.cells.attrs.width, // inherit width attribute from cells
@@ -410,7 +409,7 @@ class Heatmap extends Widget {
             me.container.svg,
             'row-cells-sub',
             me.dataset.matrix,
-            key,
+            me.key,
             function (d) { return col.scaleCellSub(d.col); },
             me.cells.attrs.y, // inherit y attribute from cells
             function () { return col.scaleCellSub.bandwidth(); },
@@ -422,45 +421,45 @@ class Heatmap extends Widget {
             me.container.svg,
             'color-key-cells-none',
             me.heatmapColors,
-            identity,
+            me.identity,
             function () { return 0; },
             function (d) { return me.scaleGradient(d); },
             function () { return me.marginAnnoColor; },
             function () { return me.scaleGradient.bandwidth(); },
-            identity
+            me.identity
         );
         me.colorKey.cells.col = new Cells(
             me.container.svg,
             'color-key-cells-col',
             me.heatmapColors,
-            identity,
+            me.identity,
             function () { return 0; },
             function (d) { return me.scaleGradient(d); },
             function () { return me.marginAnnoColor; },
             function () { return me.scaleGradient.bandwidth(); },
-            identity
+            me.identity
         );
         me.colorKey.cells.row = new Cells(
             me.container.svg,
             'color-key-cells-row',
             me.heatmapColors,
-            identity,
+            me.identity,
             function () { return 0; },
             function (d) { return me.scaleGradient(d); },
             function () { return me.marginAnnoColor; },
             function () { return me.scaleGradient.bandwidth(); },
-            identity
+            me.identity
         );
         me.colorKey.cells.bucket = new Cells(
             me.container.svg,
             'color-key-cells-bucket',
             me.bucketColors,
-            identity,
+            me.identity,
             function () { return 0; },
             function (d) { return me.scaleBucket(d); },
             function () { return me.marginAnnoColor; },
             function () { return me.scaleBucket.bandwidth(); },
-            identity
+            me.identity
         );
 
         // attach event listeners
@@ -497,7 +496,7 @@ class Heatmap extends Widget {
                 me.container.svg,
                 dim.self + '-side-colors',
                 dim.labelsAnnotated,
-                key,
+                me.key,
                 (dim.self === 'col' ? function (d) { return col.scaleCell(d.key); } : function () { return 0; }),
                 (dim.self === 'row' ? function (d) { return row.scaleCell(d.key); } : function () { return 0; }),
                 (dim.self === 'col' ? me.cells.attrs.width : function () { return row.marginSideColor - me.options.SIDE_COLOR_OFFSET; }),
@@ -508,7 +507,7 @@ class Heatmap extends Widget {
                 me.container.svg,
                 dim.self + '-anno-colors',
                 dim.annotations[dim.annoBy],
-                identity,
+                me.identity,
                 function () { return 0; },
                 function (d) { return dim.scaleAnnoColor(d); },
                 function () { return me.marginAnnoColor; },
@@ -674,7 +673,7 @@ class Heatmap extends Widget {
             dim.annoTitle = new Title(
                 me.container.svg,
                 'bold',
-                undersToSpaces(dim.annoBy),
+                dim.annoBy,
                 me.options.FONT_SIZE_CK
             );
         }
@@ -921,8 +920,8 @@ class Heatmap extends Widget {
         dim.labelsAnno.updateNames(values);
 
         // visual updates
-        dim.annoTitle.setText(undersToSpaces(dim.annoBy));
-        dim.annoColors.updateData(values, identity);
+        dim.annoTitle.setText(dim.annoBy);
+        dim.annoColors.updateData(values, me.identity);
         dim.annoColors.updateVis(['x', 'y', 'width', 'height', 'fill']);
         dim.labelsAnno.updateVis();
         dim.sideColors.selection
@@ -954,7 +953,7 @@ class Heatmap extends Widget {
             });
         }
 
-        dim.names = (annotype === 'Clustered Order' ? dim.clustOrder : dim.labelsAnnotated.map(key));
+        dim.names = (annotype === 'Clustered Order' ? dim.clustOrder : dim.labelsAnnotated.map(me.key));
 
         // update scales
         dim.scaleCell.domain(dim.names);
@@ -1212,6 +1211,7 @@ class Heatmap extends Widget {
     // parses the given string into the data structures used for generating the
     // heatmap
     parseDataset (file, parsed) {
+        var me = this;
         var matrix, colnames, rownames;
 
         // this will hold all relevant statistics for the dataset
@@ -1276,8 +1276,8 @@ class Heatmap extends Widget {
 
         matrix.forEach(function (array) {
             array.forEach(function (element) {
-                updateStats(stats, 'col', dotsToUnders(element.col), element.value);
-                updateStats(stats, 'row', dotsToUnders(element.row), element.value);
+                updateStats(stats, 'col', me.htmlEscape(element.col), element.value);
+                updateStats(stats, 'row', me.htmlEscape(element.row), element.value);
             });
         });
 
@@ -1306,8 +1306,8 @@ class Heatmap extends Widget {
             for (var k = 0; k < matrix[j].length; k++) {
                 // grab the value and compute its z-score for to its row/col
                 var value = matrix[j][k].value;
-                var colname = dotsToUnders(colnames[k]);
-                var rowname = dotsToUnders(rownames[j]);
+                var colname = me.htmlEscape(colnames[k]);
+                var rowname = me.htmlEscape(rownames[j]);
                 var colZ = (value - stats.col[colname].mean) / stats.col[colname].stdev;
                 var rowZ = (value - stats.row[rowname].mean) / stats.row[rowname].stdev;
 
@@ -1366,6 +1366,8 @@ class Heatmap extends Widget {
     // parses the given string into the data structures used for annotating and
     // sorting the heatmap
     parseAnnotations (file) {
+        var me = this;
+
         // add a nameKey if there isn't one
         file = (file.charAt(0) === ',' ? 'Name' + file : file);
 
@@ -1380,7 +1382,7 @@ class Heatmap extends Widget {
         var annotypes = parsedRows.shift(); // NOTE modifies parsedRows as well
 
         // periods in names of annotypes will mess up JS code
-        annotypes = annotypes.map(dotsToUnders);
+        annotypes = annotypes.map(me.htmlEscape);
 
         // trims annotypes down to JUST the actual annotation types
         var nameKey = annotypes.shift();
@@ -1445,7 +1447,7 @@ class Heatmap extends Widget {
             var keys = Object.keys(obj);
 
             for (var j = 0; j < keys.length; j++) {
-                objClean[dotsToUnders(keys[j])] = (obj[keys[j]] || NA);
+                objClean[me.htmlEscape(keys[j])] = (obj[keys[j]] || NA);
             }
 
             return {
