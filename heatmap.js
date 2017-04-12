@@ -151,7 +151,7 @@ class Heatmap extends Widget {
         row.pos = 'y';
         col.size = 'width';
         row.size = 'height';
-        col.sizeHeatmap = function() { return me.sizeHeatmap(row) - me.marginAnnoColor - me.marginAnnoLabel; };
+        col.sizeHeatmap = function() { return me.sizeHeatmap(row) - me.marginAnnoTotal; };
         row.sizeHeatmap = function() { return me.sizeHeatmap(col); };
 
         me.scalingDim = col.self;
@@ -325,6 +325,7 @@ class Heatmap extends Widget {
                 var names = Object.keys(me.labels);
 
                 for (var j = 0; j < names.length; j++) {
+                    me.labels[names[j]].updateLabels();
                     me.labels[names[j]].updateVis();
                 }
             },
@@ -335,7 +336,7 @@ class Heatmap extends Widget {
                 me.titles[name] = new Title(svg, 'bold', text, fontSize);
             },
 
-            addLabels: function (svg, name, labels, margin, fontSize) {
+            addLabels: function (svg, name, labels, margin, fontSize, maxLabelLength) {
                 var me = this;
 
                 me.labels[name] = new Labels(
@@ -346,6 +347,7 @@ class Heatmap extends Widget {
                     me.cells[name].attrs.height,
                     false,
                     fontSize,
+                    maxLabelLength,
                     'right'
                 );
             },
@@ -568,6 +570,7 @@ class Heatmap extends Widget {
             me.cells.attrs.height,
             false,
             me.options.FONT_SIZE,
+            function () { return row.marginLabel - 3 * me.options.AXIS_OFFSET; },
             'right'
         );
         col.labels = new Labels(
@@ -578,6 +581,7 @@ class Heatmap extends Widget {
             me.cells.attrs.width,
             true,
             me.options.FONT_SIZE,
+            function () { return col.marginLabel - 2 * me.options.AXIS_OFFSET; },
             'bottom'
         );
         row.labelsSub = new Labels(
@@ -588,6 +592,7 @@ class Heatmap extends Widget {
             me.cells.attrs.height,
             false,
             me.options.FONT_SIZE,
+            function () { return row.marginLabelSub - 3 * me.options.AXIS_OFFSET; },
             'right'
         );
         col.labelsSub = new Labels(
@@ -598,6 +603,7 @@ class Heatmap extends Widget {
             me.cells.attrs.width,
             true,
             me.options.FONT_SIZE,
+            function () { return col.marginLabelSub - 2 * me.options.AXIS_OFFSET; },
             'bottom'
         );
 
@@ -610,6 +616,7 @@ class Heatmap extends Widget {
                 row.annoColors.attrs.height,
                 false,
                 me.options.FONT_SIZE,
+                function () { return me.marginAnnoLabel - 4 * me.options.AXIS_OFFSET; },
                 'right'
             );
         }
@@ -622,6 +629,7 @@ class Heatmap extends Widget {
                 col.annoColors.attrs.height,
                 false,
                 me.options.FONT_SIZE,
+                function () { return me.marginAnnoLabel - 4 * me.options.AXIS_OFFSET; },
                 'right'
             );
         }
@@ -633,28 +641,32 @@ class Heatmap extends Widget {
                 return i < me.bucketDividers.length ? '< ' + d : '>= ' + d;
             }),
             function () { return me.marginColorKey; },
-            me.options.FONT_SIZE
+            me.options.FONT_SIZE,
+            function () { return me.marginAnnoLabel - 4 * me.options.AXIS_OFFSET; }
         );
         me.colorKey.addLabels(
             me.container.svg,
             'none',
-            [me.dataset.stats.totalMin, (me.dataset.stats.totalMin + me.dataset.stats.totalMax ) / 2, me.dataset.stats.totalMax],
+            [String(me.dataset.stats.totalMin), String((me.dataset.stats.totalMin + me.dataset.stats.totalMax ) / 2), String(me.dataset.stats.totalMax)],
             function () { return me.marginColorKey; },
-            me.options.FONT_SIZE
+            me.options.FONT_SIZE,
+            function () { return me.marginAnnoLabel - 4 * me.options.AXIS_OFFSET; }
         );
         me.colorKey.addLabels(
             me.container.svg,
             'row',
-            [-me.dataset.stats.zMax.row.toFixed(2), 0, me.dataset.stats.zMax.row.toFixed(2)],
+            [String(-me.dataset.stats.zMax.row.toFixed(2)), '0', String(me.dataset.stats.zMax.row.toFixed(2))],
             function () { return me.marginColorKey; },
-            me.options.FONT_SIZE
+            me.options.FONT_SIZE,
+            function () { return me.marginAnnoLabel - 4 * me.options.AXIS_OFFSET; }
         );
         me.colorKey.addLabels(
             me.container.svg,
             'col',
-            [-me.dataset.stats.zMax.col.toFixed(2), 0, me.dataset.stats.zMax.col.toFixed(2)],
+            [String(-me.dataset.stats.zMax.col.toFixed(2)), '0', String(me.dataset.stats.zMax.col.toFixed(2))],
             function () { return me.marginColorKey; },
-            me.options.FONT_SIZE
+            me.options.FONT_SIZE,
+            function () { return me.marginAnnoLabel - 4 * me.options.AXIS_OFFSET; }
         );
 
         //----------------------------------------------------------------------
@@ -844,7 +856,7 @@ class Heatmap extends Widget {
 
             // scale updates
             dim.scaleCell.domain(dim.names);
-            dim.labels.updateNames(dim.names);
+            dim.labels.updateLabels(dim.names);
 
             // visual updates
             dim.labels.updateVis(me.options.ANIM_DURATION);
@@ -870,7 +882,7 @@ class Heatmap extends Widget {
 
         // scale updates
         dim.scaleCell.domain(scopeArray);
-        dim.labels.updateNames(scopeArray);
+        dim.labels.updateLabels(scopeArray);
 
         // visual updates
         // TODO make 'transition' a numerical parameter
@@ -917,7 +929,7 @@ class Heatmap extends Widget {
             dim.numToColor = dim.annoReg;
         }
         dim.scaleAnnoColor.domain(values);
-        dim.labelsAnno.updateNames(values);
+        dim.labelsAnno.updateLabels(values);
 
         // visual updates
         dim.annoTitle.setText(dim.annoBy);
@@ -959,7 +971,7 @@ class Heatmap extends Widget {
         dim.scaleCell.domain(dim.names);
         dim.scaleCellSub.domain(dim.names);
         dim.brusher.inverter.range(dim.names);
-        dim.labelsSub.updateNames(dim.names);
+        dim.labelsSub.updateLabels(dim.names);
 
         // visual updates for the brushable heatmaps
         dim.labelsSub.updateVis(me.options.ANIM_DURATION);
@@ -993,15 +1005,16 @@ class Heatmap extends Widget {
         var col = me.col;
         var row = me.row;
 
-        me.marginAnnoColor = Math.floor(me.container.svgWidth / 50);
-        me.marginAnnoLabel = Math.min(Math.floor(me.container.svgWidth / 4), Math.floor(annoMax() + me.options.AXIS_OFFSET));
+        me.marginAnnoTotal = Math.max(Math.floor(me.container.svgWidth / 8), annoMax());
+        me.marginAnnoColor = 20;
+        me.marginAnnoLabel = me.marginAnnoTotal - me.marginAnnoColor;
         me.marginAnnoTitle = me.options.FONT_SIZE_CK + 2 * me.options.ANNO_TITLE_OFFSET;
         col.marginTotal = me.container.svgHeight;
         row.marginTotal = me.container.svgWidth;
-        col.marginLabel = (col.labels ? Math.ceil(col.labels.getBox().height + 2 * me.options.AXIS_OFFSET) : 0);
-        row.marginLabel = (row.labels ? Math.ceil(row.labels.getBox().width + 2 * me.options.AXIS_OFFSET) : 0);
-        col.marginLabelSub = (col.labelsSub ? Math.ceil(col.labelsSub.getBox().height + 2 * me.options.AXIS_OFFSET) : 0);
-        row.marginLabelSub = (row.labelsSub ? Math.ceil(row.labelsSub.getBox().width + 2 * me.options.AXIS_OFFSET) : 0);
+        col.marginLabel = Math.floor(me.container.svgHeight / 10);
+        row.marginLabel = Math.floor(me.container.svgWidth / 10);
+        col.marginLabelSub = col.marginLabel;
+        row.marginLabelSub = row.marginLabel;
         col.marginBrush = Math.floor(me.container.svgHeight / 10);
         row.marginBrush = Math.floor(me.container.svgHeight / 10);
         me.marginColorKey = Math.floor(me.container.svgHeight / 4) - me.marginAnnoTitle;
@@ -1016,14 +1029,11 @@ class Heatmap extends Widget {
         }
 
         function annoMax () {
-            var cM1 = (col.labelsAnno ? col.labelsAnno.getBox().width + 2 * me.options.AXIS_OFFSET : 0);
-            var rM1 = (row.labelsAnno ? row.labelsAnno.getBox().width + 2 * me.options.AXIS_OFFSET : 0);
-            var cM2 = (col.annoTitle ? col.annoTitle.getBox().width - me.marginAnnoColor + me.options.AXIS_OFFSET : 0);
-            var rM2 = (row.annoTitle ? row.annoTitle.getBox().width - me.marginAnnoColor + me.options.AXIS_OFFSET : 0);
-            var ck1 = (me.colorKey ? me.colorKey.labels[me.scalingDim].getBox().width + 2 * me.options.AXIS_OFFSET : 0);
-            var ck2 = (me.colorKey ? me.colorKey.titles[me.scalingDim].getBox().width - me.marginAnnoColor + me.options.AXIS_OFFSET : 0);
+            var colTitleLength = (col.annoTitle ? col.annoTitle.getBox().width : 0);
+            var rowTitleLength = (row.annoTitle ? row.annoTitle.getBox().width : 0);
+            var colorKeyTitleLength = (me.colorKey ? me.colorKey.titles[me.scalingDim].getBox().width : 0);
 
-            return Math.max(cM1, rM1, cM2, rM2, ck1, ck2);
+            return Math.ceil(Math.max(colTitleLength, rowTitleLength, colorKeyTitleLength) + 10);
         }
     }
 
@@ -1131,6 +1141,7 @@ class Heatmap extends Widget {
             dim.labels.position();
             dim.labels.updateVis();
             dim.labelsSub.position();
+            dim.labelsSub.updateLabels();
             dim.labelsSub.updateVis();
             dim.cellsSub.position();
             dim.cellsSub.updateVis(['x', 'y', 'width', 'height']);
@@ -1138,6 +1149,7 @@ class Heatmap extends Widget {
 
             if (dim.annotated) {
                 dim.labelsAnno.position();
+                dim.labelsAnno.updateLabels();
                 dim.labelsAnno.updateVis();
                 dim.sideColors.position();
                 dim.sideColors.updateVis(['x', 'y', 'width', 'height']);
