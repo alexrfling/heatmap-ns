@@ -935,6 +935,17 @@ class Heatmap extends Widget {
         dim.annoTitle.setText(dim.annoBy);
         dim.annoColors.updateData(values, me.identity);
         dim.annoColors.updateVis(['x', 'y', 'width', 'height', 'fill']);
+        dim.annoColors.selection
+            .on('mouseover', function (d) {
+                d3.select(this)
+                    .style('opacity', 0.5);
+                dim.annoTooltip.show(d);
+            })
+            .on('mouseout', function () {
+                d3.select(this)
+                    .style('opacity', 1);
+                dim.annoTooltip.hide();
+            });
         dim.labelsAnno.updateVis();
         dim.sideColors.selection
             .transition()
