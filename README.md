@@ -9,10 +9,18 @@ in the strings, appended to the HTML element.
 ## Boilerplate
 In the head of your HTML document, include:
 ```html
-<link rel='stylesheet' type='text/css' href='heatmap.css'>
-<script src='d3/d3.min.js'></script>
-<script src='helpers.js'></script>
+<script src='d3-helpers/d3/d3.min.js'></script>
+<script src='d3-helpers/d3-tip/index.js'></script>
+<script src='d3-helpers/bucketizer.js'></script>
+<script src='d3-helpers/graphicalElement.js'></script>
+<script src='d3-helpers/cells.js'></script>
+<script src='d3-helpers/labels.js'></script>
+<script src='d3-helpers/svgContainer.js'></script>
+<script src='d3-helpers/title.js'></script>
+<script src='d3-helpers/widget.js'></script>
 <script src='heatmap.js'></script>
+<link rel='stylesheet' type='text/css' href='d3-helpers/d3-tip/examples/example-styles.css'>
+<link rel='stylesheet' type='text/css' href='d3-helpers/widget.css'>
 ```
 
 ## Usage
