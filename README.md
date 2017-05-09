@@ -29,7 +29,7 @@ In the head of your HTML document, include:
 
 ### Call
 ```js
-var heatmap = new Heatmap('heatmap');
+var heatmap = new Heatmap(id);
 heatmap.initialize(data, options);
 ```
 
