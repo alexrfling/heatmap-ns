@@ -1,6 +1,8 @@
 # heatmap-ns
 An interactive heatmap widget made with d3.js.
 
+![alt text](https://raw.githubusercontent.com/alexrfling/heatmap-ns/master/img/example.png)
+
 ## Overview
 The `heatmap` function takes the id of an HTML element, and up to three CSV-formatted strings (along
 with a number of other optional parameters), and generates an interactive heatmap of the data stored
