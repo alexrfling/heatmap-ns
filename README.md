@@ -114,21 +114,6 @@ than or equal to `bucketDividers[bucketDividers.length - 1]` will be given the c
 <b>bucketColors</b> - array of strings, of length 1 more than `bucketDividers`, indicating the
 colors for 'bucket' color scaling (default: `['red', 'orange', 'yellow', 'gray', 'cornflowerblue']`)
 
-<b>animDuration</b> - number of milliseconds animations should last (default: `1200`)
-
-<b>sideColorPad</b> - space, in pixels, between the heatmap and the row/column side colors
-(default: `3`)
-
-<b>annoTitlePad</b> - space, in pixels, between a color key title and its colorful cells
-(default: `7`)
-
-<b>axisPad</b> - space, in pixels, between the tickmarks of labels and their colorful cells
-(default: `5`)
-
-<b>fontSize</b> - font size, in pixels, of labels (default: `9`)
-
-<b>fontSizeCK</b> - font size, in pixels, of color key titles (default: `11`)
-
 <b>lowColor</b> - string representing the color for data with negative z-scores
 (default: `'cornflowerblue'`)
 
