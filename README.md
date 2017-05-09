@@ -62,20 +62,20 @@ See example.html for more example usage.
 
 ### Optional
 <b>colAnnoFile</b> - CSV-formatted string representing annotations for the columns of the data
-matrix in `datasetFile`
+matrix in `data`
 
 <b>rowAnnoFile</b> - CSV-formatted string representing annotations for the rows of the data matrix
-in `datasetFile`
+in `data`
 
-<b>colClustOrder</b> - array of strings (all of the column names in `datasetFile`) indicating the
+<b>colClustOrder</b> - array of strings (all of the column names in `data`) indicating the
 order in which the columns should be displayed in the heatmap (`colClustOrder[0]` will be the
 left-most column and `colClustOrder[colClustOrder.length - 1]` will be the right-most column). By
-default, the columns will be displayed in the order that they appear in `datasetFile`
+default, the columns will be displayed in the order that they appear in `data`
 
-<b>rowClustOrder</b> - array of strings (all of the row names in `datasetFile`) indicating the order
+<b>rowClustOrder</b> - array of strings (all of the row names in `data`) indicating the order
 in which the rows should be displayed in the heatmap (`rowClustOrder[0]` will be the top-most row
 and `rowClustOrder[rowClustOrder.length - 1]` will be the bottom-most row). By default, the rows
-will be displayed in the order that they appear in `datasetFile`
+will be displayed in the order that they appear in `data`
 
 <b>height</b> - the height, in pixels, of the widget (default: `600`). The width of the widget will
 be the same as the width of the HTML element with id `id`
