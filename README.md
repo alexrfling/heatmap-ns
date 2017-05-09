@@ -27,38 +27,38 @@ In the head of your HTML document, include:
 
 ### Call
 ```js
-heatmap(id, datasetFile, colAnnoFile, rowAnnoFile, colClustOrder, rowClustOrder,
-        height, renderOnBrushEnd, categorical,
-        colCatScheme, colConScheme, colAnnoHeatScheme,
-        rowCatScheme, rowConScheme, rowAnnoHeatScheme,
-        bucketDividers, bucketColors,
-        animDuration, sideColorPad, annoTitlePad, axisPad,
-      	fontSize, fontSizeCK, lowColor, midColor, highColor, numColors)
+var heatmap = new Heatmap('heatmap');
+heatmap.initialize(data, options);
 ```
 
 ### Example
 Element in the HTML document:
 ```html
-<div id='dataOverview'></div>
+<div id='heatmap'></div>
 ```
 Data in JavaScript:
 ```js
 var data = 'Row,ColumnOne,ColumnTwo\nRowOne,12,34\nRowTwo,56,78';
-var rowAnnos = 'Row,Analyte.Type,Is.Control\nRowOne,mRNA,true\nRowTwo,protein,false';
-var colAnnos = 'Column,Binding.Density\nColumnTwo,0.61\nColumnOne,0.9';
+var rowAnnoFile = 'Row,Analyte.Type,Is.Control\nRowOne,mRNA,true\nRowTwo,protein,false';
+var colAnnoFile = 'Column,Binding.Density\nColumnTwo,0.61\nColumnOne,0.9';
 ```
 Create an interactive heatmap of `data` annotated with `rowAnnos` and `colAnnos`:
 ```js
-heatmap('dataOverview', data, colAnnos, rowAnnos)
+var heatmap = new Heatmap('heatmap');
+var options = {
+    rowAnnoFile: rowAnnoFile,
+    colAnnoFile: colAnnoFile
+};
+heatmap.initialize(data, options);
 ```
-See heatmap.html for more example usage.
+See example.html for more example usage.
 
 ## Parameters
 
 ### Required
 <b>id</b> - the 'id' attribute of the HTML element to which the heatmap will be appended
 
-<b>datasetFile</b> - CSV-formatted string representing a numerical matrix of data
+<b>data</b> - CSV-formatted string representing a numerical matrix of data
 
 ### Optional
 <b>colAnnoFile</b> - CSV-formatted string representing annotations for the columns of the data

@@ -18,7 +18,7 @@ class Heatmap extends Widget {
         });
     }
 
-    initializeVis (datasetFile, options) {
+    initialize (datasetFile, options) {
         var me = this;
         options = (options || {});
 
