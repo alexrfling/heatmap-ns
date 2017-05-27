@@ -15,7 +15,7 @@ In the head of your HTML document, include:
 <script src='d3-helpers/d3-tip/index.js'></script>
 <script src='d3-helpers/bucketizer.js'></script>
 <script src='d3-helpers/graphicalElement.js'></script>
-<script src='d3-helpers/cells.js'></script>
+<script src='d3-helpers/elementCollection.js'></script>
 <script src='d3-helpers/labels.js'></script>
 <script src='d3-helpers/svgContainer.js'></script>
 <script src='d3-helpers/title.js'></script>
