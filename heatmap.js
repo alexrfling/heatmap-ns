@@ -43,9 +43,12 @@ class Heatmap extends Widget {
             me.id,
             'd3-helpers-widget-div',
             'd3-helpers-widget-svg',
-            function () { me.resize.call(me); },
             me.options.SVG_MARGINS,
-            (options.height || me.options.DEFAULT_HEIGHT)
+            options.width,
+            (options.height || me.options.DEFAULT_HEIGHT),
+            {
+                onWindowResize: (options.width ? null : function () { me.resize.call(me); })
+            }
         );
 
         // the 'dims' hold all elements relevant to the columns and rows of the
@@ -311,12 +314,14 @@ class Heatmap extends Widget {
                 }
             },
 
-            updateCells: function (attrs) {
+            updateCells: function () {
                 var me = this;
                 var names = Object.keys(me.cells);
 
                 for (var j = 0; j < names.length; j++) {
-                    me.cells[names[j]].updateVis(attrs);
+                    for (var k = 0; k < arguments.length; k++) {
+                        me.cells[names[j]].updateVis(arguments[k]);
+                    }
                 }
             },
 
@@ -341,7 +346,7 @@ class Heatmap extends Widget {
 
                 me.labels[name] = new Labels(
                     svg,
-                    'axis',
+                    'labels',
                     labels,
                     margin,
                     me.cells[name].attrs.height,
@@ -379,88 +384,109 @@ class Heatmap extends Widget {
         // y) of cells are relative their group, not to the SVG as a whole.
         //----------------------------------------------------------------------
 
-        me.cells = new Cells(
+        me.cells = new ElementCollection(
             me.container.svg,
             'heatmap-cells',
+            'rect',
+            {
+                x: function (d) { return col.scaleCell(d.col); },
+                y: function (d) { return row.scaleCell(d.row); },
+                width: function () { return col.scaleCell.bandwidth(); },
+                height: function () { return row.scaleCell.bandwidth(); },
+                fill: function (d) {
+                    if (me.scalingDim === 'none') return me.mainColorScale(d.value);
+                    if (me.scalingDim === 'bucket') return me.bucketizer.bucketize(d.value);
+                    var ref = me.dataset.stats[me.scalingDim][me.htmlEscape(d[me.scalingDim])];
+                    return me.mainColorScale((d.value - ref.mean) / ref.stdev);
+                }
+            },
             me.dataset.matrix,
-            me.key,
-            function (d) { return col.scaleCell(d.col); },
-            function (d) { return row.scaleCell(d.row); },
-            function () { return col.scaleCell.bandwidth(); },
-            function () { return row.scaleCell.bandwidth(); },
-            function (d) {
-                if (me.scalingDim === 'none') return me.mainColorScale(d.value);
-                if (me.scalingDim === 'bucket') return me.bucketizer.bucketize(d.value);
-                var ref = me.dataset.stats[me.scalingDim][me.htmlEscape(d[me.scalingDim])];
-                return me.mainColorScale((d.value - ref.mean) / ref.stdev);
-            }
+            me.key
         );
 
-        col.cellsSub = new Cells(
+        col.cellsSub = new ElementCollection(
             me.container.svg,
             'col-cells-sub',
+            'rect',
+            {
+                x: me.cells.attrs.x, // inherit x attribute from cells
+                y: function (d) { return row.scaleCellSub(d.row); },
+                width: me.cells.attrs.width, // inherit width attribute from cells
+                height: function () { return row.scaleCellSub.bandwidth(); },
+                fill: me.cells.attrs.fill // inherit fill attribute from cells
+            },
             me.dataset.matrix,
-            me.key,
-            me.cells.attrs.x, // inherit x attribute from cells
-            function (d) { return row.scaleCellSub(d.row); },
-            me.cells.attrs.width, // inherit width attribute from cells
-            function () { return row.scaleCellSub.bandwidth(); },
-            me.cells.attrs.fill // inherit fill attribute from cells
+            me.key
         );
-        row.cellsSub = new Cells(
+        row.cellsSub = new ElementCollection(
             me.container.svg,
             'row-cells-sub',
+            'rect',
+            {
+                x: function (d) { return col.scaleCellSub(d.col); },
+                y: me.cells.attrs.y, // inherit y attribute from cells
+                width: function () { return col.scaleCellSub.bandwidth(); },
+                height: me.cells.attrs.height, // inherit height attribute from cells
+                fill: me.cells.attrs.fill // inherit fill attribute from cells
+            },
             me.dataset.matrix,
-            me.key,
-            function (d) { return col.scaleCellSub(d.col); },
-            me.cells.attrs.y, // inherit y attribute from cells
-            function () { return col.scaleCellSub.bandwidth(); },
-            me.cells.attrs.height, // inherit height attribute from cells
-            me.cells.attrs.fill // inherit fill attribute from cells
+            me.key
         );
 
-        me.colorKey.cells.none = new Cells(
+        me.colorKey.cells.none = new ElementCollection(
             me.container.svg,
             'color-key-cells-none',
+            'rect',
+            {
+                x: function () { return 0; },
+                y: function (d) { return me.scaleGradient(d); },
+                width: function () { return me.marginAnnoColor; },
+                height: function () { return me.scaleGradient.bandwidth(); },
+                fill: me.identity
+            },
             me.heatmapColors,
-            me.identity,
-            function () { return 0; },
-            function (d) { return me.scaleGradient(d); },
-            function () { return me.marginAnnoColor; },
-            function () { return me.scaleGradient.bandwidth(); },
             me.identity
         );
-        me.colorKey.cells.col = new Cells(
+        me.colorKey.cells.col = new ElementCollection(
             me.container.svg,
             'color-key-cells-col',
+            'rect',
+            {
+                x: function () { return 0; },
+                y: function (d) { return me.scaleGradient(d); },
+                width: function () { return me.marginAnnoColor; },
+                height: function () { return me.scaleGradient.bandwidth(); },
+                fill: me.identity
+            },
             me.heatmapColors,
-            me.identity,
-            function () { return 0; },
-            function (d) { return me.scaleGradient(d); },
-            function () { return me.marginAnnoColor; },
-            function () { return me.scaleGradient.bandwidth(); },
             me.identity
         );
-        me.colorKey.cells.row = new Cells(
+        me.colorKey.cells.row = new ElementCollection(
             me.container.svg,
             'color-key-cells-row',
+            'rect',
+            {
+                x: function () { return 0; },
+                y: function (d) { return me.scaleGradient(d); },
+                width: function () { return me.marginAnnoColor; },
+                height: function () { return me.scaleGradient.bandwidth(); },
+                fill: me.identity
+            },
             me.heatmapColors,
-            me.identity,
-            function () { return 0; },
-            function (d) { return me.scaleGradient(d); },
-            function () { return me.marginAnnoColor; },
-            function () { return me.scaleGradient.bandwidth(); },
             me.identity
         );
-        me.colorKey.cells.bucket = new Cells(
+        me.colorKey.cells.bucket = new ElementCollection(
             me.container.svg,
             'color-key-cells-bucket',
+            'rect',
+            {
+                x: function () { return 0; },
+                y: function (d) { return me.scaleBucket(d); },
+                width: function () { return me.marginAnnoColor; },
+                height: function () { return me.scaleBucket.bandwidth(); },
+                fill: me.identity
+            },
             me.bucketColors,
-            me.identity,
-            function () { return 0; },
-            function (d) { return me.scaleBucket(d); },
-            function () { return me.marginAnnoColor; },
-            function () { return me.scaleBucket.bandwidth(); },
             me.identity
         );
 
@@ -478,13 +504,13 @@ class Heatmap extends Widget {
             });
 
         // initialize fills
-        me.cells.updateVis(['fill']);
-        col.cellsSub.updateVis(['fill']);
-        row.cellsSub.updateVis(['fill']);
-        me.colorKey.cells.none.updateVis(['fill']);
-        me.colorKey.cells.col.updateVis(['fill']);
-        me.colorKey.cells.row.updateVis(['fill']);
-        me.colorKey.cells.bucket.updateVis(['fill']);
+        me.cells.updateVis('fill');
+        col.cellsSub.updateVis('fill');
+        row.cellsSub.updateVis('fill');
+        me.colorKey.cells.none.updateVis('fill');
+        me.colorKey.cells.col.updateVis('fill');
+        me.colorKey.cells.row.updateVis('fill');
+        me.colorKey.cells.bucket.updateVis('fill');
 
         sideAndAnnoColorsSetup(col);
         sideAndAnnoColorsSetup(row);
@@ -494,27 +520,33 @@ class Heatmap extends Widget {
                 return;
             }
 
-            dim.sideColors = new Cells(
+            dim.sideColors = new ElementCollection(
                 me.container.svg,
                 dim.self + '-side-colors',
+                'rect',
+                {
+                    x: (dim.self === 'col' ? function (d) { return col.scaleCell(d.key); } : function () { return 0; }),
+                    y: (dim.self === 'row' ? function (d) { return row.scaleCell(d.key); } : function () { return 0; }),
+                    width: (dim.self === 'col' ? me.cells.attrs.width : function () { return row.marginSideColor - me.options.SIDE_COLOR_OFFSET; }),
+                    height: (dim.self === 'row' ? me.cells.attrs.height : function () { return col.marginSideColor - me.options.SIDE_COLOR_OFFSET; }),
+                    fill: function (d) { return dim.numToColor(dim.annoToNum(d.annos[dim.annoBy])); }
+                },
                 dim.labelsAnnotated,
-                me.key,
-                (dim.self === 'col' ? function (d) { return col.scaleCell(d.key); } : function () { return 0; }),
-                (dim.self === 'row' ? function (d) { return row.scaleCell(d.key); } : function () { return 0; }),
-                (dim.self === 'col' ? me.cells.attrs.width : function () { return row.marginSideColor - me.options.SIDE_COLOR_OFFSET; }),
-                (dim.self === 'row' ? me.cells.attrs.height : function () { return col.marginSideColor - me.options.SIDE_COLOR_OFFSET; }),
-                function (d) { return dim.numToColor(dim.annoToNum(d.annos[dim.annoBy])); }
+                me.key
             );
-            dim.annoColors = new Cells(
+            dim.annoColors = new ElementCollection(
                 me.container.svg,
                 dim.self + '-anno-colors',
+                'rect',
+                {
+                    x: function () { return 0; },
+                    y: function (d) { return dim.scaleAnnoColor(d); },
+                    width: function () { return me.marginAnnoColor; },
+                    height: function () { return dim.scaleAnnoColor.bandwidth(); },
+                    fill: function (d) { return dim.numToColor(dim.annoToNum(d)); }
+                },
                 dim.annotations[dim.annoBy],
-                me.identity,
-                function () { return 0; },
-                function (d) { return dim.scaleAnnoColor(d); },
-                function () { return me.marginAnnoColor; },
-                function () { return dim.scaleAnnoColor.bandwidth(); },
-                function (d) { return dim.numToColor(dim.annoToNum(d)); }
+                me.identity
             );
 
             // attach event listeners
@@ -542,8 +574,8 @@ class Heatmap extends Widget {
                 });
 
             // initialize fills
-            dim.sideColors.updateVis(['fill']);
-            dim.annoColors.updateVis(['fill']);
+            dim.sideColors.updateVis('fill');
+            dim.annoColors.updateVis('fill');
         }
 
         //----------------------------------------------------------------------
@@ -564,7 +596,7 @@ class Heatmap extends Widget {
 
         row.labels = new Labels(
             me.container.svg,
-            'axis',
+            'labels',
             row.names,
             row.sizeHeatmap,
             me.cells.attrs.height,
@@ -575,7 +607,7 @@ class Heatmap extends Widget {
         );
         col.labels = new Labels(
             me.container.svg,
-            'axis',
+            'labels',
             col.names,
             col.sizeHeatmap,
             me.cells.attrs.width,
@@ -586,7 +618,7 @@ class Heatmap extends Widget {
         );
         row.labelsSub = new Labels(
             me.container.svg,
-            'axis',
+            'labels',
             row.names,
             row.sizeHeatmap,
             me.cells.attrs.height,
@@ -597,7 +629,7 @@ class Heatmap extends Widget {
         );
         col.labelsSub = new Labels(
             me.container.svg,
-            'axis',
+            'labels',
             col.names,
             col.sizeHeatmap,
             me.cells.attrs.width,
@@ -610,7 +642,7 @@ class Heatmap extends Widget {
         if (row.annotated) {
             row.labelsAnno = new Labels(
                 me.container.svg,
-                'axis',
+                'labels',
                 row.annotations[row.annoBy],
                 function () { return row.marginAnnoHeight; },
                 row.annoColors.attrs.height,
@@ -623,7 +655,7 @@ class Heatmap extends Widget {
         if (col.annotated) {
             col.labelsAnno = new Labels(
                 me.container.svg,
-                'axis',
+                'labels',
                 col.annotations[col.annoBy],
                 function () { return col.marginAnnoHeight; },
                 col.annoColors.attrs.height,
@@ -860,9 +892,9 @@ class Heatmap extends Widget {
 
             // visual updates
             dim.labels.updateVis(me.options.ANIM_DURATION);
-            me.cells.updateVis([dim.pos, dim.size]);
+            me.cells.updateVis(dim.pos, dim.size);
             if (dim.annotated) {
-                dim.sideColors.updateVis([dim.pos, dim.size]);
+                dim.sideColors.updateVis(dim.pos, dim.size);
             }
         }
     }
@@ -934,7 +966,7 @@ class Heatmap extends Widget {
         // visual updates
         dim.annoTitle.setText(dim.annoBy);
         dim.annoColors.updateData(values, me.identity);
-        dim.annoColors.updateVis(['x', 'y', 'width', 'height', 'fill']);
+        dim.annoColors.updateVis('x', 'y', 'width', 'height', 'fill');
         dim.annoColors.selection
             .on('mouseover', function (d) {
                 d3.select(this)
@@ -986,8 +1018,8 @@ class Heatmap extends Widget {
 
         // visual updates for the brushable heatmaps
         dim.labelsSub.updateVis(me.options.ANIM_DURATION);
-        dim.cellsSub.updateVis([dim.pos]);
-        dim.other.cellsSub.updateVis([dim.pos]);
+        dim.cellsSub.updateVis(dim.pos);
+        dim.other.cellsSub.updateVis(dim.pos);
         me.renderScope(dim, true);
     }
 
@@ -1006,9 +1038,9 @@ class Heatmap extends Widget {
 
         // visual updates
         me.colorKey.change(me.scalingDim);
-        me.cells.updateVis(['fill']);
-        me.col.cellsSub.updateVis(['fill']);
-        me.row.cellsSub.updateVis(['fill']);
+        me.cells.updateVis('fill');
+        me.col.cellsSub.updateVis('fill');
+        me.row.cellsSub.updateVis('fill');
     }
 
     marginsSetup () {
@@ -1137,8 +1169,8 @@ class Heatmap extends Widget {
         var me = this;
 
         me.cells.position();
-        me.cells.updateVis(['x', 'y', 'width', 'height']);
-        me.colorKey.updateCells(['x', 'y', 'width', 'height']);
+        me.cells.updateVis('x', 'y', 'width', 'height');
+        me.colorKey.updateCells('x', 'y', 'width', 'height');
         me.colorKey.positionElements('cells');
         me.colorKey.positionElements('labels');
         me.colorKey.updateVisLabels();
@@ -1155,7 +1187,7 @@ class Heatmap extends Widget {
             dim.labelsSub.updateLabels();
             dim.labelsSub.updateVis();
             dim.cellsSub.position();
-            dim.cellsSub.updateVis(['x', 'y', 'width', 'height']);
+            dim.cellsSub.updateVis('x', 'y', 'width', 'height');
             dim.brusher.callBrush();
 
             if (dim.annotated) {
@@ -1163,9 +1195,9 @@ class Heatmap extends Widget {
                 dim.labelsAnno.updateLabels();
                 dim.labelsAnno.updateVis();
                 dim.sideColors.position();
-                dim.sideColors.updateVis(['x', 'y', 'width', 'height']);
+                dim.sideColors.updateVis('x', 'y', 'width', 'height');
                 dim.annoColors.position();
-                dim.annoColors.updateVis(['x', 'y', 'width', 'height']);
+                dim.annoColors.updateVis('x', 'y', 'width', 'height');
                 dim.annoTitle.position();
             }
         }
