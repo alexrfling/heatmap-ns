@@ -1134,12 +1134,12 @@ class Heatmap extends Widget {
         me.scaleGradient.range([0, me.marginColorKey]);
     }
 
-    resize () {
+    resize (width, height) {
         var me = this;
         var col = me.col;
         var row = me.row;
+        me.container.resize(width, height);
 
-        me.container.resize(me.initialHeight);
         me.marginsSetup();
         me.anchorsSetup();
         me.scalesSetup();
