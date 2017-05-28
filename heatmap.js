@@ -18,11 +18,11 @@ class Heatmap extends Widget {
         });
     }
 
-    initialize (datasetFile, options) {
+    initialize (data, options) {
         var me = this;
         options = (options || {});
 
-        me.dataset = me.parseDataset(datasetFile, options.parsed);
+        me.data = me.parseDataset(data, options.parsed);
         me.colClustOrder = options.colClustOrder;
         me.rowClustOrder = options.rowClustOrder;
         me.renderOnBrushEnd = options.renderOnBrushEnd;
@@ -56,12 +56,12 @@ class Heatmap extends Widget {
         var col = me.col = {};
         var row = me.row = {};
 
-        col.stats = me.dataset.stats.col;
-        row.stats = me.dataset.stats.row;
-        col.clustOrder = (me.colClustOrder || me.dataset.colnames);
-        row.clustOrder = (me.rowClustOrder || me.dataset.rownames);
-        col.names = (me.colClustOrder || me.dataset.colnames);
-        row.names = (me.rowClustOrder || me.dataset.rownames);
+        col.stats = me.data.stats.col;
+        row.stats = me.data.stats.row;
+        col.clustOrder = (me.colClustOrder || me.data.colnames);
+        row.clustOrder = (me.rowClustOrder || me.data.rownames);
+        col.names = (me.colClustOrder || me.data.colnames);
+        row.names = (me.rowClustOrder || me.data.rownames);
         col.catScheme = (options.colCatScheme || 'rainbow');
         col.conScheme = (options.colConScheme || 'rainbow');
         col.annoHeatScheme = (options.colAnnoHeatScheme || 'plasma');
@@ -252,7 +252,7 @@ class Heatmap extends Widget {
 
         // scales for determining cell color
         me.mainColorScale = d3.scaleQuantize()
-            .domain([-me.dataset.stats.zMax[me.scalingDim], me.dataset.stats.zMax[me.scalingDim]])
+            .domain([-me.data.stats.zMax[me.scalingDim], me.data.stats.zMax[me.scalingDim]])
             .range(me.heatmapColors);
         me.bucketizer = new Bucketizer(me.bucketDividers, me.bucketColors);
 
@@ -396,11 +396,11 @@ class Heatmap extends Widget {
                 fill: function (d) {
                     if (me.scalingDim === 'none') return me.mainColorScale(d.value);
                     if (me.scalingDim === 'bucket') return me.bucketizer.bucketize(d.value);
-                    var ref = me.dataset.stats[me.scalingDim][me.htmlEscape(d[me.scalingDim])];
+                    var ref = me.data.stats[me.scalingDim][me.htmlEscape(d[me.scalingDim])];
                     return me.mainColorScale((d.value - ref.mean) / ref.stdev);
                 }
             },
-            me.dataset.matrix,
+            me.data.matrix,
             me.key
         );
 
@@ -415,7 +415,7 @@ class Heatmap extends Widget {
                 height: function () { return row.scaleCellSub.bandwidth(); },
                 fill: me.cells.attrs.fill // inherit fill attribute from cells
             },
-            me.dataset.matrix,
+            me.data.matrix,
             me.key
         );
         row.cellsSub = new ElementCollection(
@@ -429,7 +429,7 @@ class Heatmap extends Widget {
                 height: me.cells.attrs.height, // inherit height attribute from cells
                 fill: me.cells.attrs.fill // inherit fill attribute from cells
             },
-            me.dataset.matrix,
+            me.data.matrix,
             me.key
         );
 
@@ -679,7 +679,7 @@ class Heatmap extends Widget {
         me.colorKey.addLabels(
             me.container.svg,
             'none',
-            [String(me.dataset.stats.totalMin), String((me.dataset.stats.totalMin + me.dataset.stats.totalMax ) / 2), String(me.dataset.stats.totalMax)],
+            [String(me.data.stats.totalMin), String((me.data.stats.totalMin + me.data.stats.totalMax ) / 2), String(me.data.stats.totalMax)],
             function () { return me.marginColorKey; },
             me.options.FONT_SIZE,
             function () { return me.marginAnnoLabel - 4 * me.options.AXIS_OFFSET; }
@@ -687,7 +687,7 @@ class Heatmap extends Widget {
         me.colorKey.addLabels(
             me.container.svg,
             'row',
-            [String(-me.dataset.stats.zMax.row.toFixed(2)), '0', String(me.dataset.stats.zMax.row.toFixed(2))],
+            [String(-me.data.stats.zMax.row.toFixed(2)), '0', String(me.data.stats.zMax.row.toFixed(2))],
             function () { return me.marginColorKey; },
             me.options.FONT_SIZE,
             function () { return me.marginAnnoLabel - 4 * me.options.AXIS_OFFSET; }
@@ -695,7 +695,7 @@ class Heatmap extends Widget {
         me.colorKey.addLabels(
             me.container.svg,
             'col',
-            [String(-me.dataset.stats.zMax.col.toFixed(2)), '0', String(me.dataset.stats.zMax.col.toFixed(2))],
+            [String(-me.data.stats.zMax.col.toFixed(2)), '0', String(me.data.stats.zMax.col.toFixed(2))],
             function () { return me.marginColorKey; },
             me.options.FONT_SIZE,
             function () { return me.marginAnnoLabel - 4 * me.options.AXIS_OFFSET; }
@@ -1031,9 +1031,9 @@ class Heatmap extends Widget {
 
         // scale update (NOTE no scale update for 'bucket')
         if (me.scalingDim === 'none') {
-            me.mainColorScale.domain([me.dataset.stats.totalMin, me.dataset.stats.totalMax]);
+            me.mainColorScale.domain([me.data.stats.totalMin, me.data.stats.totalMax]);
         } else if (me.scalingDim === 'col' || me.scalingDim === 'row') {
-            me.mainColorScale.domain([-me.dataset.stats.zMax[me.scalingDim], me.dataset.stats.zMax[me.scalingDim]]);
+            me.mainColorScale.domain([-me.data.stats.zMax[me.scalingDim], me.data.stats.zMax[me.scalingDim]]);
         }
 
         // visual updates
@@ -1269,7 +1269,7 @@ class Heatmap extends Widget {
         var me = this;
         var matrix, colnames, rownames;
 
-        // this will hold all relevant statistics for the dataset
+        // this will hold all relevant statistics for the data
         var stats = {
             col: {},
             row: {},
@@ -1337,7 +1337,7 @@ class Heatmap extends Widget {
         });
 
         // perform final calculations of the stats for each column, and find the
-        // totalMin and totalMax of the dataset (this could also be done in the
+        // totalMin and totalMax of the data (this could also be done in the
         // final calculations for the row stats)
         var cStatNames = Object.keys(stats.col);
 
@@ -1356,7 +1356,7 @@ class Heatmap extends Widget {
             finalCalculations(stats, 'row', rStatNames[j], colnames.length);
         }
 
-        // find the z-score in the dataset with the largest magnitude
+        // find the z-score in the data with the largest magnitude
         for (var j = 0; j < matrix.length; j++) {
             for (var k = 0; k < matrix[j].length; k++) {
                 // grab the value and compute its z-score for to its row/col
@@ -1414,7 +1414,7 @@ class Heatmap extends Widget {
             stats: stats // object with 5 fields: row and col (hashmaps from
                 // row/col name to object of statistics, zMax stores largest
                 // z-score (by magnitude) for both row and col, and
-                // totalMin/totalMax store min and max of the entire dataset
+                // totalMin/totalMax store min and max of the data
         };
     }
 
