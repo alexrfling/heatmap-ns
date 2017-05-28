@@ -82,8 +82,10 @@ indicating the order in which the rows should be displayed in the heatmap
 `rowClustOrder[rowClustOrder.length - 1]` will be the bottom-most row). By
 default, the rows will be displayed in the order that they appear in `data`
 
-<b>height</b> - the height, in pixels, of the widget (default: `600`). The width
+<b>width</b> - the width, in pixels, of the widget. If not given, the width
 of the widget will be the same as the width of the HTML element with id `id`
+
+<b>height</b> - the height, in pixels, of the widget (default: `600`)
 
 <b>renderOnBrushEnd</b> - true for immediate rendering of visual updates, false
 for delayed rendering of visual updates when zooming/panning (default:
