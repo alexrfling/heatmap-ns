@@ -4,9 +4,9 @@ An interactive heatmap widget made with d3.js.
 ![alt text](https://raw.githubusercontent.com/alexrfling/heatmap-ns/master/img/example.png)
 
 ## Overview
-`Heatmap` takes the id of an HTML element, and up to three CSV-formatted strings
-(along with a number of other optional parameters), and generates an interactive
-heatmap of the data stored in the strings, appended to the HTML element.
+`Heatmap` takes the id of an HTML element, a matrix of data, and optional
+annotations (along with a number of other optional parameters), and generates an
+interactive heatmap of the data appended to the HTML element.
 
 ## Boilerplate
 In the head of your HTML document, include:
