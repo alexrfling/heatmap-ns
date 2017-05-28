@@ -68,18 +68,18 @@ class Heatmap extends Widget {
         row.catScheme = (options.rowCatScheme || 'google');
         row.conScheme = (options.rowConScheme || 'cubehelix');
         row.annoHeatScheme = (options.rowAnnoHeatScheme || 'magma');
-        col.annotated = (options.colAnnoFile ? true : false);
-        row.annotated = (options.rowAnnoFile ? true : false);
+        col.annotated = (options.colAnnotations ? true : false);
+        row.annotated = (options.rowAnnotations ? true : false);
 
-        annoSetup(col, options.colAnnoFile);
-        annoSetup(row, options.rowAnnoFile);
+        annoSetup(col, options.colAnnotations);
+        annoSetup(row, options.rowAnnotations);
 
-        function annoSetup (dim, annoFile) {
+        function annoSetup (dim, file) {
             if (!dim.annotated) {
                 return;
             }
 
-            var annosParsed = me.parseAnnotations(annoFile);
+            var annosParsed = me.parseAnnotations(file);
             dim.annotations = annosParsed.annotations;
             dim.labelsAnnotated = annosParsed.labels;
             me.setColors(dim);

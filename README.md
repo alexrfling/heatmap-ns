@@ -41,15 +41,15 @@ Element in the HTML document:
 Data in JavaScript:
 ```js
 var data = 'Row,ColumnOne,ColumnTwo\nRowOne,12,34\nRowTwo,56,78';
-var rowAnnoFile = 'Row,Analyte.Type,Is.Control\nRowOne,mRNA,true\nRowTwo,protein,false';
-var colAnnoFile = 'Column,Binding.Density\nColumnTwo,0.61\nColumnOne,0.9';
+var rowAnnotations = 'Row,Analyte.Type,Is.Control\nRowOne,mRNA,true\nRowTwo,protein,false';
+var colAnnotations = 'Column,Binding.Density\nColumnTwo,0.61\nColumnOne,0.9';
 ```
-Create an interactive heatmap of `data` annotated with `rowAnnos` and `colAnnos`:
+Create an interactive heatmap of `data` annotated with `rowAnnotations` and `colAnnotations`:
 ```js
 var heatmap = new Heatmap('heatmap');
 var options = {
-    rowAnnoFile: rowAnnoFile,
-    colAnnoFile: colAnnoFile
+    rowAnnotations: rowAnnotations,
+    colAnnotations: colAnnotations
 };
 heatmap.initialize(data, options);
 ```
@@ -64,10 +64,10 @@ appended
 <b>data</b> - CSV-formatted string representing a numerical matrix of data
 
 ### Optional
-<b>colAnnoFile</b> - CSV-formatted string representing annotations for the
+<b>colAnnotations</b> - CSV-formatted string representing annotations for the
 columns of the data matrix in `data`
 
-<b>rowAnnoFile</b> - CSV-formatted string representing annotations for the rows
+<b>rowAnnotations</b> - CSV-formatted string representing annotations for the rows
 of the data matrix in `data`
 
 <b>colClustOrder</b> - array of strings (all of the column names in `data`)
