@@ -61,7 +61,47 @@ See example.html for more example usage.
 <b>id</b> - the 'id' attribute of the HTML element to which the heatmap will be
 appended
 
-<b>data</b> - CSV-formatted string representing a numerical matrix of data
+<b>data</b> - a representation of an n-by-m numerical matrix of data, as either
+a CSV-formatted string or an object of the following form
+```js
+{
+    matrix: [
+        [
+            {
+                key: 'Row 1 Col 1',
+                row: 'Row 1',
+                col: 'Col 1',
+                value: 348
+            },
+            ...,
+            {
+                key: 'Row 1 Col m',
+                row: 'Row 1',
+                col: 'Col m',
+                value: 729
+            }
+        ],
+        ...,
+        [
+            {
+                key: 'Row n Col 1',
+                row: 'Row n',
+                col: 'Col 1',
+                value: 651
+            },
+            ...,
+            {
+                key: 'Row n Col m',
+                row: 'Row n',
+                col: 'Col m',
+                value: 100
+            }
+        ]
+    ],
+    rownames: ['Row 1', ..., 'Row n'],
+    colnames: ['Col 1', ..., 'Col m']
+}
+```
 
 ### Optional
 <b>colAnnotations</b> - CSV-formatted string representing annotations for the
