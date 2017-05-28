@@ -125,7 +125,7 @@ default, the rows will be displayed in the order that they appear in `data`
 <b>width</b> - the width, in pixels, of the widget. If not given, the width
 of the widget will be the same as the width of the HTML element with id `id`
 
-<b>height</b> - the height, in pixels, of the widget (default: `600`)
+<b>height</b> - the height, in pixels, of the widget (default: `400`)
 
 <b>renderOnBrushEnd</b> - true for immediate rendering of visual updates, false
 for delayed rendering of visual updates when zooming/panning (default:
