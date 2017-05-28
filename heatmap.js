@@ -82,7 +82,7 @@ class Heatmap extends Widget {
             var annosParsed = me.parseAnnotations(annoFile);
             dim.annotations = annosParsed.annotations;
             dim.labelsAnnotated = annosParsed.labels;
-            me.colorsSetup(dim);
+            me.setColors(dim);
         }
 
         //----------------------------------------------------------------------
@@ -179,7 +179,7 @@ class Heatmap extends Widget {
         // axis/dimension.
         //----------------------------------------------------------------------
 
-        me.marginsSetup();
+        me.setMargins();
 
         //----------------------------------------------------------------------
         //                          TOOLTIPS/SETTINGS PANEL
@@ -289,7 +289,7 @@ class Heatmap extends Widget {
         me.scaleBucket = d3.scaleBand().domain(me.bucketColors);
         me.scaleGradient = d3.scaleBand().domain(me.heatmapColors);
 
-        me.scalesSetup();
+        me.setScales();
 
         //----------------------------------------------------------------------
         //                              COLOR KEY
@@ -738,7 +738,7 @@ class Heatmap extends Widget {
         // are determined by the margins.
         //----------------------------------------------------------------------
 
-        me.anchorsSetup();
+        me.setAnchors();
 
         //----------------------------------------------------------------------
         //                                  BRUSHES
@@ -780,7 +780,7 @@ class Heatmap extends Widget {
                     .append('g')
                     .attr('class', 'brush');
                 me.callBrush();
-                me.extentsSetup();
+                me.setExtents();
             }
 
             brushToScope () {
@@ -803,7 +803,7 @@ class Heatmap extends Widget {
                 me.group.call(me.brush.move, null);
             }
 
-            extentsSetup () {
+            setExtents () {
                 var me = this;
 
                 me.brush.extent([me.upperLeft(), me.lowerRight()]);
@@ -1043,7 +1043,7 @@ class Heatmap extends Widget {
         me.row.cellsSub.updateVis('fill');
     }
 
-    marginsSetup () {
+    setMargins () {
         var me = this;
         var col = me.col;
         var row = me.row;
@@ -1080,7 +1080,7 @@ class Heatmap extends Widget {
         }
     }
 
-    anchorsSetup () {
+    setAnchors () {
         var me = this;
         var cells = me.cells;
         var col = me.col;
@@ -1113,7 +1113,7 @@ class Heatmap extends Widget {
         colorKey.anchors.titles = [colorKey.anchors.cells[0], colorKey.anchors.cells[1] - me.options.ANNO_TITLE_OFFSET];
     }
 
-    scalesSetup () {
+    setScales () {
         var me = this;
         var col = me.col;
         var row = me.row;
@@ -1140,12 +1140,12 @@ class Heatmap extends Widget {
         var row = me.row;
         me.container.resize(width, height);
 
-        me.marginsSetup();
-        me.anchorsSetup();
-        me.scalesSetup();
-        // TODO position elements before extents setup?
-        col.brusher.extentsSetup();
-        row.brusher.extentsSetup();
+        me.setMargins();
+        me.setAnchors();
+        me.setScales();
+        // TODO position elements before setting extents?
+        col.brusher.setExtents();
+        row.brusher.setExtents();
         me.positionAllElements();
         resizeBrush(col);
         resizeBrush(row);
@@ -1207,7 +1207,7 @@ class Heatmap extends Widget {
     //                          OTHER HELPER FUNCTIONS
     //--------------------------------------------------------------------------
 
-    colorsSetup (dim) {
+    setColors (dim) {
         var me = this;
 
         var categoricalSchemes = {
