@@ -29,8 +29,8 @@ In the head of your HTML document, include:
 
 ### Call
 ```js
-var heatmap = new Heatmap(id);
-heatmap.initialize(data, options);
+var chart = new Heatmap(id);
+chart.initialize(data, options);
 ```
 
 ### Example
@@ -46,12 +46,12 @@ var colAnnotations = 'Column,Binding.Density\nColumnTwo,0.61\nColumnOne,0.9';
 ```
 Create an interactive heatmap of `data` annotated with `rowAnnotations` and `colAnnotations`:
 ```js
-var heatmap = new Heatmap('heatmap');
+var chart = new Heatmap('heatmap');
 var options = {
     rowAnnotations: rowAnnotations,
     colAnnotations: colAnnotations
 };
-heatmap.initialize(data, options);
+chart.initialize(data, options);
 ```
 See example.html for more example usage.
 
