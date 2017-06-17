@@ -863,7 +863,7 @@ class Heatmap extends Widget {
             // bounds of brushed -> row/column
             var inverses = d3.event.selection.map(dim.brusher.inverter);
             dim.currentScope = [dim.names.indexOf(inverses[0]), dim.names.indexOf(inverses[1]) + 1];
-            me.renderScope(dim, false);
+            me.renderScope(dim);
         }
     }
 
@@ -879,7 +879,7 @@ class Heatmap extends Widget {
                 // pixel bounds -> row/column
                 var inverses = d3.event.selection.map(dim.brusher.inverter);
                 dim.currentScope = [dim.names.indexOf(inverses[0]), dim.names.indexOf(inverses[1]) + 1];
-                me.renderScope(dim, true);
+                me.renderScope(dim, me.options.ANIM_DURATION);
             }
         } else {
 
@@ -899,10 +899,9 @@ class Heatmap extends Widget {
         }
     }
 
-    // renders the currentScope for the given dim. If transition is true, the
-    // labels will update with a transition, else they will update without a
-    // transition
-    renderScope (dim, transition) {
+    // renders the currentScope for the given dim, with a transition of
+    // animDuration milliseconds (no transition if animDuration is falsy)
+    renderScope (dim, animDuration) {
         var me = this;
         var scopeArray = dim.names.slice(dim.currentScope[0], dim.currentScope[1]);
         var inScope = {};
@@ -917,12 +916,7 @@ class Heatmap extends Widget {
         dim.labels.updateLabels(scopeArray);
 
         // visual updates
-        // TODO make 'transition' a numerical parameter
-        if (transition) {
-            dim.labels.updateVis(me.options.ANIM_DURATION);
-        } else {
-            dim.labels.updateVis();
-        }
+        dim.labels.updateVis(animDuration);
         me.updateVisualScope(dim, inScope);
     }
 
@@ -1022,7 +1016,7 @@ class Heatmap extends Widget {
         dim.labelsSub.updateVis(me.options.ANIM_DURATION);
         dim.cellsSub.updateVis(dim.pos);
         dim.other.cellsSub.updateVis(dim.pos);
-        me.renderScope(dim, true);
+        me.renderScope(dim, me.options.ANIM_DURATION);
     }
 
     // updates the fill of the heatmap cells based on the currently selected
