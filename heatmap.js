@@ -227,6 +227,7 @@ class Heatmap extends Widget {
 
                     return html;
                 });
+                
             dim.annoTooltip = d3.tip()
                 .attr('class', 'd3-tip')
                 .direction('w')
@@ -418,6 +419,7 @@ class Heatmap extends Widget {
             me.data.matrix,
             me.key
         );
+
         row.cellsSub = new ElementCollection(
             me.container.svg,
             'row-cells-sub',
@@ -447,6 +449,7 @@ class Heatmap extends Widget {
             me.colorsHeatmap,
             me.identity
         );
+
         me.colorKey.cells.col = new ElementCollection(
             me.container.svg,
             'color-key-cells-col',
@@ -461,6 +464,7 @@ class Heatmap extends Widget {
             me.colorsHeatmap,
             me.identity
         );
+
         me.colorKey.cells.row = new ElementCollection(
             me.container.svg,
             'color-key-cells-row',
@@ -475,6 +479,7 @@ class Heatmap extends Widget {
             me.colorsHeatmap,
             me.identity
         );
+
         me.colorKey.cells.bucket = new ElementCollection(
             me.container.svg,
             'color-key-cells-bucket',
@@ -534,6 +539,7 @@ class Heatmap extends Widget {
                 dim.labelsAnnotated,
                 me.key
             );
+
             dim.annoColors = new ElementCollection(
                 me.container.svg,
                 dim.self + '-anno-colors',
@@ -605,6 +611,7 @@ class Heatmap extends Widget {
             function () { return row.marginLabel - 3 * me.options.AXIS_OFFSET; },
             'right'
         );
+
         col.labels = new Labels(
             me.container.svg,
             'labels',
@@ -616,6 +623,7 @@ class Heatmap extends Widget {
             function () { return col.marginLabel - 2 * me.options.AXIS_OFFSET; },
             'bottom'
         );
+
         row.labelsSub = new Labels(
             me.container.svg,
             'labels',
@@ -627,6 +635,7 @@ class Heatmap extends Widget {
             function () { return row.marginLabelSub - 3 * me.options.AXIS_OFFSET; },
             'right'
         );
+
         col.labelsSub = new Labels(
             me.container.svg,
             'labels',
@@ -652,6 +661,7 @@ class Heatmap extends Widget {
                 'right'
             );
         }
+
         if (col.annotated) {
             col.labelsAnno = new Labels(
                 me.container.svg,
@@ -676,6 +686,7 @@ class Heatmap extends Widget {
             me.options.FONT_SIZE,
             function () { return me.marginAnnoLabel - 4 * me.options.AXIS_OFFSET; }
         );
+
         me.colorKey.addLabels(
             me.container.svg,
             'none',
@@ -684,6 +695,7 @@ class Heatmap extends Widget {
             me.options.FONT_SIZE,
             function () { return me.marginAnnoLabel - 4 * me.options.AXIS_OFFSET; }
         );
+
         me.colorKey.addLabels(
             me.container.svg,
             'row',
@@ -692,6 +704,7 @@ class Heatmap extends Widget {
             me.options.FONT_SIZE,
             function () { return me.marginAnnoLabel - 4 * me.options.AXIS_OFFSET; }
         );
+
         me.colorKey.addLabels(
             me.container.svg,
             'col',
@@ -821,6 +834,7 @@ class Heatmap extends Widget {
             function () { return [col.cellsSub.anchor[0] + col.sizeHeatmap(), col.cellsSub.anchor[1] + col.marginBrush]; },
             0
         );
+
         row.brusher = new Brush(
             me.container.svg,
             row,
