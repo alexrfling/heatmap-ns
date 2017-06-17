@@ -27,13 +27,13 @@ class Heatmap extends Widget {
         me.rowClustOrder = options.rowClustOrder;
         me.renderOnBrushEnd = options.renderOnBrushEnd;
         me.categorical = options.categorical;
-        me.bucketDividers = (options.bucketDividers || [25, 50, 100, 500]);
-        me.bucketColors = (options.bucketColors || ['red', 'orange', 'yellow', 'gray', 'cornflowerblue']);
-        me.lowColor = (options.lowColor || 'cornflowerblue');
-        me.midColor = (options.midColor || 'black');
-        me.highColor = (options.highColor || 'orange');
+        me.dividersBucket = (options.dividersBucket || [25, 50, 100, 500]);
+        me.colorsBucket = (options.colorsBucket || ['red', 'orange', 'yellow', 'gray', 'cornflowerblue']);
+        me.loColor = (options.loColor || 'cornflowerblue');
+        me.mdColor = (options.mdColor || 'black');
+        me.hiColor = (options.hiColor || 'orange');
         me.numColors = (options.numColors || 256);
-        me.heatmapColors = me.interpolateColors(me.lowColor, me.midColor, me.highColor, me.numColors);
+        me.colorsHeatmap = me.interpolateColors(me.loColor, me.mdColor, me.hiColor, me.numColors);
 
         // clear out DOM elements inside parent
         me.destroy();
@@ -253,8 +253,8 @@ class Heatmap extends Widget {
         // scales for determining cell color
         me.mainColorScale = d3.scaleQuantize()
             .domain([-me.data.stats.zMax[me.scalingDim], me.data.stats.zMax[me.scalingDim]])
-            .range(me.heatmapColors);
-        me.bucketizer = new Bucketizer(me.bucketDividers, me.bucketColors);
+            .range(me.colorsHeatmap);
+        me.bucketizer = new Bucketizer(me.dividersBucket, me.colorsBucket);
 
         colorScalesSetup(col);
         colorScalesSetup(row);
@@ -286,8 +286,8 @@ class Heatmap extends Widget {
         if (row.annotated) {
             row.scaleAnnoColor = d3.scaleBand().domain(row.annotations[row.annoBy]);
         }
-        me.scaleBucket = d3.scaleBand().domain(me.bucketColors);
-        me.scaleGradient = d3.scaleBand().domain(me.heatmapColors);
+        me.scaleBucket = d3.scaleBand().domain(me.colorsBucket);
+        me.scaleGradient = d3.scaleBand().domain(me.colorsHeatmap);
 
         me.setScales();
 
@@ -444,7 +444,7 @@ class Heatmap extends Widget {
                 height: function () { return me.scaleGradient.bandwidth(); },
                 fill: me.identity
             },
-            me.heatmapColors,
+            me.colorsHeatmap,
             me.identity
         );
         me.colorKey.cells.col = new ElementCollection(
@@ -458,7 +458,7 @@ class Heatmap extends Widget {
                 height: function () { return me.scaleGradient.bandwidth(); },
                 fill: me.identity
             },
-            me.heatmapColors,
+            me.colorsHeatmap,
             me.identity
         );
         me.colorKey.cells.row = new ElementCollection(
@@ -472,7 +472,7 @@ class Heatmap extends Widget {
                 height: function () { return me.scaleGradient.bandwidth(); },
                 fill: me.identity
             },
-            me.heatmapColors,
+            me.colorsHeatmap,
             me.identity
         );
         me.colorKey.cells.bucket = new ElementCollection(
@@ -486,7 +486,7 @@ class Heatmap extends Widget {
                 height: function () { return me.scaleBucket.bandwidth(); },
                 fill: me.identity
             },
-            me.bucketColors,
+            me.colorsBucket,
             me.identity
         );
 
@@ -669,8 +669,8 @@ class Heatmap extends Widget {
         me.colorKey.addLabels(
             me.container.svg,
             'bucket',
-            me.bucketDividers.concat([me.bucketDividers[me.bucketDividers.length - 1]]).map(function (d, i) {
-                return i < me.bucketDividers.length ? '< ' + d : '>= ' + d;
+            me.dividersBucket.concat([me.dividersBucket[me.dividersBucket.length - 1]]).map(function (d, i) {
+                return i < me.dividersBucket.length ? '< ' + d : '>= ' + d;
             }),
             function () { return me.marginColorKey; },
             me.options.FONT_SIZE,
@@ -1146,7 +1146,7 @@ class Heatmap extends Widget {
         // TODO position elements before setting extents?
         col.brusher.setExtents();
         row.brusher.setExtents();
-        me.positionAllElements();
+        me.positionElements();
         resizeBrush(col);
         resizeBrush(row);
 
@@ -1165,7 +1165,7 @@ class Heatmap extends Widget {
     // elements in the heatmap.
     //--------------------------------------------------------------------------
 
-    positionAllElements () {
+    positionElements () {
         var me = this;
 
         me.cells.position();
