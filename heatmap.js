@@ -991,7 +991,9 @@ class Heatmap extends Widget {
         var me = this;
 
         // sort the rows/columns by the chosen annotype
-        if (annotype !== 'Clustered Order') {
+        if (annotype === 'Clustered Order') {
+            dim.names = dim.clustOrder;
+        } else {
             var values = dim.annotations[annotype];
 
             // hashmap to determine priority for sorting
@@ -1006,9 +1008,9 @@ class Heatmap extends Widget {
                 var val2 = valueToIndex[b.annos[annotype]];
                 return (val1 === val2 ? a.key.localeCompare(b.key) : val1 - val2);
             });
-        }
 
-        dim.names = (annotype === 'Clustered Order' ? dim.clustOrder : dim.labelsAnnotated.map(me.key));
+            dim.names = dim.labelsAnnotated.map(me.key);
+        }
 
         // update scales
         dim.scaleCell.domain(dim.names);
