@@ -227,7 +227,7 @@ class Heatmap extends Widget {
 
                     return html;
                 });
-                
+
             dim.annoTooltip = d3.tip()
                 .attr('class', 'd3-tip')
                 .direction('w')
@@ -527,7 +527,7 @@ class Heatmap extends Widget {
 
             dim.sideColors = new ElementCollection(
                 me.container.svg,
-                dim.self + '-side-colors',
+                'side-colors',
                 'rect',
                 {
                     x: (dim.self === 'col' ? function (d) { return col.scaleCell(d.key); } : function () { return 0; }),
@@ -542,7 +542,7 @@ class Heatmap extends Widget {
 
             dim.annoColors = new ElementCollection(
                 me.container.svg,
-                dim.self + '-anno-colors',
+                'anno-colors',
                 'rect',
                 {
                     x: function () { return 0; },
