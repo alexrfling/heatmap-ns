@@ -1151,12 +1151,6 @@ class Heatmap extends Widget {
         }
     }
 
-    //--------------------------------------------------------------------------
-    // TOOLTIP GENERATING/DISPLAYING FUNCTIONS + MISC
-    // These handle the setup and displaying of various visual/interactive
-    // elements in the heatmap.
-    //--------------------------------------------------------------------------
-
     positionElements () {
         var me = this;
 
@@ -1194,10 +1188,6 @@ class Heatmap extends Widget {
             }
         }
     }
-
-    //--------------------------------------------------------------------------
-    //                          OTHER HELPER FUNCTIONS
-    //--------------------------------------------------------------------------
 
     setColors (dim) {
         var me = this;
