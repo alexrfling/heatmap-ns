@@ -74,8 +74,7 @@ class Heatmap extends Widget {
         );
 
         //----------------------------------------------------------------------
-        //                              REFERENCES BY DIM
-        //
+        // REFERENCES BY DIM
         // Note that the row and col objects are mirror images of each other;
         // every field that col has, row also has, and vice-versa. They could be
         // made into objects of the same new class, but its much easier to just
@@ -83,24 +82,24 @@ class Heatmap extends Widget {
         // containing everything that's relevant to their respective dimension.
         //
         // For example, when we zoom and pan using the brush for the columns,
-        // the only things that need to get visually updated are:
+        // the only things that need to visually update are:
         //		* column labels
-        //		* x-coordinates of the heatmap cells
+        //		* x-positions of the heatmap cells
         //		* widths of the heatmap cells
-        //		* x-coordinates of the column side colors
-        //		* heights of the column side colors
+        //		* x-positions of the column side colors
+        //		* widths of the column side colors
         // Similarly, when doing the same thing to the rows, we need only be
         // concerned with updating:
         //		* row labels
-        //		* y-coordinates of the heatmap cells
+        //		* y-positions of the heatmap cells
         //		* heights of the heatmap cells
-        //		* y-coordinates of the row side colors
+        //		* y-positions of the row side colors
         //		* heights of the row side colors
         // Grouping these another way, we see that there are different 'types'
         // of things that get updated:
         //		* labels (column, row)
-        //		* coordinates (x, y)
-        //		* lengths (width, height)
+        //		* positions (x, y)
+        //		* sizes (width, height)
         //		* side colors (column, row)
         //		* heatmap cells
         // For each of these types, col and row should store a reference (with
@@ -108,24 +107,20 @@ class Heatmap extends Widget {
         // (note that we update the heatmap cells regardless, so we can just
         // store this as a global variable):
         //		* col.labels = column labels
-        //			row.labels = row labels
-        //		* col.coordinate = x
-        //			row.coordiante = y
-        //		* col.length = width
-        //			row.length = height
+        //		  row.labels = row labels
+        //		* col.pos = x
+        //		  row.pos = y
+        //		* col.size = width
+        //		  row.size = height
         //		* col.sideColors = column side colors
-        //			row.sideColors = row side colors
+        //		  row.sideColors = row side colors
         // We can thus create a function which handles the event where either
         // dim has been zoomed/panned, needing only parameter, the dim, whose
-        // 'labels', 'coordinate', 'length', and 'sideColors' fields will be
-        // used (along with the global reference to the heatmap cells) to
-        // determine the visual updates. NOTE the function that actually does
-        // this modifies more variables than just those listed here, and
-        // additionally the actual field names may be different than they are
-        // here.
-        //
-        // And that's the concept behind the 'dim'.
-        //
+        // 'labels', 'pos', 'size', and 'sideColors' fields will be used (along
+        // with the global reference to the heatmap cells) to determine the
+        // visual updates. NOTE the function that actually does this modifies
+        // more variables than just those listed here, and additionally the
+        // actual field names may be different than they are here.
         //----------------------------------------------------------------------
 
         // set the current scope for each dimension (these get modified by
@@ -170,18 +165,16 @@ class Heatmap extends Widget {
         }
 
         //----------------------------------------------------------------------
-        //                                  MARGINS
-        // A margin describes a visual element's length in pixels along one
-        // axis/dimension.
+        // MARGINS
+        // A margin is an element's size (in pixels) along an axis (x or y).
         //----------------------------------------------------------------------
 
         me.setMargins();
 
         //----------------------------------------------------------------------
-        //                          TOOLTIPS/SETTINGS PANEL
-        // Tooltips provide information for rows, columns, matrix data, and
-        // annotations when hovering over the side colors, heatmap cells, and
-        // color key.
+        // TOOLTIPS
+        // Tooltips provide info on rows/columns, matrix data, and annotations
+        // when hovering over the side colors, heatmap cells, and color key.
         //----------------------------------------------------------------------
 
         me.cellTooltip = d3.tip()
@@ -199,10 +192,10 @@ class Heatmap extends Widget {
         // invoke tooltip
         me.container.svg.call(me.cellTooltip);
 
-        tooltipSetupForDim(col);
-        tooltipSetupForDim(row);
+        tooltipSetup(col);
+        tooltipSetup(row);
 
-        function tooltipSetupForDim (dim) {
+        function tooltipSetup (dim) {
             if (!dim.annotated) {
                 return;
             }
@@ -240,7 +233,7 @@ class Heatmap extends Widget {
         }
 
         //----------------------------------------------------------------------
-        //                                  SCALES
+        // SCALES
         // Scales are very useful for determining where visual elements should
         // be placed relative to each other. For example, to determine the sizes
         // and positions of the cells that make up the heatmap, a scale can map
@@ -289,7 +282,7 @@ class Heatmap extends Widget {
         me.setScales();
 
         //----------------------------------------------------------------------
-        //                              COLOR KEY
+        // COLOR KEY
         // This holds all the elements that make up the color keys for the
         // scaling options (row, col, none, and bucket).
         //----------------------------------------------------------------------
@@ -367,7 +360,7 @@ class Heatmap extends Widget {
         };
 
         //----------------------------------------------------------------------
-        //                                  CELLS
+        // CELLS
         // These represent groupings of colorful rectangles (row side colors,
         // color keys, heatmap itself).
         //
@@ -581,16 +574,16 @@ class Heatmap extends Widget {
         }
 
         //----------------------------------------------------------------------
-        //                                  LABELS
+        // LABELS
         // These make up all the tickmark-prefaced pieces of text next to cells.
         //
         // The axes provide a visualization for the labels of rows, columns, and
         // annotations. There are 3 parts that go into making a visible axis:
         //		* scale - a d3.scalePoint object whose domain is the labels and
-        //                  range is the pixel
-        //                  coordinate extent in which to display them
+        //          range is the pixel coordinate extent in which to display
+        //          them
         //		* axis component - a d3.axis object determining the axis
-        //                          orientation (top/bottom/left/right)
+        //          orientation (top/bottom/left/right)
         //		* SVG element - a g element which makes the axis visible
         // When an axis is to be visually updated, first update its scale, then
         // call its axis component on its SVG element.
@@ -644,27 +637,20 @@ class Heatmap extends Widget {
             'bottom'
         );
 
-        if (row.annotated) {
-            row.labelsAnno = new Labels(
-                me.container.svg,
-                'labels',
-                row.annotations[row.annoBy],
-                function () { return row.marginAnnoHeight; },
-                row.annoColors.attrs.height,
-                false,
-                me.options.FONT_SIZE,
-                function () { return me.marginAnnoLabel - 4 * me.options.AXIS_OFFSET; },
-                'right'
-            );
-        }
+        labelsSetup(col);
+        labelsSetup(row);
 
-        if (col.annotated) {
-            col.labelsAnno = new Labels(
+        function labelsSetup (dim) {
+            if (!dim.annotated) {
+                return;
+            }
+
+            dim.labelsAnno = new Labels(
                 me.container.svg,
                 'labels',
-                col.annotations[col.annoBy],
-                function () { return col.marginAnnoHeight; },
-                col.annoColors.attrs.height,
+                dim.annotations[dim.annoBy],
+                function () { return dim.marginAnnoHeight; },
+                dim.annoColors.attrs.height,
                 false,
                 me.options.FONT_SIZE,
                 function () { return me.marginAnnoLabel - 4 * me.options.AXIS_OFFSET; },
@@ -711,7 +697,7 @@ class Heatmap extends Widget {
         );
 
         //----------------------------------------------------------------------
-        //                                  TITLES
+        // TITLES
         // These represent the titles on the columns of cells at the right.
         //----------------------------------------------------------------------
 
@@ -737,7 +723,7 @@ class Heatmap extends Widget {
         me.colorKey.addTitle(me.container.svg, 'col', 'Column Z-Score', me.options.FONT_SIZE_CK);
 
         //----------------------------------------------------------------------
-        //                                  ANCHORS
+        // ANCHORS
         // An anchor is a 2-element array describing the pixel coordinates
         // (relative to the SVG, not the webpage as a whole) of the upper-left
         // corner of a visual element. Using the 'transform' attribute of SVG
@@ -750,7 +736,7 @@ class Heatmap extends Widget {
         me.setAnchors();
 
         //----------------------------------------------------------------------
-        //                                  BRUSHES
+        // BRUSHES
         // The brushes provide a way to zoom and pan on the main heatmap by
         // selecting regions on brushable heatmaps, and they are made up of 2
         // parts:
@@ -843,7 +829,7 @@ class Heatmap extends Widget {
         );
 
         //----------------------------------------------------------------------
-        //                              INITIALIZATION
+        // INITIALIZATION
         // One final resize completes the initial rendering of the widget.
         //----------------------------------------------------------------------
 
@@ -851,7 +837,7 @@ class Heatmap extends Widget {
     }
 
     //--------------------------------------------------------------------------
-    //                          INTERACTIVITY FUNCTIONS
+    // INTERACTIVITY FUNCTIONS
     // These functions determine all the things that can happen in the widget
     // once it is initially rendered.
     //
@@ -1166,7 +1152,7 @@ class Heatmap extends Widget {
     }
 
     //--------------------------------------------------------------------------
-    //              TOOLTIP GENERATING/DISPLAYING FUNCTIONS + MISC
+    // TOOLTIP GENERATING/DISPLAYING FUNCTIONS + MISC
     // These handle the setup and displaying of various visual/interactive
     // elements in the heatmap.
     //--------------------------------------------------------------------------
@@ -1264,9 +1250,9 @@ class Heatmap extends Widget {
     }
 
     //--------------------------------------------------------------------------
-    //                              PARSING FUNCTIONS
-    // These take strings in CSV format and turn them into the data structures
-    // needed for the heatmap.
+    // PARSING FUNCTIONS
+    // These take strings in CSV format (or objects) and turn them into the data
+    // structures needed for the heatmap.
     //--------------------------------------------------------------------------
 
     // parses the given string into the data structures used for generating the
