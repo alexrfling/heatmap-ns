@@ -22,18 +22,40 @@ class Heatmap extends Widget {
         var me = this;
         options = (options || {});
 
+        // the 'dims' hold all elements relevant to the columns and rows of the
+        // data, separately
+        var col = me.col = {};
+        var row = me.row = {};
+
+        // required
         me.data = me.parseDataset(data, options.parsed);
-        me.colClustOrder = options.colClustOrder;
-        me.rowClustOrder = options.rowClustOrder;
-        me.renderOnBrushEnd = options.renderOnBrushEnd;
-        me.categorical = options.categorical;
-        me.dividersBucket = (options.dividersBucket || [25, 50, 100, 500]);
-        me.colorsBucket = (options.colorsBucket || ['red', 'orange', 'yellow', 'gray', 'cornflowerblue']);
+
+        // order options
+        col.clustOrder = (options.colClustOrder || me.data.colnames);
+        row.clustOrder = (options.rowClustOrder || me.data.rownames);
+
+        // annotation options
+        col.annotations = (options.colAnnotations === undefined ? null : options.colAnnotations);
+        row.annotations = (options.rowAnnotations === undefined ? null : options.rowAnnotations);
+
+        // color options
         me.loColor = (options.loColor || 'cornflowerblue');
         me.mdColor = (options.mdColor || 'black');
         me.hiColor = (options.hiColor || 'orange');
         me.numColors = (options.numColors || 256);
-        me.colorsHeatmap = me.interpolateColors(me.loColor, me.mdColor, me.hiColor, me.numColors);
+        me.colorsHeatmap = (options.colorsHeatmap || me.interpolateColors(me.loColor, me.mdColor, me.hiColor, me.numColors));
+        me.dividersBucket = (options.dividersBucket || [25, 50, 100, 500]);
+        me.colorsBucket = (options.colorsBucket || ['red', 'orange', 'yellow', 'gray', 'cornflowerblue']);
+        col.catScheme = (options.colCatScheme || 'rainbow');
+        col.conScheme = (options.colConScheme || 'rainbow');
+        col.annoHeatScheme = (options.colAnnoHeatScheme || 'plasma');
+        row.catScheme = (options.rowCatScheme || 'google');
+        row.conScheme = (options.rowConScheme || 'cubehelix');
+        row.annoHeatScheme = (options.rowAnnoHeatScheme || 'magma');
+        me.categorical = (options.categorical === undefined ? false : options.categorical);
+
+        // miscellaneous options
+        me.renderOnBrushEnd = options.renderOnBrushEnd;
 
         // clear out DOM elements inside parent
         me.destroy();
@@ -50,40 +72,6 @@ class Heatmap extends Widget {
                 onWindowResize: (options.width ? null : function () { me.resize.call(me); })
             }
         );
-
-        // the 'dims' hold all elements relevant to the columns and rows of the
-        // data, separately
-        var col = me.col = {};
-        var row = me.row = {};
-
-        col.stats = me.data.stats.col;
-        row.stats = me.data.stats.row;
-        col.clustOrder = (me.colClustOrder || me.data.colnames);
-        row.clustOrder = (me.rowClustOrder || me.data.rownames);
-        col.names = (me.colClustOrder || me.data.colnames);
-        row.names = (me.rowClustOrder || me.data.rownames);
-        col.catScheme = (options.colCatScheme || 'rainbow');
-        col.conScheme = (options.colConScheme || 'rainbow');
-        col.annoHeatScheme = (options.colAnnoHeatScheme || 'plasma');
-        row.catScheme = (options.rowCatScheme || 'google');
-        row.conScheme = (options.rowConScheme || 'cubehelix');
-        row.annoHeatScheme = (options.rowAnnoHeatScheme || 'magma');
-        col.annotated = (options.colAnnotations ? true : false);
-        row.annotated = (options.rowAnnotations ? true : false);
-
-        annoSetup(col, options.colAnnotations);
-        annoSetup(row, options.rowAnnotations);
-
-        function annoSetup (dim, file) {
-            if (!dim.annotated) {
-                return;
-            }
-
-            var annosParsed = me.parseAnnotations(file);
-            dim.annotations = annosParsed.annotations;
-            dim.labelsAnnotated = annosParsed.labels;
-            me.setColors(dim);
-        }
 
         //----------------------------------------------------------------------
         //                              REFERENCES BY DIM
@@ -142,6 +130,10 @@ class Heatmap extends Widget {
 
         // set the current scope for each dimension (these get modified by
         // interactivity functions)
+        col.stats = me.data.stats.col;
+        row.stats = me.data.stats.row;
+        col.names = col.clustOrder;
+        row.names = row.clustOrder;
         col.currentScope = [0, col.names.length];
         row.currentScope = [0, row.names.length];
         col.other = row;
@@ -154,23 +146,27 @@ class Heatmap extends Widget {
         row.pos = 'y';
         col.size = 'width';
         row.size = 'height';
-        col.sizeHeatmap = function() { return me.sizeHeatmap(row) - me.marginAnnoTotal; };
-        row.sizeHeatmap = function() { return me.sizeHeatmap(col); };
+        col.annotated = (col.annotations ? true : false);
+        row.annotated = (row.annotations ? true : false);
+        col.sizeHeatmap = function () { return me.sizeHeatmap(row) - me.marginAnnoTotal; };
+        row.sizeHeatmap = function () { return me.sizeHeatmap(col); };
 
         me.scalingDim = col.self;
 
-        annotypesSetup(col);
-        annotypesSetup(row);
+        annoSetup(col);
+        annoSetup(row);
 
-        function annotypesSetup (dim) {
+        function annoSetup (dim) {
             if (!dim.annotated) {
                 return;
             }
 
-            dim.annotypes = Object.keys(dim.annotations).sort(function (a, b) {
-                return a.localeCompare(b);
-            });
+            var annosParsed = me.parseAnnotations(dim.annotations);
+            dim.annotations = annosParsed.annotations;
+            dim.labelsAnnotated = annosParsed.labels;
+            dim.annotypes = Object.keys(dim.annotations).sort(function (a, b) { return a.localeCompare(b); });
             dim.annoBy = dim.annotypes[0];
+            me.setColors(dim);
         }
 
         //----------------------------------------------------------------------
