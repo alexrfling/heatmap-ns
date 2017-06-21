@@ -90,12 +90,12 @@
 				.append('td')
 				.append('p')
 				.text(dim.title + 's: annotate by');
-			dim.annoByDropdown = selectorSetup(trow, dim, heatmap.annoUpdate);
+			dim.annoByDropdown = selectorSetup(trow, dim, heatmap.updateAnno);
 			trow
 				.append('td')
 				.append('p')
 				.text(dim.title + 's: sort by');
-			dim.sortByDropdown = selectorSetup(trow, dim, heatmap.sortUpdate);
+			dim.sortByDropdown = selectorSetup(trow, dim, heatmap.updateSort);
 			dim.annoByDropdown
 				.selectAll('option')
 				.data(dim.annotypes)

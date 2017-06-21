@@ -847,7 +847,7 @@ class Heatmap extends Widget {
     // functions).
     //
     // For the dropdowns in the settings panel, there are 3 functions,
-    // annoUpdate, sortUpdate, and updateColorScaling.
+    // updateAnno, updateSort, and updateColorScaling.
     //--------------------------------------------------------------------------
 
     // updates the current scope of the given dimension and, if renderOnBrushEnd
@@ -935,7 +935,7 @@ class Heatmap extends Widget {
     // annotates the rows/columns (depending on dim) and updates the respective
     // annotation colors by the currently selected annotation option for the
     // given dimension
-    annoUpdate (dim, annotype) {
+    updateAnno (dim, annotype) {
         var me = this;
         dim.annoBy = annotype;
         var values = dim.annotations[dim.annoBy];
@@ -977,7 +977,7 @@ class Heatmap extends Widget {
 
     // sorts the rows/columns (depending on dim) of the 3 heatmaps according to
     // the currently selected sorting option for the given dimension
-    sortUpdate (dim, annotype) {
+    updateSort (dim, annotype) {
         var me = this;
 
         // sort the rows/columns by the chosen annotype
