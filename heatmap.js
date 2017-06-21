@@ -28,7 +28,7 @@ class Heatmap extends Widget {
         var row = me.row = {};
 
         // required
-        me.data = me.parseDataset(data, options.parsed);
+        me.data = me.parseDataset(data);
 
         // order options
         col.clustOrder = (options.colClustOrder || me.data.colnames);
@@ -1271,7 +1271,7 @@ class Heatmap extends Widget {
 
     // parses the given string into the data structures used for generating the
     // heatmap
-    parseDataset (file, parsed) {
+    parseDataset (file) {
         var me = this;
         var matrix, colnames, rownames;
 
