@@ -239,13 +239,13 @@ class Heatmap extends Widget {
                 return;
             }
 
-            dim.annoToNum = me.categorical ?
-                d3.scaleOrdinal()
+            dim.annoToNum = (me.categorical
+                ? d3.scaleOrdinal()
                     .domain(dim.annotations[dim.annoBy])
                     .range(d3.range(dim.annotations[dim.annoBy].length))
                 : d3.scalePoint()
                     .domain(dim.annotations[dim.annoBy])
-                    .range([0, 0.9]); // must be within [0, 1]
+                    .range([0, 0.9])); // must be within [0, 1]
             dim.numToColor = dim.annoReg;
         });
 
