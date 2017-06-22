@@ -124,14 +124,6 @@ class Heatmap extends Widget {
         // actual field names may be different than they are here.
         //----------------------------------------------------------------------
 
-        // set the current scope for each dimension (these get modified by
-        // interactivity functions)
-        col.stats = me.data.stats.col;
-        row.stats = me.data.stats.row;
-        col.names = col.clustOrder;
-        row.names = row.clustOrder;
-        col.currentScope = [0, col.names.length];
-        row.currentScope = [0, row.names.length];
         col.other = row;
         row.other = col;
         col.self = 'col';
@@ -142,24 +134,25 @@ class Heatmap extends Widget {
         row.pos = 'y';
         col.size = 'width';
         row.size = 'height';
-        col.annotated = (col.annotations ? true : false);
-        row.annotated = (row.annotations ? true : false);
         col.sizeHeatmap = function () { return me.sizeHeatmap(row) - me.marginAnnoTotal; };
         row.sizeHeatmap = function () { return me.sizeHeatmap(col); };
 
         me.scalingDim = col.self;
 
         dims.forEach(function (dim) {
-            if (!dim.annotated) {
-                return;
-            }
+            dim.stats = me.data.stats[dim.self];
+            dim.names = dim.clustOrder;
+            dim.currentScope = [0, dim.names.length];
+            dim.annotated = (dim.annotations ? true : false);
 
-            var annosParsed = me.parseAnnotations(dim.annotations);
-            dim.annotations = annosParsed.annotations;
-            dim.labelsAnnotated = annosParsed.labels;
-            dim.annotypes = Object.keys(dim.annotations).sort(function (a, b) { return a.localeCompare(b); });
-            dim.annoBy = dim.annotypes[0];
-            me.setColors(dim);
+            if (dim.annotated) {
+                var annosParsed = me.parseAnnotations(dim.annotations);
+                dim.annotations = annosParsed.annotations;
+                dim.labelsAnnotated = annosParsed.labels;
+                dim.annotypes = Object.keys(dim.annotations).sort(function (a, b) { return a.localeCompare(b); });
+                dim.annoBy = dim.annotypes[0];
+                me.setColors(dim);
+            }
         });
 
         //----------------------------------------------------------------------
