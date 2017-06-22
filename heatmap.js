@@ -235,32 +235,22 @@ class Heatmap extends Widget {
         me.bucketizer = new Bucketizer(me.dividersBucket, me.colorsBucket);
 
         dims.forEach(function (dim) {
-            if (!dim.annotated) {
-                return;
-            }
+            dim.scaleCell = d3.scaleBand();
+            dim.scaleCellSub = d3.scaleBand();
 
-            dim.annoToNum = (me.categorical
-                ? d3.scaleOrdinal()
-                    .domain(dim.annotations[dim.annoBy])
-                    .range(d3.range(dim.annotations[dim.annoBy].length))
-                : d3.scalePoint()
-                    .domain(dim.annotations[dim.annoBy])
-                    .range([0, 0.9])); // must be within [0, 1]
-            dim.numToColor = dim.annoReg;
+            if (dim.annotated) {
+                dim.scaleAnnoColor = d3.scaleBand();
+                dim.annoToNum = (me.categorical
+                    ? d3.scaleOrdinal()
+                        .domain(dim.annotations[dim.annoBy])
+                        .range(d3.range(dim.annotations[dim.annoBy].length))
+                    : d3.scalePoint()
+                        .domain(dim.annotations[dim.annoBy])
+                        .range([0, 0.9])); // must be within [0, 1]
+                dim.numToColor = dim.annoReg;
+            }
         });
 
-        // for cell position/size - map row/col.names to x/y/width/height based on
-        // the margins
-        col.scaleCell = d3.scaleBand(); // col.names, col.sizeHeatmap -> x, width of cells
-        row.scaleCell = d3.scaleBand(); // row.names, row.sizeHeatmap -> y, height of cells
-        col.scaleCellSub = d3.scaleBand(); // col.names, row.marginBrush -> x, width of cellsRight
-        row.scaleCellSub = d3.scaleBand(); // row.names, col.marginBrush -> y, height of cellsBottom
-        if (col.annotated) {
-            col.scaleAnnoColor = d3.scaleBand();
-        }
-        if (row.annotated) {
-            row.scaleAnnoColor = d3.scaleBand();
-        }
         me.scaleBucket = d3.scaleBand();
         me.scaleGradient = d3.scaleBand();
 
