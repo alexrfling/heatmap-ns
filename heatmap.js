@@ -26,6 +26,7 @@ class Heatmap extends Widget {
         // data, separately
         var col = me.col = {};
         var row = me.row = {};
+        var dims = me.dims = [col, row];
 
         // required
         me.data = me.parseDataset(data);
@@ -148,10 +149,7 @@ class Heatmap extends Widget {
 
         me.scalingDim = col.self;
 
-        annoSetup(col);
-        annoSetup(row);
-
-        function annoSetup (dim) {
+        dims.forEach(function (dim) {
             if (!dim.annotated) {
                 return;
             }
@@ -162,7 +160,7 @@ class Heatmap extends Widget {
             dim.annotypes = Object.keys(dim.annotations).sort(function (a, b) { return a.localeCompare(b); });
             dim.annoBy = dim.annotypes[0];
             me.setColors(dim);
-        }
+        });
 
         //----------------------------------------------------------------------
         // MARGINS
@@ -192,10 +190,7 @@ class Heatmap extends Widget {
         // invoke tooltip
         me.container.svg.call(me.cellTooltip);
 
-        tooltipSetup(col);
-        tooltipSetup(row);
-
-        function tooltipSetup (dim) {
+        dims.forEach(function (dim) {
             if (!dim.annotated) {
                 return;
             }
@@ -230,7 +225,7 @@ class Heatmap extends Widget {
             // invoke tooltips
             me.container.svg.call(dim.tooltip);
             me.container.svg.call(dim.annoTooltip);
-        }
+        });
 
         //----------------------------------------------------------------------
         // SCALES
@@ -246,10 +241,7 @@ class Heatmap extends Widget {
             .range(me.colorsHeatmap);
         me.bucketizer = new Bucketizer(me.dividersBucket, me.colorsBucket);
 
-        colorScalesSetup(col);
-        colorScalesSetup(row);
-
-        function colorScalesSetup (dim) {
+        dims.forEach(function (dim) {
             if (!dim.annotated) {
                 return;
             }
@@ -262,7 +254,7 @@ class Heatmap extends Widget {
                     .domain(dim.annotations[dim.annoBy])
                     .range([0, 0.9]); // must be within [0, 1]
             dim.numToColor = dim.annoReg;
-        }
+        });
 
         // for cell position/size - map row/col.names to x/y/width/height based on
         // the margins
@@ -507,10 +499,7 @@ class Heatmap extends Widget {
         me.colorKey.cells.row.updateVis('fill');
         me.colorKey.cells.bucket.updateVis('fill');
 
-        sideAndAnnoColorsSetup(col);
-        sideAndAnnoColorsSetup(row);
-
-        function sideAndAnnoColorsSetup (dim) {
+        dims.forEach(function (dim) {
             if (!dim.annotated) {
                 return;
             }
@@ -572,7 +561,7 @@ class Heatmap extends Widget {
             // initialize fills
             dim.sideColors.updateVis('fill');
             dim.annoColors.updateVis('fill');
-        }
+        });
 
         //----------------------------------------------------------------------
         // LABELS
@@ -638,10 +627,7 @@ class Heatmap extends Widget {
             'bottom'
         );
 
-        labelsSetup(col);
-        labelsSetup(row);
-
-        function labelsSetup (dim) {
+        dims.forEach(function (dim) {
             if (!dim.annotated) {
                 return;
             }
@@ -657,7 +643,7 @@ class Heatmap extends Widget {
                 function () { return me.marginAnnoLabel - 4 * me.options.AXIS_OFFSET; },
                 'right'
             );
-        }
+        });
 
         me.colorKey.addLabels(
             me.container.svg,
@@ -702,10 +688,7 @@ class Heatmap extends Widget {
         // These represent the titles on the columns of cells at the right.
         //----------------------------------------------------------------------
 
-        annoTitleSetup(col);
-        annoTitleSetup(row);
-
-        function annoTitleSetup (dim) {
+        dims.forEach(function (dim) {
             if (!dim.annotated) {
                 return;
             }
@@ -716,7 +699,7 @@ class Heatmap extends Widget {
                 dim.annoBy,
                 me.options.FONT_SIZE_CK
             );
-        }
+        });
 
         me.colorKey.addTitle(me.container.svg, 'bucket', 'Buckets', me.options.FONT_SIZE_CK);
         me.colorKey.addTitle(me.container.svg, 'none', 'Linear Gradient', me.options.FONT_SIZE_CK);
@@ -1040,6 +1023,7 @@ class Heatmap extends Widget {
         var me = this;
         var col = me.col;
         var row = me.row;
+        var dims = me.dims;
 
         me.marginAnnoTotal = Math.max(Math.floor(me.container.svgWidth / 8), annoMax());
         me.marginAnnoColor = 20;
@@ -1055,14 +1039,11 @@ class Heatmap extends Widget {
         row.marginBrush = Math.floor(me.container.svgHeight / 10);
         me.marginColorKey = Math.floor(me.container.svgHeight / 4) - me.marginAnnoTitle;
 
-        sideAndAnnoMarginsSetup(col);
-        sideAndAnnoMarginsSetup(row);
-
-        function sideAndAnnoMarginsSetup (dim) {
+        dims.forEach(function (dim) {
             dim.marginSideColor = (dim.annotated ? Math.floor(me.container.svgHeight / 40) : 0);
             dim.marginAnnoTotal = (dim.annotated ? Math.floor(3 * me.container.svgHeight / 8) : 0);
             dim.marginAnnoHeight = (dim.annotated ? dim.marginAnnoTotal - me.marginAnnoTitle : 0);
-        }
+        });
 
         function annoMax () {
             var colTitleLength = (col.annoTitle ? col.annoTitle.getBox().width : 0);
@@ -1110,17 +1091,15 @@ class Heatmap extends Widget {
         var me = this;
         var col = me.col;
         var row = me.row;
+        var dims = me.dims;
 
-        scaleDomainsSetup(col);
-        scaleDomainsSetup(row);
-
-        function scaleDomainsSetup (dim) {
+        dims.forEach(function (dim) {
             dim.scaleCell.domain(dim.names);
             dim.scaleCellSub.domain(dim.names);
             if (dim.annotated) {
                 dim.scaleAnnoColor.domain(dim.annotations[dim.annoBy]);
             }
-        }
+        });
 
         me.scaleBucket.domain(me.colorsBucket);
         me.scaleGradient.domain(me.colorsHeatmap);
@@ -1130,17 +1109,15 @@ class Heatmap extends Widget {
         var me = this;
         var col = me.col;
         var row = me.row;
+        var dims = me.dims;
 
-        scaleRangesSetup(col);
-        scaleRangesSetup(row);
-
-        function scaleRangesSetup (dim) {
+        dims.forEach(function (dim) {
             dim.scaleCell.range([0, dim.sizeHeatmap()]);
             dim.scaleCellSub.range([0, dim.other.marginBrush]);
             if (dim.annotated) {
                 dim.scaleAnnoColor.range([0, dim.marginAnnoHeight]);
             }
-        }
+        });
 
         me.scaleBucket.range([0, me.marginColorKey]);
         me.scaleGradient.range([0, me.marginColorKey]);
@@ -1150,6 +1127,7 @@ class Heatmap extends Widget {
         var me = this;
         var col = me.col;
         var row = me.row;
+        var dims = me.dims;
         me.container.resize(width, height);
 
         me.setMargins();
@@ -1159,16 +1137,14 @@ class Heatmap extends Widget {
         col.brusher.setExtents();
         row.brusher.setExtents();
         me.positionElements();
-        resizeBrush(col);
-        resizeBrush(row);
 
-        function resizeBrush (dim) {
+        dims.forEach(function (dim) {
             if (dim.currentScope[0] !== 0 || dim.currentScope[1] !== dim.names.length) {
                 dim.brusher.brushToScope();
             } else {
                 dim.brusher.clearBrush();
             }
-        }
+        });
     }
 
     positionElements () {
@@ -1183,10 +1159,7 @@ class Heatmap extends Widget {
         me.colorKey.positionElements('titles');
         me.colorKey.change(me.scalingDim);
 
-        positionElementsForDim(me.col);
-        positionElementsForDim(me.row);
-
-        function positionElementsForDim (dim) {
+        me.dims.forEach(function (dim) {
             dim.labels.position();
             dim.labels.updateVis();
             dim.labelsSub.position();
@@ -1206,7 +1179,7 @@ class Heatmap extends Widget {
                 dim.annoColors.updateVis('x', 'y', 'width', 'height');
                 dim.annoTitle.position();
             }
-        }
+        });
     }
 
     setColors (dim) {
