@@ -271,15 +271,16 @@ class Heatmap extends Widget {
         col.scaleCellSub = d3.scaleBand(); // col.names, row.marginBrush -> x, width of cellsRight
         row.scaleCellSub = d3.scaleBand(); // row.names, col.marginBrush -> y, height of cellsBottom
         if (col.annotated) {
-            col.scaleAnnoColor = d3.scaleBand().domain(col.annotations[col.annoBy]);
+            col.scaleAnnoColor = d3.scaleBand();
         }
         if (row.annotated) {
-            row.scaleAnnoColor = d3.scaleBand().domain(row.annotations[row.annoBy]);
+            row.scaleAnnoColor = d3.scaleBand();
         }
-        me.scaleBucket = d3.scaleBand().domain(me.colorsBucket);
-        me.scaleGradient = d3.scaleBand().domain(me.colorsHeatmap);
+        me.scaleBucket = d3.scaleBand();
+        me.scaleGradient = d3.scaleBand();
 
-        me.setScales();
+        me.setScaleDomains();
+        me.setScaleRanges();
 
         //----------------------------------------------------------------------
         // COLOR KEY
@@ -1105,21 +1106,40 @@ class Heatmap extends Widget {
         colorKey.anchors.titles = [colorKey.anchors.cells[0], colorKey.anchors.cells[1] - me.options.ANNO_TITLE_OFFSET];
     }
 
-    setScales () {
+    setScaleDomains () {
         var me = this;
         var col = me.col;
         var row = me.row;
 
-        col.scaleCell.domain(col.names).range([0, col.sizeHeatmap()]);
-        row.scaleCell.domain(row.names).range([0, row.sizeHeatmap()]);
-        col.scaleCellSub.domain(col.names).range([0, row.marginBrush]);
-        row.scaleCellSub.domain(row.names).range([0, col.marginBrush]);
+        scaleDomainsSetup(col);
+        scaleDomainsSetup(row);
 
-        if (col.annotated) {
-            col.scaleAnnoColor.range([0, col.marginAnnoHeight]);
+        function scaleDomainsSetup (dim) {
+            dim.scaleCell.domain(dim.names);
+            dim.scaleCellSub.domain(dim.names);
+            if (dim.annotated) {
+                dim.scaleAnnoColor.domain(dim.annotations[dim.annoBy]);
+            }
         }
-        if (row.annotated) {
-            row.scaleAnnoColor.range([0, row.marginAnnoHeight]);
+
+        me.scaleBucket.domain(me.colorsBucket);
+        me.scaleGradient.domain(me.colorsHeatmap);
+    }
+
+    setScaleRanges () {
+        var me = this;
+        var col = me.col;
+        var row = me.row;
+
+        scaleRangesSetup(col);
+        scaleRangesSetup(row);
+
+        function scaleRangesSetup (dim) {
+            dim.scaleCell.range([0, dim.sizeHeatmap()]);
+            dim.scaleCellSub.range([0, dim.other.marginBrush]);
+            if (dim.annotated) {
+                dim.scaleAnnoColor.range([0, dim.marginAnnoHeight]);
+            }
         }
 
         me.scaleBucket.range([0, me.marginColorKey]);
@@ -1134,7 +1154,7 @@ class Heatmap extends Widget {
 
         me.setMargins();
         me.setAnchors();
-        me.setScales();
+        me.setScaleRanges();
         // TODO position elements before setting extents?
         col.brusher.setExtents();
         row.brusher.setExtents();
