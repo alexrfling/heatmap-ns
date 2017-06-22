@@ -233,6 +233,8 @@ class Heatmap extends Widget {
             .domain([-me.data.stats.zMax[me.scalingDim], me.data.stats.zMax[me.scalingDim]])
             .range(me.colorsHeatmap);
         me.bucketizer = new Bucketizer(me.dividersBucket, me.colorsBucket);
+        me.scaleBucket = d3.scaleBand();
+        me.scaleGradient = d3.scaleBand();
 
         dims.forEach(function (dim) {
             dim.scaleCell = d3.scaleBand();
@@ -250,9 +252,6 @@ class Heatmap extends Widget {
                 dim.numToColor = dim.annoReg;
             }
         });
-
-        me.scaleBucket = d3.scaleBand();
-        me.scaleGradient = d3.scaleBand();
 
         me.setScaleDomains();
         me.setScaleRanges();
