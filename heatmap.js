@@ -1023,7 +1023,6 @@ class Heatmap extends Widget {
         var me = this;
         var col = me.col;
         var row = me.row;
-        var dims = me.dims;
 
         me.marginAnnoTotal = Math.max(Math.floor(me.container.svgWidth / 8), annoMax());
         me.marginAnnoColor = 20;
@@ -1039,7 +1038,7 @@ class Heatmap extends Widget {
         row.marginBrush = Math.floor(me.container.svgHeight / 10);
         me.marginColorKey = Math.floor(me.container.svgHeight / 4) - me.marginAnnoTitle;
 
-        dims.forEach(function (dim) {
+        me.dims.forEach(function (dim) {
             dim.marginSideColor = (dim.annotated ? Math.floor(me.container.svgHeight / 40) : 0);
             dim.marginAnnoTotal = (dim.annotated ? Math.floor(3 * me.container.svgHeight / 8) : 0);
             dim.marginAnnoHeight = (dim.annotated ? dim.marginAnnoTotal - me.marginAnnoTitle : 0);
@@ -1089,11 +1088,8 @@ class Heatmap extends Widget {
 
     setScaleDomains () {
         var me = this;
-        var col = me.col;
-        var row = me.row;
-        var dims = me.dims;
 
-        dims.forEach(function (dim) {
+        me.dims.forEach(function (dim) {
             dim.scaleCell.domain(dim.names);
             dim.scaleCellSub.domain(dim.names);
             if (dim.annotated) {
@@ -1107,11 +1103,8 @@ class Heatmap extends Widget {
 
     setScaleRanges () {
         var me = this;
-        var col = me.col;
-        var row = me.row;
-        var dims = me.dims;
 
-        dims.forEach(function (dim) {
+        me.dims.forEach(function (dim) {
             dim.scaleCell.range([0, dim.sizeHeatmap()]);
             dim.scaleCellSub.range([0, dim.other.marginBrush]);
             if (dim.annotated) {
@@ -1125,20 +1118,17 @@ class Heatmap extends Widget {
 
     resize (width, height) {
         var me = this;
-        var col = me.col;
-        var row = me.row;
-        var dims = me.dims;
         me.container.resize(width, height);
 
         me.setMargins();
         me.setAnchors();
         me.setScaleRanges();
         // TODO position elements before setting extents?
-        col.brusher.setExtents();
-        row.brusher.setExtents();
+        me.col.brusher.setExtents();
+        me.row.brusher.setExtents();
         me.positionElements();
 
-        dims.forEach(function (dim) {
+        me.dims.forEach(function (dim) {
             if (dim.currentScope[0] !== 0 || dim.currentScope[1] !== dim.names.length) {
                 dim.brusher.brushToScope();
             } else {
