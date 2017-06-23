@@ -608,21 +608,28 @@ class Heatmap extends Widget {
         );
 
         dims.forEach(function (dim) {
-            if (!dim.annotated) {
-                return;
-            }
-
-            dim.labelsAnno = new Labels(
+            me.colorKey.addLabels(
                 me.container.svg,
-                'labels',
-                dim.annotations[dim.annoBy],
-                function () { return dim.marginAnnoHeight; },
-                dim.cellsAnno.attrs.height,
-                false,
+                dim.self,
+                [String(-me.data.stats.zMax[dim.self].toFixed(2)), '0', String(me.data.stats.zMax[dim.self].toFixed(2))],
+                function () { return me.marginColorKey; },
                 me.options.FONT_SIZE,
-                function () { return me.marginAnnoLabel - 4 * me.options.AXIS_OFFSET; },
-                'right'
+                function () { return me.marginAnnoLabel - 4 * me.options.AXIS_OFFSET; }
             );
+
+            if (dim.annotated) {
+                dim.labelsAnno = new Labels(
+                    me.container.svg,
+                    'labels',
+                    dim.annotations[dim.annoBy],
+                    function () { return dim.marginAnnoHeight; },
+                    dim.cellsAnno.attrs.height,
+                    false,
+                    me.options.FONT_SIZE,
+                    function () { return me.marginAnnoLabel - 4 * me.options.AXIS_OFFSET; },
+                    'right'
+                );
+            }
         });
 
         me.colorKey.addLabels(
@@ -640,24 +647,6 @@ class Heatmap extends Widget {
             me.container.svg,
             'none',
             [String(me.data.stats.totalMin), String((me.data.stats.totalMin + me.data.stats.totalMax ) / 2), String(me.data.stats.totalMax)],
-            function () { return me.marginColorKey; },
-            me.options.FONT_SIZE,
-            function () { return me.marginAnnoLabel - 4 * me.options.AXIS_OFFSET; }
-        );
-
-        me.colorKey.addLabels(
-            me.container.svg,
-            'row',
-            [String(-me.data.stats.zMax.row.toFixed(2)), '0', String(me.data.stats.zMax.row.toFixed(2))],
-            function () { return me.marginColorKey; },
-            me.options.FONT_SIZE,
-            function () { return me.marginAnnoLabel - 4 * me.options.AXIS_OFFSET; }
-        );
-
-        me.colorKey.addLabels(
-            me.container.svg,
-            'col',
-            [String(-me.data.stats.zMax.col.toFixed(2)), '0', String(me.data.stats.zMax.col.toFixed(2))],
             function () { return me.marginColorKey; },
             me.options.FONT_SIZE,
             function () { return me.marginAnnoLabel - 4 * me.options.AXIS_OFFSET; }
