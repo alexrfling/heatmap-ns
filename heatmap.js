@@ -583,7 +583,7 @@ class Heatmap extends Widget {
             'bottom'
         );
 
-        row.labelsSub = new Labels(
+        row.labelsMini = new Labels(
             me.container.svg,
             'labels',
             row.names,
@@ -595,7 +595,7 @@ class Heatmap extends Widget {
             'right'
         );
 
-        col.labelsSub = new Labels(
+        col.labelsMini = new Labels(
             me.container.svg,
             'labels',
             col.names,
@@ -970,10 +970,10 @@ class Heatmap extends Widget {
         dim.scaleCellPosSize.domain(dim.names);
         dim.scaleCellMiniPosSize.domain(dim.names);
         dim.brusher.inverter.range(dim.names);
-        dim.labelsSub.updateLabels(dim.names);
+        dim.labelsMini.updateLabels(dim.names);
 
         // visual updates for the brushable heatmaps
-        dim.labelsSub.updateVis(me.options.ANIM_DURATION);
+        dim.labelsMini.updateVis(me.options.ANIM_DURATION);
         dim.cellsMini.updateVis(dim.pos);
         dim.other.cellsMini.updateVis(dim.pos);
         me.renderScope(dim, me.options.ANIM_DURATION);
@@ -1041,24 +1041,24 @@ class Heatmap extends Widget {
         row.labels.anchor = [cells.anchor[0] + col.sizeHeatmap() + me.options.AXIS_OFFSET, cells.anchor[1]];
         col.cellsMini.anchor = [cells.anchor[0], col.labels.anchor[1] + col.marginLabel];
         row.cellsMini.anchor = [row.labels.anchor[0] + row.marginLabel, cells.anchor[1]];
-        col.labelsSub.anchor = [cells.anchor[0], col.cellsMini.anchor[1] + col.marginBrush + me.options.AXIS_OFFSET];
-        row.labelsSub.anchor = [row.cellsMini.anchor[0] + row.marginBrush + me.options.AXIS_OFFSET, cells.anchor[1]];
+        col.labelsMini.anchor = [cells.anchor[0], col.cellsMini.anchor[1] + col.marginBrush + me.options.AXIS_OFFSET];
+        row.labelsMini.anchor = [row.cellsMini.anchor[0] + row.marginBrush + me.options.AXIS_OFFSET, cells.anchor[1]];
 
         if (col.annotated) {
             col.cellsSide.anchor = [cells.anchor[0], 0];
-            col.cellsAnno.anchor = [row.labelsSub.anchor[0] + row.marginLabelSub, me.marginAnnoTitle];
+            col.cellsAnno.anchor = [row.labelsMini.anchor[0] + row.marginLabelSub, me.marginAnnoTitle];
             col.annoTitle.anchor = [col.cellsAnno.anchor[0], col.cellsAnno.anchor[1] - me.options.ANNO_TITLE_OFFSET];
             col.labelsAnno.anchor = [col.cellsAnno.anchor[0] + me.marginAnnoColor + me.options.AXIS_OFFSET, col.cellsAnno.anchor[1]];
         }
 
         if (row.annotated) {
             row.cellsSide.anchor = [0, cells.anchor[1]];
-            row.cellsAnno.anchor = [row.labelsSub.anchor[0] + row.marginLabelSub, col.marginAnnoTotal + me.marginAnnoTitle];
+            row.cellsAnno.anchor = [row.labelsMini.anchor[0] + row.marginLabelSub, col.marginAnnoTotal + me.marginAnnoTitle];
             row.annoTitle.anchor = [row.cellsAnno.anchor[0], row.cellsAnno.anchor[1] - me.options.ANNO_TITLE_OFFSET];
             row.labelsAnno.anchor = [row.cellsAnno.anchor[0] + me.marginAnnoColor + me.options.AXIS_OFFSET, row.cellsAnno.anchor[1]];
         }
 
-        colorKey.anchors.cells = [row.labelsSub.anchor[0] + row.marginLabelSub, col.marginAnnoTotal + row.marginAnnoTotal + me.marginAnnoTitle];
+        colorKey.anchors.cells = [row.labelsMini.anchor[0] + row.marginLabelSub, col.marginAnnoTotal + row.marginAnnoTotal + me.marginAnnoTitle];
         colorKey.anchors.labels = [colorKey.anchors.cells[0] + me.marginAnnoColor + me.options.AXIS_OFFSET, colorKey.anchors.cells[1]];
         colorKey.anchors.titles = [colorKey.anchors.cells[0], colorKey.anchors.cells[1] - me.options.ANNO_TITLE_OFFSET];
     }
@@ -1160,9 +1160,9 @@ class Heatmap extends Widget {
         me.dims.forEach(function (dim) {
             dim.labels.position();
             dim.labels.updateVis();
-            dim.labelsSub.position();
-            dim.labelsSub.updateLabels();
-            dim.labelsSub.updateVis();
+            dim.labelsMini.position();
+            dim.labelsMini.updateLabels();
+            dim.labelsMini.updateVis();
             dim.cellsMini.position();
             dim.cellsMini.updateVis('x', 'y', 'width', 'height');
             dim.brusher.callBrush();
