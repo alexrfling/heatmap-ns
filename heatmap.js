@@ -569,7 +569,7 @@ class Heatmap extends Widget {
                 me.cells.attrs[dim.size],
                 dim.angled,
                 me.options.FONT_SIZE,
-                function () { return dim.marginLabelSub - dim.offsetMultiplier * me.options.AXIS_OFFSET; },
+                function () { return dim.marginLabelMini - dim.offsetMultiplier * me.options.AXIS_OFFSET; },
                 dim.orientation
             );
 
@@ -960,8 +960,8 @@ class Heatmap extends Widget {
         row.marginTotal = me.container.svgWidth;
         col.marginLabel = Math.floor(me.container.svgHeight / 10);
         row.marginLabel = Math.floor(me.container.svgWidth / 10);
-        col.marginLabelSub = col.marginLabel;
-        row.marginLabelSub = row.marginLabel;
+        col.marginLabelMini = col.marginLabel;
+        row.marginLabelMini = row.marginLabel;
         col.marginBrush = Math.floor(me.container.svgHeight / 10);
         row.marginBrush = Math.floor(me.container.svgHeight / 10);
         me.marginColorKey = Math.floor(me.container.svgHeight / 4) - me.marginAnnoTitle;
@@ -998,19 +998,19 @@ class Heatmap extends Widget {
 
         if (col.annotated) {
             col.cellsSide.anchor = [cells.anchor[0], 0];
-            col.cellsAnno.anchor = [row.labelsMini.anchor[0] + row.marginLabelSub, me.marginAnnoTitle];
+            col.cellsAnno.anchor = [row.labelsMini.anchor[0] + row.marginLabelMini, me.marginAnnoTitle];
             col.annoTitle.anchor = [col.cellsAnno.anchor[0], col.cellsAnno.anchor[1] - me.options.ANNO_TITLE_OFFSET];
             col.labelsAnno.anchor = [col.cellsAnno.anchor[0] + me.marginAnnoColor + me.options.AXIS_OFFSET, col.cellsAnno.anchor[1]];
         }
 
         if (row.annotated) {
             row.cellsSide.anchor = [0, cells.anchor[1]];
-            row.cellsAnno.anchor = [row.labelsMini.anchor[0] + row.marginLabelSub, col.marginAnnoTotal + me.marginAnnoTitle];
+            row.cellsAnno.anchor = [row.labelsMini.anchor[0] + row.marginLabelMini, col.marginAnnoTotal + me.marginAnnoTitle];
             row.annoTitle.anchor = [row.cellsAnno.anchor[0], row.cellsAnno.anchor[1] - me.options.ANNO_TITLE_OFFSET];
             row.labelsAnno.anchor = [row.cellsAnno.anchor[0] + me.marginAnnoColor + me.options.AXIS_OFFSET, row.cellsAnno.anchor[1]];
         }
 
-        colorKey.anchors.cells = [row.labelsMini.anchor[0] + row.marginLabelSub, col.marginAnnoTotal + row.marginAnnoTotal + me.marginAnnoTitle];
+        colorKey.anchors.cells = [row.labelsMini.anchor[0] + row.marginLabelMini, col.marginAnnoTotal + row.marginAnnoTotal + me.marginAnnoTitle];
         colorKey.anchors.labels = [colorKey.anchors.cells[0] + me.marginAnnoColor + me.options.AXIS_OFFSET, colorKey.anchors.cells[1]];
         colorKey.anchors.titles = [colorKey.anchors.cells[0], colorKey.anchors.cells[1] - me.options.ANNO_TITLE_OFFSET];
     }
@@ -1179,7 +1179,7 @@ class Heatmap extends Widget {
     // (height - col, width - row), but does not take into account margins used
     // for color keys
     sizeHeatmap (dim) {
-        return dim.marginTotal - dim.marginSideColor - dim.marginLabel - dim.marginBrush - dim.marginLabelSub;
+        return dim.marginTotal - dim.marginSideColor - dim.marginLabel - dim.marginBrush - dim.marginLabelMini;
     }
 
     //--------------------------------------------------------------------------
