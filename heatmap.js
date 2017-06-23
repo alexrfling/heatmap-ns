@@ -239,6 +239,7 @@ class Heatmap extends Widget {
         dims.forEach(function (dim) {
             dim.scaleCell = d3.scaleBand();
             dim.scaleCellSub = d3.scaleBand();
+            dim.scaleCellSubOther = d3.scaleBand();
 
             if (dim.annotated) {
                 dim.scaleAnnoColor = d3.scaleBand();
@@ -374,10 +375,10 @@ class Heatmap extends Widget {
             'col-cells-sub',
             'rect',
             {
-                x: me.cells.attrs.x, // inherit x attribute from cells
-                y: function (d) { return row.scaleCellSub(d.row); },
-                width: me.cells.attrs.width, // inherit width attribute from cells
-                height: function () { return row.scaleCellSub.bandwidth(); },
+                x: function (d) { return col.scaleCellSub(d.col); },
+                y: function (d) { return row.scaleCellSubOther(d.row); },
+                width: function () { return col.scaleCellSub.bandwidth(); },
+                height: function () { return row.scaleCellSubOther.bandwidth(); },
                 fill: me.cells.attrs.fill // inherit fill attribute from cells
             },
             me.data.matrix,
@@ -389,10 +390,10 @@ class Heatmap extends Widget {
             'row-cells-sub',
             'rect',
             {
-                x: function (d) { return col.scaleCellSub(d.col); },
-                y: me.cells.attrs.y, // inherit y attribute from cells
-                width: function () { return col.scaleCellSub.bandwidth(); },
-                height: me.cells.attrs.height, // inherit height attribute from cells
+                x: function (d) { return col.scaleCellSubOther(d.col); },
+                y: function (d) { return row.scaleCellSub(d.row); },
+                width: function () { return col.scaleCellSubOther.bandwidth(); },
+                height: function () { return row.scaleCellSub.bandwidth(); },
                 fill: me.cells.attrs.fill // inherit fill attribute from cells
             },
             me.data.matrix,
@@ -1074,6 +1075,7 @@ class Heatmap extends Widget {
         me.dims.forEach(function (dim) {
             dim.scaleCell.domain(dim.names);
             dim.scaleCellSub.domain(dim.names);
+            dim.scaleCellSubOther.domain(dim.names);
             if (dim.annotated) {
                 dim.scaleAnnoColor.domain(dim.annotations[dim.annoBy]);
             }
@@ -1088,7 +1090,8 @@ class Heatmap extends Widget {
 
         me.dims.forEach(function (dim) {
             dim.scaleCell.range([0, dim.sizeHeatmap()]);
-            dim.scaleCellSub.range([0, dim.other.marginBrush]);
+            dim.scaleCellSub.range([0, dim.sizeHeatmap()]);
+            dim.scaleCellSubOther.range([0, dim.other.marginBrush]);
             if (dim.annotated) {
                 dim.scaleAnnoColor.range([0, dim.marginAnnoHeight]);
             }
