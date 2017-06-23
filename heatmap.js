@@ -418,36 +418,6 @@ class Heatmap extends Widget {
             me.identity
         );
 
-        me.colorKey.cells.col = new ElementCollection(
-            me.container.svg,
-            'color-key-cells-col',
-            'rect',
-            {
-                x: function () { return 0; },
-                y: function (d) { return me.scaleGradient(d); },
-                width: function () { return me.marginAnnoColor; },
-                height: function () { return me.scaleGradient.bandwidth(); },
-                fill: me.identity
-            },
-            me.colorsHeatmap,
-            me.identity
-        );
-
-        me.colorKey.cells.row = new ElementCollection(
-            me.container.svg,
-            'color-key-cells-row',
-            'rect',
-            {
-                x: function () { return 0; },
-                y: function (d) { return me.scaleGradient(d); },
-                width: function () { return me.marginAnnoColor; },
-                height: function () { return me.scaleGradient.bandwidth(); },
-                fill: me.identity
-            },
-            me.colorsHeatmap,
-            me.identity
-        );
-
         me.colorKey.cells.bucket = new ElementCollection(
             me.container.svg,
             'color-key-cells-bucket',
@@ -478,75 +448,88 @@ class Heatmap extends Widget {
 
         // initialize fills
         me.cells.updateVis('fill');
-        col.cellsMini.updateVis('fill');
-        row.cellsMini.updateVis('fill');
         me.colorKey.cells.none.updateVis('fill');
-        me.colorKey.cells.col.updateVis('fill');
-        me.colorKey.cells.row.updateVis('fill');
         me.colorKey.cells.bucket.updateVis('fill');
 
         dims.forEach(function (dim) {
-            if (!dim.annotated) {
-                return;
-            }
-
-            dim.cellsSide = new ElementCollection(
+            me.colorKey.cells[dim.self] = new ElementCollection(
                 me.container.svg,
-                'side-colors',
-                'rect',
-                {
-                    x: (dim.self === 'col' ? function (d) { return col.scaleCellPosSize(d.key); } : function () { return 0; }),
-                    y: (dim.self === 'row' ? function (d) { return row.scaleCellPosSize(d.key); } : function () { return 0; }),
-                    width: (dim.self === 'col' ? me.cells.attrs.width : function () { return row.marginSideColor - me.options.SIDE_COLOR_OFFSET; }),
-                    height: (dim.self === 'row' ? me.cells.attrs.height : function () { return col.marginSideColor - me.options.SIDE_COLOR_OFFSET; }),
-                    fill: function (d) { return dim.numToColor(dim.annoToNum(d.annos[dim.annoBy])); }
-                },
-                dim.labelsAnnotated,
-                me.key
-            );
-
-            dim.cellsAnno = new ElementCollection(
-                me.container.svg,
-                'anno-colors',
+                'color-key-cells-' + dim.self,
                 'rect',
                 {
                     x: function () { return 0; },
-                    y: function (d) { return dim.scaleAnnoColor(d); },
+                    y: function (d) { return me.scaleGradient(d); },
                     width: function () { return me.marginAnnoColor; },
-                    height: function () { return dim.scaleAnnoColor.bandwidth(); },
-                    fill: function (d) { return dim.numToColor(dim.annoToNum(d)); }
+                    height: function () { return me.scaleGradient.bandwidth(); },
+                    fill: me.identity
                 },
-                dim.annotations[dim.annoBy],
+                me.colorsHeatmap,
                 me.identity
             );
 
-            // attach event listeners
-            dim.cellsSide.selection
-                .on('mouseover', function (d) {
-                    d3.select(this)
-                        .style('opacity', 0.5);
-                    dim.tooltip.show(d);
-                })
-                .on('mouseout', function () {
-                    d3.select(this)
-                        .style('opacity', 1);
-                    dim.tooltip.hide();
-                });
-            dim.cellsAnno.selection
-                .on('mouseover', function (d) {
-                    d3.select(this)
-                        .style('opacity', 0.5);
-                    dim.annoTooltip.show(d);
-                })
-                .on('mouseout', function () {
-                    d3.select(this)
-                        .style('opacity', 1);
-                    dim.annoTooltip.hide();
-                });
-
             // initialize fills
-            dim.cellsSide.updateVis('fill');
-            dim.cellsAnno.updateVis('fill');
+            dim.cellsMini.updateVis('fill');
+            me.colorKey.cells[dim.self].updateVis('fill');
+
+            if (dim.annotated) {
+                dim.cellsSide = new ElementCollection(
+                    me.container.svg,
+                    'side-colors',
+                    'rect',
+                    {
+                        x: (dim.self === 'col' ? function (d) { return col.scaleCellPosSize(d.key); } : function () { return 0; }),
+                        y: (dim.self === 'row' ? function (d) { return row.scaleCellPosSize(d.key); } : function () { return 0; }),
+                        width: (dim.self === 'col' ? me.cells.attrs.width : function () { return row.marginSideColor - me.options.SIDE_COLOR_OFFSET; }),
+                        height: (dim.self === 'row' ? me.cells.attrs.height : function () { return col.marginSideColor - me.options.SIDE_COLOR_OFFSET; }),
+                        fill: function (d) { return dim.numToColor(dim.annoToNum(d.annos[dim.annoBy])); }
+                    },
+                    dim.labelsAnnotated,
+                    me.key
+                );
+
+                dim.cellsAnno = new ElementCollection(
+                    me.container.svg,
+                    'anno-colors',
+                    'rect',
+                    {
+                        x: function () { return 0; },
+                        y: function (d) { return dim.scaleAnnoColor(d); },
+                        width: function () { return me.marginAnnoColor; },
+                        height: function () { return dim.scaleAnnoColor.bandwidth(); },
+                        fill: function (d) { return dim.numToColor(dim.annoToNum(d)); }
+                    },
+                    dim.annotations[dim.annoBy],
+                    me.identity
+                );
+
+                // attach event listeners
+                dim.cellsSide.selection
+                    .on('mouseover', function (d) {
+                        d3.select(this)
+                            .style('opacity', 0.5);
+                        dim.tooltip.show(d);
+                    })
+                    .on('mouseout', function () {
+                        d3.select(this)
+                            .style('opacity', 1);
+                        dim.tooltip.hide();
+                    });
+                dim.cellsAnno.selection
+                    .on('mouseover', function (d) {
+                        d3.select(this)
+                            .style('opacity', 0.5);
+                        dim.annoTooltip.show(d);
+                    })
+                    .on('mouseout', function () {
+                        d3.select(this)
+                            .style('opacity', 1);
+                        dim.annoTooltip.hide();
+                    });
+
+                // initialize fills
+                dim.cellsSide.updateVis('fill');
+                dim.cellsAnno.updateVis('fill');
+            }
         });
 
         //----------------------------------------------------------------------
