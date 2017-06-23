@@ -229,7 +229,7 @@ class Heatmap extends Widget {
         //----------------------------------------------------------------------
 
         // scales for determining cell color
-        me.mainColorScale = d3.scaleQuantize()
+        me.scaleCellFill = d3.scaleQuantize()
             .domain([-me.data.stats.zMax[me.scalingDim], me.data.stats.zMax[me.scalingDim]])
             .range(me.colorsHeatmap);
         me.bucketizer = new Bucketizer(me.dividersBucket, me.colorsBucket);
@@ -237,9 +237,9 @@ class Heatmap extends Widget {
         me.scaleGradient = d3.scaleBand();
 
         dims.forEach(function (dim) {
-            dim.scaleCell = d3.scaleBand();
-            dim.scaleCellSub = d3.scaleBand();
-            dim.scaleCellSubOther = d3.scaleBand();
+            dim.scaleCellPosSize = d3.scaleBand();
+            dim.scaleCellMiniPosSize = d3.scaleBand();
+            dim.scaleCellMiniOtherPosSize = d3.scaleBand();
 
             if (dim.annotated) {
                 dim.scaleAnnoColor = d3.scaleBand();
@@ -355,15 +355,15 @@ class Heatmap extends Widget {
             'heatmap-cells',
             'rect',
             {
-                x: function (d) { return col.scaleCell(d.col); },
-                y: function (d) { return row.scaleCell(d.row); },
-                width: function () { return col.scaleCell.bandwidth(); },
-                height: function () { return row.scaleCell.bandwidth(); },
+                x: function (d) { return col.scaleCellPosSize(d.col); },
+                y: function (d) { return row.scaleCellPosSize(d.row); },
+                width: function () { return col.scaleCellPosSize.bandwidth(); },
+                height: function () { return row.scaleCellPosSize.bandwidth(); },
                 fill: function (d) {
-                    if (me.scalingDim === 'none') return me.mainColorScale(d.value);
+                    if (me.scalingDim === 'none') return me.scaleCellFill(d.value);
                     if (me.scalingDim === 'bucket') return me.bucketizer.bucketize(d.value);
                     var ref = me.data.stats[me.scalingDim][me.htmlEscape(d[me.scalingDim])];
-                    return me.mainColorScale((d.value - ref.mean) / ref.stdev);
+                    return me.scaleCellFill((d.value - ref.mean) / ref.stdev);
                 }
             },
             me.data.matrix,
@@ -375,10 +375,10 @@ class Heatmap extends Widget {
             'col-cells-sub',
             'rect',
             {
-                x: function (d) { return col.scaleCellSub(d.col); },
-                y: function (d) { return row.scaleCellSubOther(d.row); },
-                width: function () { return col.scaleCellSub.bandwidth(); },
-                height: function () { return row.scaleCellSubOther.bandwidth(); },
+                x: function (d) { return col.scaleCellMiniPosSize(d.col); },
+                y: function (d) { return row.scaleCellMiniOtherPosSize(d.row); },
+                width: function () { return col.scaleCellMiniPosSize.bandwidth(); },
+                height: function () { return row.scaleCellMiniOtherPosSize.bandwidth(); },
                 fill: me.cells.attrs.fill // inherit fill attribute from cells
             },
             me.data.matrix,
@@ -390,10 +390,10 @@ class Heatmap extends Widget {
             'row-cells-sub',
             'rect',
             {
-                x: function (d) { return col.scaleCellSubOther(d.col); },
-                y: function (d) { return row.scaleCellSub(d.row); },
-                width: function () { return col.scaleCellSubOther.bandwidth(); },
-                height: function () { return row.scaleCellSub.bandwidth(); },
+                x: function (d) { return col.scaleCellMiniOtherPosSize(d.col); },
+                y: function (d) { return row.scaleCellMiniPosSize(d.row); },
+                width: function () { return col.scaleCellMiniOtherPosSize.bandwidth(); },
+                height: function () { return row.scaleCellMiniPosSize.bandwidth(); },
                 fill: me.cells.attrs.fill // inherit fill attribute from cells
             },
             me.data.matrix,
@@ -492,8 +492,8 @@ class Heatmap extends Widget {
                 'side-colors',
                 'rect',
                 {
-                    x: (dim.self === 'col' ? function (d) { return col.scaleCell(d.key); } : function () { return 0; }),
-                    y: (dim.self === 'row' ? function (d) { return row.scaleCell(d.key); } : function () { return 0; }),
+                    x: (dim.self === 'col' ? function (d) { return col.scaleCellPosSize(d.key); } : function () { return 0; }),
+                    y: (dim.self === 'row' ? function (d) { return row.scaleCellPosSize(d.key); } : function () { return 0; }),
                     width: (dim.self === 'col' ? me.cells.attrs.width : function () { return row.marginSideColor - me.options.SIDE_COLOR_OFFSET; }),
                     height: (dim.self === 'row' ? me.cells.attrs.height : function () { return col.marginSideColor - me.options.SIDE_COLOR_OFFSET; }),
                     fill: function (d) { return dim.numToColor(dim.annoToNum(d.annos[dim.annoBy])); }
@@ -850,7 +850,7 @@ class Heatmap extends Widget {
           	dim.currentScope = [0, dim.names.length];
 
             // scale updates
-            dim.scaleCell.domain(dim.names);
+            dim.scaleCellPosSize.domain(dim.names);
             dim.labels.updateLabels(dim.names);
 
             // visual updates
@@ -875,7 +875,7 @@ class Heatmap extends Widget {
         }
 
         // scale updates
-        dim.scaleCell.domain(scopeArray);
+        dim.scaleCellPosSize.domain(scopeArray);
         dim.labels.updateLabels(scopeArray);
 
         // visual updates
@@ -970,8 +970,8 @@ class Heatmap extends Widget {
         }
 
         // update scales
-        dim.scaleCell.domain(dim.names);
-        dim.scaleCellSub.domain(dim.names);
+        dim.scaleCellPosSize.domain(dim.names);
+        dim.scaleCellMiniPosSize.domain(dim.names);
         dim.brusher.inverter.range(dim.names);
         dim.labelsSub.updateLabels(dim.names);
 
@@ -990,9 +990,9 @@ class Heatmap extends Widget {
 
         // scale update (NOTE no scale update for 'bucket')
         if (me.scalingDim === 'none') {
-            me.mainColorScale.domain([me.data.stats.totalMin, me.data.stats.totalMax]);
+            me.scaleCellFill.domain([me.data.stats.totalMin, me.data.stats.totalMax]);
         } else if (me.scalingDim === 'col' || me.scalingDim === 'row') {
-            me.mainColorScale.domain([-me.data.stats.zMax[me.scalingDim], me.data.stats.zMax[me.scalingDim]]);
+            me.scaleCellFill.domain([-me.data.stats.zMax[me.scalingDim], me.data.stats.zMax[me.scalingDim]]);
         }
 
         // visual updates
@@ -1057,6 +1057,7 @@ class Heatmap extends Widget {
             col.annoTitle.anchor = [col.annoColors.anchor[0], col.annoColors.anchor[1] - me.options.ANNO_TITLE_OFFSET];
             col.labelsAnno.anchor = [col.annoColors.anchor[0] + me.marginAnnoColor + me.options.AXIS_OFFSET, col.annoColors.anchor[1]];
         }
+
         if (row.annotated) {
             row.sideColors.anchor = [0, cells.anchor[1]];
             row.annoColors.anchor = [row.labelsSub.anchor[0] + row.marginLabelSub, col.marginAnnoTotal + me.marginAnnoTitle];
@@ -1073,9 +1074,9 @@ class Heatmap extends Widget {
         var me = this;
 
         me.dims.forEach(function (dim) {
-            dim.scaleCell.domain(dim.names);
-            dim.scaleCellSub.domain(dim.names);
-            dim.scaleCellSubOther.domain(dim.names);
+            dim.scaleCellPosSize.domain(dim.names);
+            dim.scaleCellMiniPosSize.domain(dim.names);
+            dim.scaleCellMiniOtherPosSize.domain(dim.names);
             if (dim.annotated) {
                 dim.scaleAnnoColor.domain(dim.annotations[dim.annoBy]);
             }
@@ -1089,9 +1090,10 @@ class Heatmap extends Widget {
         var me = this;
 
         me.dims.forEach(function (dim) {
-            dim.scaleCell.range([0, dim.sizeHeatmap()]);
-            dim.scaleCellSub.range([0, dim.sizeHeatmap()]);
-            dim.scaleCellSubOther.range([0, dim.other.marginBrush]);
+            dim.scaleCellPosSize.range([0, dim.sizeHeatmap()]);
+            dim.scaleCellMiniPosSize.range([0, dim.sizeHeatmap()]);
+            dim.scaleCellMiniOtherPosSize.range([0, dim.other.marginBrush]);
+
             if (dim.annotated) {
                 dim.scaleAnnoColor.range([0, dim.marginAnnoHeight]);
             }
