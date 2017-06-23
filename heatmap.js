@@ -668,23 +668,21 @@ class Heatmap extends Widget {
         // These represent the titles on the columns of cells at the right.
         //----------------------------------------------------------------------
 
-        dims.forEach(function (dim) {
-            if (!dim.annotated) {
-                return;
-            }
-
-            dim.annoTitle = new Title(
-                me.container.svg,
-                'bold',
-                dim.annoBy,
-                me.options.FONT_SIZE_CK
-            );
-        });
-
         me.colorKey.addTitle(me.container.svg, 'bucket', 'Buckets', me.options.FONT_SIZE_CK);
         me.colorKey.addTitle(me.container.svg, 'none', 'Linear Gradient', me.options.FONT_SIZE_CK);
-        me.colorKey.addTitle(me.container.svg, 'row', 'Row Z-Score', me.options.FONT_SIZE_CK);
-        me.colorKey.addTitle(me.container.svg, 'col', 'Column Z-Score', me.options.FONT_SIZE_CK);
+
+        dims.forEach(function (dim) {
+            me.colorKey.addTitle(me.container.svg, dim.self, dim.title + ' Z-Score', me.options.FONT_SIZE_CK);
+
+            if (dim.annotated) {
+                dim.annoTitle = new Title(
+                    me.container.svg,
+                    'bold',
+                    dim.annoBy,
+                    me.options.FONT_SIZE_CK
+                );
+            }
+        });
 
         //----------------------------------------------------------------------
         // ANCHORS
