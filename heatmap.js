@@ -56,7 +56,8 @@ class Heatmap extends Widget {
         me.categorical = (options.categorical === undefined ? false : options.categorical);
 
         // miscellaneous options
-        me.renderOnBrushEnd = options.renderOnBrushEnd;
+        me.scalingDim = (options.scalingDim || 'col');
+        me.renderOnBrushEnd = (options.renderOnBrushEnd === undefined ? true : options.renderOnBrushEnd);
 
         // clear out DOM elements inside parent
         me.destroy();
@@ -136,8 +137,6 @@ class Heatmap extends Widget {
         row.size = 'height';
         col.sizeHeatmap = function () { return me.sizeHeatmap(row) - me.marginAnnoTotal; };
         row.sizeHeatmap = function () { return me.sizeHeatmap(col); };
-
-        me.scalingDim = col.self;
 
         dims.forEach(function (dim) {
             dim.stats = me.data.stats[dim.self];
