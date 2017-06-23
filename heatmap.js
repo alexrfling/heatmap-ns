@@ -135,6 +135,12 @@ class Heatmap extends Widget {
         row.pos = 'y';
         col.size = 'width';
         row.size = 'height';
+        col.orientation = 'bottom';
+        row.orientation = 'right';
+        col.offsetMultiplier = 2;
+        row.offsetMultiplier = 3;
+        col.angled = true;
+        row.angled = false;
         col.sizeHeatmap = function () { return me.sizeHeatmap(row) - me.marginAnnoTotal; };
         row.sizeHeatmap = function () { return me.sizeHeatmap(col); };
 
@@ -559,55 +565,31 @@ class Heatmap extends Widget {
         // call its axis component on its SVG element.
         //----------------------------------------------------------------------
 
-        row.labels = new Labels(
-            me.container.svg,
-            'labels',
-            row.names,
-            row.sizeHeatmap,
-            me.cells.attrs.height,
-            false,
-            me.options.FONT_SIZE,
-            function () { return row.marginLabel - 3 * me.options.AXIS_OFFSET; },
-            'right'
-        );
-
-        col.labels = new Labels(
-            me.container.svg,
-            'labels',
-            col.names,
-            col.sizeHeatmap,
-            me.cells.attrs.width,
-            true,
-            me.options.FONT_SIZE,
-            function () { return col.marginLabel - 2 * me.options.AXIS_OFFSET; },
-            'bottom'
-        );
-
-        row.labelsMini = new Labels(
-            me.container.svg,
-            'labels',
-            row.names,
-            row.sizeHeatmap,
-            me.cells.attrs.height,
-            false,
-            me.options.FONT_SIZE,
-            function () { return row.marginLabelSub - 3 * me.options.AXIS_OFFSET; },
-            'right'
-        );
-
-        col.labelsMini = new Labels(
-            me.container.svg,
-            'labels',
-            col.names,
-            col.sizeHeatmap,
-            me.cells.attrs.width,
-            true,
-            me.options.FONT_SIZE,
-            function () { return col.marginLabelSub - 2 * me.options.AXIS_OFFSET; },
-            'bottom'
-        );
-
         dims.forEach(function (dim) {
+            dim.labels = new Labels(
+                me.container.svg,
+                'labels',
+                dim.names,
+                dim.sizeHeatmap,
+                me.cells.attrs[dim.size],
+                dim.angled,
+                me.options.FONT_SIZE,
+                function () { return dim.marginLabel - dim.offsetMultiplier * me.options.AXIS_OFFSET; },
+                dim.orientation
+            );
+
+            dim.labelsMini = new Labels(
+                me.container.svg,
+                'labels',
+                dim.names,
+                dim.sizeHeatmap,
+                me.cells.attrs[dim.size],
+                dim.angled,
+                me.options.FONT_SIZE,
+                function () { return dim.marginLabelSub - dim.offsetMultiplier * me.options.AXIS_OFFSET; },
+                dim.orientation
+            );
+
             me.colorKey.addLabels(
                 me.container.svg,
                 dim.self,
