@@ -114,11 +114,11 @@ class Heatmap extends Widget {
         //		  row.pos = y
         //		* col.size = width
         //		  row.size = height
-        //		* col.sideColors = column side colors
-        //		  row.sideColors = row side colors
+        //		* col.cellsSide = column side colors
+        //		  row.cellsSide = row side colors
         // We can thus create a function which handles the event where either
         // dim has been zoomed/panned, needing only parameter, the dim, whose
-        // 'labels', 'pos', 'size', and 'sideColors' fields will be used (along
+        // 'labels', 'pos', 'size', and 'cellsSide' fields will be used (along
         // with the global reference to the heatmap cells) to determine the
         // visual updates. NOTE the function that actually does this modifies
         // more variables than just those listed here, and additionally the
@@ -367,7 +367,7 @@ class Heatmap extends Widget {
             me.key
         );
 
-        col.cellsSub = new ElementCollection(
+        col.cellsMini = new ElementCollection(
             me.container.svg,
             'col-cells-sub',
             'rect',
@@ -382,7 +382,7 @@ class Heatmap extends Widget {
             me.key
         );
 
-        row.cellsSub = new ElementCollection(
+        row.cellsMini = new ElementCollection(
             me.container.svg,
             'row-cells-sub',
             'rect',
@@ -472,8 +472,8 @@ class Heatmap extends Widget {
 
         // initialize fills
         me.cells.updateVis('fill');
-        col.cellsSub.updateVis('fill');
-        row.cellsSub.updateVis('fill');
+        col.cellsMini.updateVis('fill');
+        row.cellsMini.updateVis('fill');
         me.colorKey.cells.none.updateVis('fill');
         me.colorKey.cells.col.updateVis('fill');
         me.colorKey.cells.row.updateVis('fill');
@@ -484,7 +484,7 @@ class Heatmap extends Widget {
                 return;
             }
 
-            dim.sideColors = new ElementCollection(
+            dim.cellsSide = new ElementCollection(
                 me.container.svg,
                 'side-colors',
                 'rect',
@@ -499,7 +499,7 @@ class Heatmap extends Widget {
                 me.key
             );
 
-            dim.annoColors = new ElementCollection(
+            dim.cellsAnno = new ElementCollection(
                 me.container.svg,
                 'anno-colors',
                 'rect',
@@ -515,7 +515,7 @@ class Heatmap extends Widget {
             );
 
             // attach event listeners
-            dim.sideColors.selection
+            dim.cellsSide.selection
                 .on('mouseover', function (d) {
                     d3.select(this)
                         .style('opacity', 0.5);
@@ -526,7 +526,7 @@ class Heatmap extends Widget {
                         .style('opacity', 1);
                     dim.tooltip.hide();
                 });
-            dim.annoColors.selection
+            dim.cellsAnno.selection
                 .on('mouseover', function (d) {
                     d3.select(this)
                         .style('opacity', 0.5);
@@ -539,8 +539,8 @@ class Heatmap extends Widget {
                 });
 
             // initialize fills
-            dim.sideColors.updateVis('fill');
-            dim.annoColors.updateVis('fill');
+            dim.cellsSide.updateVis('fill');
+            dim.cellsAnno.updateVis('fill');
         });
 
         //----------------------------------------------------------------------
@@ -617,7 +617,7 @@ class Heatmap extends Widget {
                 'labels',
                 dim.annotations[dim.annoBy],
                 function () { return dim.marginAnnoHeight; },
-                dim.annoColors.attrs.height,
+                dim.cellsAnno.attrs.height,
                 false,
                 me.options.FONT_SIZE,
                 function () { return me.marginAnnoLabel - 4 * me.options.AXIS_OFFSET; },
@@ -776,8 +776,8 @@ class Heatmap extends Widget {
             d3.brushX(),
             function () { me.onBrush(col); },
             function () { me.onEnd(col); },
-            function () { return col.cellsSub.anchor; },
-            function () { return [col.cellsSub.anchor[0] + col.sizeHeatmap(), col.cellsSub.anchor[1] + col.marginBrush]; },
+            function () { return col.cellsMini.anchor; },
+            function () { return [col.cellsMini.anchor[0] + col.sizeHeatmap(), col.cellsMini.anchor[1] + col.marginBrush]; },
             0
         );
 
@@ -787,8 +787,8 @@ class Heatmap extends Widget {
             d3.brushY(),
             function () { me.onBrush(row); },
             function () { me.onEnd(row); },
-            function () { return row.cellsSub.anchor; },
-            function () { return [row.cellsSub.anchor[0] + row.marginBrush, row.cellsSub.anchor[1] + row.sizeHeatmap()]; },
+            function () { return row.cellsMini.anchor; },
+            function () { return [row.cellsMini.anchor[0] + row.marginBrush, row.cellsMini.anchor[1] + row.sizeHeatmap()]; },
             1
         );
 
@@ -854,7 +854,7 @@ class Heatmap extends Widget {
             dim.labels.updateVis(me.options.ANIM_DURATION);
             me.cells.updateVis(dim.pos, dim.size);
             if (dim.annotated) {
-                dim.sideColors.updateVis(dim.pos, dim.size);
+                dim.cellsSide.updateVis(dim.pos, dim.size);
             }
         }
     }
@@ -890,9 +890,9 @@ class Heatmap extends Widget {
             .attr(dim.pos, function (d) { return (vis[d[dim.self]] ? me.cells.attrs[dim.pos](d) : 0); })
             .attr(dim.size, function (d) { return (vis[d[dim.self]] ? me.cells.attrs[dim.size]() : 0); });
         if (dim.annotated) {
-            dim.sideColors.selection
-                .attr(dim.pos, function (d) { return (vis[d.key] ? dim.sideColors.attrs[dim.pos](d) : 0); })
-                .attr(dim.size, function (d) { return (vis[d.key] ? dim.sideColors.attrs[dim.size]() : 0); });
+            dim.cellsSide.selection
+                .attr(dim.pos, function (d) { return (vis[d.key] ? dim.cellsSide.attrs[dim.pos](d) : 0); })
+                .attr(dim.size, function (d) { return (vis[d.key] ? dim.cellsSide.attrs[dim.size]() : 0); });
         }
     }
 
@@ -919,9 +919,9 @@ class Heatmap extends Widget {
 
         // visual updates
         dim.annoTitle.setText(dim.annoBy);
-        dim.annoColors.updateData(values, me.identity);
-        dim.annoColors.updateVis('x', 'y', 'width', 'height', 'fill');
-        dim.annoColors.selection
+        dim.cellsAnno.updateData(values, me.identity);
+        dim.cellsAnno.updateVis('x', 'y', 'width', 'height', 'fill');
+        dim.cellsAnno.selection
             .on('mouseover', function (d) {
                 d3.select(this)
                     .style('opacity', 0.5);
@@ -933,10 +933,10 @@ class Heatmap extends Widget {
                 dim.annoTooltip.hide();
             });
         dim.labelsAnno.updateVis();
-        dim.sideColors.selection
+        dim.cellsSide.selection
             .transition()
             .duration(me.options.ANIM_DURATION)
-            .attr('fill', dim.sideColors.attrs.fill);
+            .attr('fill', dim.cellsSide.attrs.fill);
     }
 
     // sorts the rows/columns (depending on dim) of the 3 heatmaps according to
@@ -974,8 +974,8 @@ class Heatmap extends Widget {
 
         // visual updates for the brushable heatmaps
         dim.labelsSub.updateVis(me.options.ANIM_DURATION);
-        dim.cellsSub.updateVis(dim.pos);
-        dim.other.cellsSub.updateVis(dim.pos);
+        dim.cellsMini.updateVis(dim.pos);
+        dim.other.cellsMini.updateVis(dim.pos);
         me.renderScope(dim, me.options.ANIM_DURATION);
     }
 
@@ -991,8 +991,8 @@ class Heatmap extends Widget {
         // visual updates
         me.colorKey.change(me.scalingDim);
         me.cells.updateVis('fill');
-        me.col.cellsSub.updateVis('fill');
-        me.row.cellsSub.updateVis('fill');
+        me.col.cellsMini.updateVis('fill');
+        me.row.cellsMini.updateVis('fill');
     }
 
     setMargins () {
@@ -1039,23 +1039,23 @@ class Heatmap extends Widget {
         cells.anchor = [row.marginSideColor, col.marginSideColor];
         col.labels.anchor = [cells.anchor[0], cells.anchor[1] + row.sizeHeatmap() + me.options.AXIS_OFFSET];
         row.labels.anchor = [cells.anchor[0] + col.sizeHeatmap() + me.options.AXIS_OFFSET, cells.anchor[1]];
-        col.cellsSub.anchor = [cells.anchor[0], col.labels.anchor[1] + col.marginLabel];
-        row.cellsSub.anchor = [row.labels.anchor[0] + row.marginLabel, cells.anchor[1]];
-        col.labelsSub.anchor = [cells.anchor[0], col.cellsSub.anchor[1] + col.marginBrush + me.options.AXIS_OFFSET];
-        row.labelsSub.anchor = [row.cellsSub.anchor[0] + row.marginBrush + me.options.AXIS_OFFSET, cells.anchor[1]];
+        col.cellsMini.anchor = [cells.anchor[0], col.labels.anchor[1] + col.marginLabel];
+        row.cellsMini.anchor = [row.labels.anchor[0] + row.marginLabel, cells.anchor[1]];
+        col.labelsSub.anchor = [cells.anchor[0], col.cellsMini.anchor[1] + col.marginBrush + me.options.AXIS_OFFSET];
+        row.labelsSub.anchor = [row.cellsMini.anchor[0] + row.marginBrush + me.options.AXIS_OFFSET, cells.anchor[1]];
 
         if (col.annotated) {
-            col.sideColors.anchor = [cells.anchor[0], 0];
-            col.annoColors.anchor = [row.labelsSub.anchor[0] + row.marginLabelSub, me.marginAnnoTitle];
-            col.annoTitle.anchor = [col.annoColors.anchor[0], col.annoColors.anchor[1] - me.options.ANNO_TITLE_OFFSET];
-            col.labelsAnno.anchor = [col.annoColors.anchor[0] + me.marginAnnoColor + me.options.AXIS_OFFSET, col.annoColors.anchor[1]];
+            col.cellsSide.anchor = [cells.anchor[0], 0];
+            col.cellsAnno.anchor = [row.labelsSub.anchor[0] + row.marginLabelSub, me.marginAnnoTitle];
+            col.annoTitle.anchor = [col.cellsAnno.anchor[0], col.cellsAnno.anchor[1] - me.options.ANNO_TITLE_OFFSET];
+            col.labelsAnno.anchor = [col.cellsAnno.anchor[0] + me.marginAnnoColor + me.options.AXIS_OFFSET, col.cellsAnno.anchor[1]];
         }
 
         if (row.annotated) {
-            row.sideColors.anchor = [0, cells.anchor[1]];
-            row.annoColors.anchor = [row.labelsSub.anchor[0] + row.marginLabelSub, col.marginAnnoTotal + me.marginAnnoTitle];
-            row.annoTitle.anchor = [row.annoColors.anchor[0], row.annoColors.anchor[1] - me.options.ANNO_TITLE_OFFSET];
-            row.labelsAnno.anchor = [row.annoColors.anchor[0] + me.marginAnnoColor + me.options.AXIS_OFFSET, row.annoColors.anchor[1]];
+            row.cellsSide.anchor = [0, cells.anchor[1]];
+            row.cellsAnno.anchor = [row.labelsSub.anchor[0] + row.marginLabelSub, col.marginAnnoTotal + me.marginAnnoTitle];
+            row.annoTitle.anchor = [row.cellsAnno.anchor[0], row.cellsAnno.anchor[1] - me.options.ANNO_TITLE_OFFSET];
+            row.labelsAnno.anchor = [row.cellsAnno.anchor[0] + me.marginAnnoColor + me.options.AXIS_OFFSET, row.cellsAnno.anchor[1]];
         }
 
         colorKey.anchors.cells = [row.labelsSub.anchor[0] + row.marginLabelSub, col.marginAnnoTotal + row.marginAnnoTotal + me.marginAnnoTitle];
@@ -1163,18 +1163,18 @@ class Heatmap extends Widget {
             dim.labelsSub.position();
             dim.labelsSub.updateLabels();
             dim.labelsSub.updateVis();
-            dim.cellsSub.position();
-            dim.cellsSub.updateVis('x', 'y', 'width', 'height');
+            dim.cellsMini.position();
+            dim.cellsMini.updateVis('x', 'y', 'width', 'height');
             dim.brusher.callBrush();
 
             if (dim.annotated) {
                 dim.labelsAnno.position();
                 dim.labelsAnno.updateLabels();
                 dim.labelsAnno.updateVis();
-                dim.sideColors.position();
-                dim.sideColors.updateVis('x', 'y', 'width', 'height');
-                dim.annoColors.position();
-                dim.annoColors.updateVis('x', 'y', 'width', 'height');
+                dim.cellsSide.position();
+                dim.cellsSide.updateVis('x', 'y', 'width', 'height');
+                dim.cellsAnno.position();
+                dim.cellsAnno.updateVis('x', 'y', 'width', 'height');
                 dim.annoTitle.position();
             }
         });
