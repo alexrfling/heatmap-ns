@@ -355,7 +355,7 @@ class Heatmap extends Widget {
 
         me.cells = new ElementCollection(
             me.container.svg,
-            'heatmap-cells',
+            'cells',
             'rect',
             {
                 x: function (d) { return col.scaleCellPosSize(d.col); },
@@ -375,7 +375,7 @@ class Heatmap extends Widget {
 
         col.cellsMini = new ElementCollection(
             me.container.svg,
-            'col-cells-sub',
+            'cells-mini-col',
             'rect',
             {
                 x: function (d) { return col.scaleCellMiniPosSize(d.col); },
@@ -390,7 +390,7 @@ class Heatmap extends Widget {
 
         row.cellsMini = new ElementCollection(
             me.container.svg,
-            'row-cells-sub',
+            'cells-mini-row',
             'rect',
             {
                 x: function (d) { return col.scaleCellMiniOtherPosSize(d.col); },
@@ -474,7 +474,7 @@ class Heatmap extends Widget {
             if (dim.annotated) {
                 dim.cellsSide = new ElementCollection(
                     me.container.svg,
-                    'side-colors',
+                    'cells-side' + dim.self,
                     'rect',
                     {
                         x: (dim.self === 'col' ? function (d) { return col.scaleCellPosSize(d.key); } : function () { return 0; }),
@@ -489,7 +489,7 @@ class Heatmap extends Widget {
 
                 dim.cellsAnno = new ElementCollection(
                     me.container.svg,
-                    'anno-colors',
+                    'cells-anno-' + dim.self,
                     'rect',
                     {
                         x: function () { return 0; },
