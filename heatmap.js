@@ -229,9 +229,7 @@ class Heatmap extends Widget {
         //----------------------------------------------------------------------
 
         // scales for determining cell color
-        me.scaleCellFill = d3.scaleQuantize()
-            .domain([-me.data.stats.zMax[me.scalingDim], me.data.stats.zMax[me.scalingDim]])
-            .range(me.colorsHeatmap);
+        me.scaleCellFill = d3.scaleQuantize();
         me.bucketizer = new Bucketizer(me.dividersBucket, me.colorsBucket);
         me.scaleBucket = d3.scaleBand();
         me.scaleGradient = d3.scaleBand();
@@ -988,12 +986,8 @@ class Heatmap extends Widget {
         var me = this;
         me.scalingDim = scalingDim;
 
-        // scale update (NOTE no scale update for 'bucket')
-        if (me.scalingDim === 'none') {
-            me.scaleCellFill.domain([me.data.stats.totalMin, me.data.stats.totalMax]);
-        } else if (me.scalingDim === 'col' || me.scalingDim === 'row') {
-            me.scaleCellFill.domain([-me.data.stats.zMax[me.scalingDim], me.data.stats.zMax[me.scalingDim]]);
-        }
+        // scale update
+        me.setScaleDomainCellFill();
 
         // visual updates
         me.colorKey.change(me.scalingDim);
@@ -1073,20 +1067,33 @@ class Heatmap extends Widget {
     setScaleDomains () {
         var me = this;
 
+        me.setScaleDomainCellFill();
+        me.scaleBucket.domain(me.colorsBucket);
+        me.scaleGradient.domain(me.colorsHeatmap);
+
         me.dims.forEach(function (dim) {
             dim.scaleCellPosSize.domain(dim.names);
             dim.scaleCellMiniPosSize.domain(dim.names);
             dim.scaleCellMiniOtherPosSize.domain(dim.names);
+
             if (dim.annotated) {
                 dim.scaleAnnoColor.domain(dim.annotations[dim.annoBy]);
             }
         });
-
-        me.scaleBucket.domain(me.colorsBucket);
-        me.scaleGradient.domain(me.colorsHeatmap);
     }
 
-    setScaleRanges () {
+    setScaleDomainCellFill () {
+        var me = this;
+
+        // NOTE no scale update for 'bucket'
+        if (me.scalingDim === 'none') {
+            me.scaleCellFill.domain([me.data.stats.totalMin, me.data.stats.totalMax]);
+        } else if (me.scalingDim === 'col' || me.scalingDim === 'row') {
+            me.scaleCellFill.domain([-me.data.stats.zMax[me.scalingDim], me.data.stats.zMax[me.scalingDim]]);
+        }
+    }
+
+    setScaleRangesPositional () {
         var me = this;
 
         me.dims.forEach(function (dim) {
@@ -1101,6 +1108,19 @@ class Heatmap extends Widget {
 
         me.scaleBucket.range([0, me.marginColorKey]);
         me.scaleGradient.range([0, me.marginColorKey]);
+    }
+
+    setScaleRangesFill () {
+        var me = this;
+
+        me.scaleCellFill.range(me.colorsHeatmap);
+    }
+
+    setScaleRanges () {
+        var me = this;
+
+        me.setScaleRangesPositional();
+        me.setScaleRangesFill();
     }
 
     resize (width, height) {
