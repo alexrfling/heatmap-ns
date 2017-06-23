@@ -1108,9 +1108,11 @@ class Heatmap extends Widget {
         me.setMargins();
         me.setAnchors();
         me.setScaleRanges();
-        // TODO position elements before setting extents?
-        me.col.brusher.setExtents();
-        me.row.brusher.setExtents();
+
+        me.dims.forEach(function (dim) {
+            dim.brusher.setExtents();
+        });
+
         me.positionElements();
 
         me.dims.forEach(function (dim) {
