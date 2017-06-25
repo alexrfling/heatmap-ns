@@ -53,7 +53,7 @@ class Heatmap extends Widget {
         row.catScheme = (options.rowCatScheme || 'google');
         row.conScheme = (options.rowConScheme || 'cubehelix');
         row.annoHeatScheme = (options.rowAnnoHeatScheme || 'magma');
-        me.categorical = (options.categorical === undefined ? false : options.categorical);
+        me.categorical = (options.categorical === undefined ? true : options.categorical);
 
         // miscellaneous options
         me.scalingDim = (options.scalingDim || 'col');
