@@ -963,6 +963,7 @@ class Heatmap extends Widget {
         me.cells.updateVis('fill');
         me.dims.forEach(function (dim) {
             dim.cellsMini.updateVis('fill');
+            me.colorKey.cells[dim.self].updateVis('fill');
         });
     }
 
