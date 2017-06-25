@@ -950,6 +950,22 @@ class Heatmap extends Widget {
         me.row.cellsMini.updateVis('fill');
     }
 
+    updateColors (loColor hiColor) {
+        var me = this;
+        me.loColor = (loColor || me.loColor);
+        me.hiColor = (hiColor || me.hiColor);
+        me.colorsHeatmap = me.interpolateColors(me.loColor, me.mdColor, me.hiColor, me.numColors);
+
+        // scale updates
+        me.setScaleRangesFill();
+
+        // visual updates
+        me.cells.updateVis('fill');
+        me.dims.forEach(function (dim) {
+            dim.cellsMini.updateVis('fill');
+        });
+    }
+
     setMargins () {
         var me = this;
         var col = me.col;
