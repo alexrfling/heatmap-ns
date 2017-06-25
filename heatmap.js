@@ -851,8 +851,10 @@ class Heatmap extends Widget {
     // annotates the rows/columns (depending on dim) and updates the respective
     // annotation colors by the currently selected annotation option for the
     // given dimension
-    updateAnno (dim, annotype) {
+    updateAnno (dimKey, annotype) {
         var me = this;
+        var dim = me[dimKey];
+
         dim.annoBy = annotype;
         var values = dim.annotations[dim.annoBy];
 
@@ -893,8 +895,9 @@ class Heatmap extends Widget {
 
     // sorts the rows/columns (depending on dim) of the 3 heatmaps according to
     // the currently selected sorting option for the given dimension
-    updateSort (dim, annotype) {
+    updateSort (dimKey, annotype) {
         var me = this;
+        var dim = me[dimKey];
 
         // sort the rows/columns by the chosen annotype
         if (annotype === 'Clustered Order') {

@@ -45,16 +45,9 @@
 		var heatmap = new Heatmap('heatmap');
 		heatmap.initialize(heatmapString[TEST_SET_INDEX], options);
 
-		var col = heatmap.col;
-		var row = heatmap.row;
-
-		var panel = d3.select('body')
+		var trow = d3.select('body')
 			.append('div')
-			.attr('id', 'settings')
-			.attr('class', 'tooltip');
-		var table = panel
-			.append('table');
-		var trow = table
+			.append('table')
 			.append('tr');
 		trow
 			.append('td')
@@ -65,11 +58,10 @@
 			.append('td')
 			.append('p')
 			.text('Scale by');
-		var scaleBy = trow
+		trow
 			.append('td')
 			.append('select')
-			.on('change', function () { heatmap.updateColorScaling(this.value); });
-		scaleBy
+			.on('change', function () { heatmap.updateColorScaling(this.value); })
 			.selectAll('option')
 			.data([
 				{ value: 'col', text: 'Column' },
@@ -82,42 +74,41 @@
 			.attr('value', function (d) { return d.value; })
 			.text(function (d) { return d.text; });
 
-		if (heatmap.row.annotated) controlsSetup(row);
-		if (heatmap.col.annotated) controlsSetup(col);
+		heatmap.dims.forEach(function (dim) {
+			if (dim.annotated) {
+				trow
+					.append('td')
+					.append('p')
+					.text(dim.title + 's: annotate by');
+				var dropdownAnno = selectorSetup(dim, heatmap.updateAnno);
+				trow
+					.append('td')
+					.append('p')
+					.text(dim.title + 's: sort by');
+				var dropdownSort = selectorSetup(dim, heatmap.updateSort);
+				dropdownAnno
+					.selectAll('option')
+					.data(dim.annotypes)
+					.enter()
+					.append('option')
+					.attr('value', Widget.prototype.identity)
+					.text(Widget.prototype.identity);
+				dropdownSort
+					.selectAll('option')
+					.data(['Clustered Order'].concat(dim.annotypes))
+					.enter()
+					.append('option')
+					.attr('value', Widget.prototype.identity)
+					.text(Widget.prototype.identity);
+			}
 
-		function controlsSetup (dim) {
-			trow
-				.append('td')
-				.append('p')
-				.text(dim.title + 's: annotate by');
-			dim.annoByDropdown = selectorSetup(trow, dim, heatmap.updateAnno);
-			trow
-				.append('td')
-				.append('p')
-				.text(dim.title + 's: sort by');
-			dim.sortByDropdown = selectorSetup(trow, dim, heatmap.updateSort);
-			dim.annoByDropdown
-				.selectAll('option')
-				.data(dim.annotypes)
-				.enter()
-				.append('option')
-				.attr('value', Widget.prototype.identity)
-				.text(function (d) { return d; });
-			dim.sortByDropdown
-				.selectAll('option')
-				.data(['Clustered Order'].concat(dim.annotypes))
-				.enter()
-				.append('option')
-				.attr('value', Widget.prototype.identity)
-				.text(function (d) { return d; });
-		}
-
-		function selectorSetup (s, dim, update) {
-			return s
-				.append('td')
-				.append('select')
-				.on('change', function () { update.call(heatmap, dim, this.value); });
-		}
+			function selectorSetup (dim, update) {
+				return trow
+					.append('td')
+					.append('select')
+					.on('change', function () { update.call(heatmap, dim.self, this.value); });
+			}
+		});
 	</script>
 </body>
 </html>
