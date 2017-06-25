@@ -957,13 +957,15 @@ class Heatmap extends Widget {
         me.colorsHeatmap = me.interpolateColors(me.loColor, me.mdColor, me.hiColor, me.numColors);
 
         // scale updates
+        me.scaleGradient.domain(me.colorsHeatmap);
         me.setScaleRangesFill();
 
         // visual updates
         me.cells.updateVis('fill');
         me.dims.forEach(function (dim) {
             dim.cellsMini.updateVis('fill');
-            me.colorKey.cells[dim.self].updateVis('fill');
+            me.colorKey.cells[dim.self].updateData(me.colorsHeatmap, me.identity);
+            me.colorKey.cells[dim.self].updateVis('x', 'y', 'width', 'height', 'fill');
         });
     }
 
