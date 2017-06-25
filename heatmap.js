@@ -950,7 +950,7 @@ class Heatmap extends Widget {
         me.row.cellsMini.updateVis('fill');
     }
 
-    updateColors (loColor hiColor) {
+    updateColors (loColor, hiColor) {
         var me = this;
         me.loColor = (loColor || me.loColor);
         me.hiColor = (hiColor || me.hiColor);
