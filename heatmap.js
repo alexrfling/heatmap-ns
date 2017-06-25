@@ -629,7 +629,7 @@ class Heatmap extends Widget {
             me.colorKey.addTitle(me.container.svg, dim.self, dim.title + ' Z-Score', me.options.FONT_SIZE_CK);
 
             if (dim.annotated) {
-                dim.annoTitle = new Title(
+                dim.titleAnno = new Title(
                     me.container.svg,
                     'bold',
                     dim.annoBy,
@@ -870,7 +870,7 @@ class Heatmap extends Widget {
         dim.labelsAnno.updateLabels(values);
 
         // visual updates
-        dim.annoTitle.setText(dim.annoBy);
+        dim.titleAnno.setText(dim.annoBy);
         dim.cellsAnno.updateData(values, me.identity);
         dim.cellsAnno.updateVis('x', 'y', 'width', 'height', 'fill');
         dim.cellsAnno.selection
@@ -973,8 +973,8 @@ class Heatmap extends Widget {
         });
 
         function annoMax () {
-            var colTitleLength = (col.annoTitle ? col.annoTitle.getBox().width : 0);
-            var rowTitleLength = (row.annoTitle ? row.annoTitle.getBox().width : 0);
+            var colTitleLength = (col.titleAnno ? col.titleAnno.getBox().width : 0);
+            var rowTitleLength = (row.titleAnno ? row.titleAnno.getBox().width : 0);
             var colorKeyTitleLength = (me.colorKey ? me.colorKey.titles[me.scalingDim].getBox().width : 0);
 
             return Math.ceil(Math.max(colTitleLength, rowTitleLength, colorKeyTitleLength) + 10);
@@ -999,14 +999,14 @@ class Heatmap extends Widget {
         if (col.annotated) {
             col.cellsSide.anchor = [cells.anchor[0], 0];
             col.cellsAnno.anchor = [row.labelsMini.anchor[0] + row.marginLabelMini, me.marginAnnoTitle];
-            col.annoTitle.anchor = [col.cellsAnno.anchor[0], col.cellsAnno.anchor[1] - me.options.ANNO_TITLE_OFFSET];
+            col.titleAnno.anchor = [col.cellsAnno.anchor[0], col.cellsAnno.anchor[1] - me.options.ANNO_TITLE_OFFSET];
             col.labelsAnno.anchor = [col.cellsAnno.anchor[0] + me.marginAnnoColor + me.options.AXIS_OFFSET, col.cellsAnno.anchor[1]];
         }
 
         if (row.annotated) {
             row.cellsSide.anchor = [0, cells.anchor[1]];
             row.cellsAnno.anchor = [row.labelsMini.anchor[0] + row.marginLabelMini, col.marginAnnoTotal + me.marginAnnoTitle];
-            row.annoTitle.anchor = [row.cellsAnno.anchor[0], row.cellsAnno.anchor[1] - me.options.ANNO_TITLE_OFFSET];
+            row.titleAnno.anchor = [row.cellsAnno.anchor[0], row.cellsAnno.anchor[1] - me.options.ANNO_TITLE_OFFSET];
             row.labelsAnno.anchor = [row.cellsAnno.anchor[0] + me.marginAnnoColor + me.options.AXIS_OFFSET, row.cellsAnno.anchor[1]];
         }
 
@@ -1127,7 +1127,7 @@ class Heatmap extends Widget {
                 dim.cellsSide.updateVis('x', 'y', 'width', 'height');
                 dim.cellsAnno.position();
                 dim.cellsAnno.updateVis('x', 'y', 'width', 'height');
-                dim.annoTitle.position();
+                dim.titleAnno.position();
             }
         });
     }
