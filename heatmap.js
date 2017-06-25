@@ -408,7 +408,7 @@ class Heatmap extends Widget {
             'color-key-cells-none',
             'rect',
             {
-                x: function () { return 0; },
+                x: me.zero,
                 y: function (d) { return me.scaleGradient(d); },
                 width: function () { return me.marginAnnoColor; },
                 height: function () { return me.scaleGradient.bandwidth(); },
@@ -423,7 +423,7 @@ class Heatmap extends Widget {
             'color-key-cells-bucket',
             'rect',
             {
-                x: function () { return 0; },
+                x: me.zero,
                 y: function (d) { return me.scaleBucket(d); },
                 width: function () { return me.marginAnnoColor; },
                 height: function () { return me.scaleBucket.bandwidth(); },
@@ -457,7 +457,7 @@ class Heatmap extends Widget {
                 'color-key-cells-' + dim.self,
                 'rect',
                 {
-                    x: function () { return 0; },
+                    x: me.zero,
                     y: function (d) { return me.scaleGradient(d); },
                     width: function () { return me.marginAnnoColor; },
                     height: function () { return me.scaleGradient.bandwidth(); },
@@ -477,8 +477,8 @@ class Heatmap extends Widget {
                     'cells-side' + dim.self,
                     'rect',
                     {
-                        x: (dim.self === 'col' ? function (d) { return col.scaleCellPosSize(d.key); } : function () { return 0; }),
-                        y: (dim.self === 'row' ? function (d) { return row.scaleCellPosSize(d.key); } : function () { return 0; }),
+                        x: (dim.self === 'col' ? function (d) { return col.scaleCellPosSize(d.key); } : me.zero),
+                        y: (dim.self === 'row' ? function (d) { return row.scaleCellPosSize(d.key); } : me.zero),
                         width: (dim.self === 'col' ? me.cells.attrs.width : function () { return row.marginSideColor - me.options.SIDE_COLOR_OFFSET; }),
                         height: (dim.self === 'row' ? me.cells.attrs.height : function () { return col.marginSideColor - me.options.SIDE_COLOR_OFFSET; }),
                         fill: function (d) { return dim.numToColor(dim.annoToNum(d.annos[dim.annoBy])); }
@@ -492,7 +492,7 @@ class Heatmap extends Widget {
                     'cells-anno-' + dim.self,
                     'rect',
                     {
-                        x: function () { return 0; },
+                        x: me.zero,
                         y: function (d) { return dim.scaleAnnoColor(d); },
                         width: function () { return me.marginAnnoColor; },
                         height: function () { return dim.scaleAnnoColor.bandwidth(); },
