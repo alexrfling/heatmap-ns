@@ -45,8 +45,8 @@ class Heatmap extends Widget {
         me.hiColor = (options.hiColor || 'orange');
         me.numColors = (options.numColors || 256);
         me.colorsHeatmap = (options.colorsHeatmap || me.interpolateColors(me.loColor, me.mdColor, me.hiColor, me.numColors));
-        me.dividersBucket = (options.dividersBucket || [25, 50, 100, 500]);
         me.colorsBucket = (options.colorsBucket || ['red', 'orange', 'yellow', 'gray', 'cornflowerblue']);
+        me.dividersBucket = (options.dividersBucket || [25, 50, 100, 500]);
         col.catScheme = (options.colCatScheme || 'rainbow');
         col.conScheme = (options.colConScheme || 'rainbow');
         col.annoHeatScheme = (options.colAnnoHeatScheme || 'plasma');

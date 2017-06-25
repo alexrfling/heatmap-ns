@@ -38,6 +38,10 @@ Binds _data_ to _chart_ and renders a heatmap inside the widget's parent element
 * _options_ - an object specifying various attributes of the rendering and widget
   * __width__ - the width, in pixels, of the widget. If falsy, the width of the widget will be the same as the width of the widget's parent element (default: `undefined`)
   * __height__ - the height, in pixels, of the widget (default: `400`)
+  * __colClustOrder__ - an array of strings (all of the column names in `data`) indicating the order in which the columns should be displayed in the heatmap (the first element will be the left-most column and the last element will be the right-most column). By default, the columns will be displayed in the order that they appear in `data`
+  * __rowClustOrder__ - an array of strings (all of the row names in `data`) indicating the order in which the rows should be displayed in the heatmap (the first element will be the top-most row and the last element will be the bottom-most row). By default, the rows will be displayed in the order that they appear in `data`
+  * __colAnnotations__ - a CSV-formatted string representing annotations for the columns of the `data` matrix
+  * __rowAnnotations__ - a CSV-formatted string representing annotations for the rows of the `data` matrix
   * __loColor__ - the color for data with negative z-scores (default: `'cornflowerblue'`)
   * __mdColor__ - the color for data with a z-score of 0 (default: `'black'`)
   * __hiColor__ - the color for data with positive z-scores (default: `'orange'`)
@@ -45,18 +49,15 @@ Binds _data_ to _chart_ and renders a heatmap inside the widget's parent element
   * __colorsHeatmap__ - an array of colors (default: an interpolation from __loColor__ to __mdColor__ to __hiColor__ consisting of __numColors__ strings)
   * __colorsBucket__ - an array of strings, of length 1 more than __dividersBucket__, indicating the colors for 'bucket' color scaling (default: `['red', 'orange', 'yellow', 'gray', 'cornflowerblue']`)
   * __dividersBucket__ - an array of numbers, of length 1 less than `bucketColors`, indicating the thresholds for 'bucket' color scaling (default: `[25, 50, 100, 500]`). Data less than `bucketDividers[0]` will be given the color `bucketColors[0]`, data between `bucketDividers[0]` (inclusive) and `bucketDividers[1]` (exclusive) will be given the color `bucketColors[1]`, and so on. Data greater than or equal to `bucketDividers[bucketDividers.length - 1]` will be given the color `bucketColors[bucketColors.length - 1]`
-  * __colAnnotations__ - a CSV-formatted string representing annotations for the columns of the `data` matrix
-  * __rowAnnotations__ - a CSV-formatted string representing annotations for the rows of the `data` matrix
-  * __colClustOrder__ - an array of strings (all of the column names in `data`) indicating the order in which the columns should be displayed in the heatmap (the first element will be the left-most column and the last element will be the right-most column). By default, the columns will be displayed in the order that they appear in `data`
-  * __rowClustOrder__ - an array of strings (all of the row names in `data`) indicating the order in which the rows should be displayed in the heatmap (the first element will be the top-most row and the last element will be the bottom-most row). By default, the rows will be displayed in the order that they appear in `data`
-  * __renderOnBrushEnd__ - if truthy, zoom/pan actions trigger immediate visual updates; otherwise, visual updates are delayed until the end a zoom/pan action (default: `false`)
-  * __categorical__ - if truthy, categorical color schemes are used; otherwise, continuous color schemes are used (default: `true`)
   * __colCatScheme__ - one of `'ns'`, `'google'`, or `'rainbow'` indicating the categorical color scheme to use for non-numerical column annotations (default: `'google'`). Ignored if __categorical__ is falsy
   * __colConScheme__ - one of `'cubehelix'` or `'rainbow'` indicating the continuous color scheme to use for non-numerical column annotations (default: `'rainbow'`). Ignored if __categorical__ is truthy
   * __colAnnoHeatScheme__ - one of `'viridis'`, `'inferno'`, `'magma'`, `'plasma'`, `'warm'`, or `'cool'` indicating the color scheme to use for numerical column annotations (default: `'plasma'`)
   * __rowCatScheme__ - one of `'ns'`, `'google'`, or `'rainbow'` indicating the categorical color scheme to use for non-numerical row annotations (default: `'ns'`). Ignored if __categorical__ is falsy
   * __rowConScheme__ - one of `'cubehelix'` or `'rainbow'` indicating the continuous color scheme to use for non-numerical row annotations (default: `'cubehelix'`). Ignored if __categorical__ is truthy
   * __rowAnnoHeatScheme__ - one of `'viridis'`, `'inferno'`, `'magma'`, `'plasma'`, `'warm'`, or `'cool'` indicating the color scheme to use for numerical row annotations (default: `'magma'`)
+  * __categorical__ - if truthy, categorical color schemes are used; otherwise, continuous color schemes are used (default: `true`)
+  * __scalingDim__ - one of `'col'`, `'row'`, `'none'`, or `'bucket'` indicating how the color of the cells is to be determined (default: `'col'`)
+  * __renderOnBrushEnd__ - if truthy, zoom/pan actions trigger immediate visual updates; otherwise, visual updates are delayed until the end a zoom/pan action (default: `false`)
 
 <a name='resize' href='#resize'>#</a> _chart_.__resize__([_width_[, _height_]])
 
