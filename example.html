@@ -3,13 +3,7 @@
 <head>
 	<script src='d3-helpers/d3/d3.min.js'></script>
 	<script src='d3-helpers/d3-tip/index.js'></script>
-	<script src='d3-helpers/bucketizer.js'></script>
-	<script src='d3-helpers/graphicalElement.js'></script>
-	<script src='d3-helpers/elementCollection.js'></script>
-	<script src='d3-helpers/labels.js'></script>
-	<script src='d3-helpers/svgContainer.js'></script>
-	<script src='d3-helpers/title.js'></script>
-	<script src='d3-helpers/widget.js'></script>
+	<script src='d3-helpers/d3-helpers.js'></script>
 	<script src='heatmap.js'></script>
 	<script src='example-data.js'></script>
 	<link rel='stylesheet' type='text/css' href='d3-helpers/d3-tip/examples/example-styles.css'>
@@ -42,7 +36,7 @@
 			bucketColors: ['#a1d99b', '#74c476', '#41ab5d', '#238b45', '#006d2c'].reverse()
 		};
 
-		var heatmap = new Heatmap('heatmap');
+		var heatmap = new d3.Heatmap('heatmap');
 		heatmap.initialize(heatmapString[TEST_SET_INDEX], options);
 
 		var trow = d3.select('body')
@@ -91,15 +85,15 @@
 					.data(dim.annotypes)
 					.enter()
 					.append('option')
-					.attr('value', Widget.prototype.identity)
-					.text(Widget.prototype.identity);
+					.attr('value', d3.Widget.prototype.identity)
+					.text(d3.Widget.prototype.identity);
 				dropdownSort
 					.selectAll('option')
 					.data(['Clustered Order'].concat(dim.annotypes))
 					.enter()
 					.append('option')
-					.attr('value', Widget.prototype.identity)
-					.text(Widget.prototype.identity);
+					.attr('value', d3.Widget.prototype.identity)
+					.text(d3.Widget.prototype.identity);
 			}
 
 			function selectorSetup (dim, update) {

@@ -1,23 +1,17 @@
 # heatmap-ns
-An interactive heatmap widget made with d3.js.
+Interactive heatmap with d3.js
 
 ![alt text](https://raw.githubusercontent.com/alexrfling/heatmap-ns/master/img/example.png)
 
 ## Overview
-`Heatmap` takes the id of an HTML element, a matrix of data, and optional parameters, and generates an interactive heatmap of the data appended to the HTML element.
+`d3.Heatmap` takes the id of an HTML element, a matrix of data, and optional parameters, and generates an interactive heatmap of the data appended to the HTML element.
 
 ## Boilerplate
 In the head of your HTML document, include:
 ```html
 <script src='d3-helpers/d3/d3.min.js'></script>
 <script src='d3-helpers/d3-tip/index.js'></script>
-<script src='d3-helpers/bucketizer.js'></script>
-<script src='d3-helpers/graphicalElement.js'></script>
-<script src='d3-helpers/elementCollection.js'></script>
-<script src='d3-helpers/labels.js'></script>
-<script src='d3-helpers/svgContainer.js'></script>
-<script src='d3-helpers/title.js'></script>
-<script src='d3-helpers/widget.js'></script>
+<script src='d3-helpers/d3-helpers.js'></script>
 <script src='heatmap.js'></script>
 <link rel='stylesheet' type='text/css' href='d3-helpers/d3-tip/examples/example-styles.css'>
 <link rel='stylesheet' type='text/css' href='d3-helpers/widget.css'>
@@ -26,7 +20,7 @@ In the head of your HTML document, include:
 ## Usage
 
 ### Constructor
-<a name='constructorHeatmap' href='#constructorHeatmap'>#</a> new __Heatmap__(_id_)
+<a name='constructorHeatmap' href='#constructorHeatmap'>#</a> new d3.__Heatmap__(_id_)
 
 Constructs a new Heatmap widget with parent element set to the HTML element in the DOM with id _id_. Note that this does not modify the DOM.
 
@@ -111,7 +105,7 @@ var data = {
 ```
 Create an interactive heatmap of `data`:
 ```js
-var chart = new Heatmap('parent');
+var chart = new d3.Heatmap('parent');
 chart.initialize(data);
 ```
 See <a href='https://github.com/alexrfling/heatmap-ns/blob/master/example.html'>example.html</a> for more example usage.
