@@ -97,37 +97,37 @@
             //
             // For example, when we zoom and pan using the brush for the columns,
             // the only things that need to visually update are:
-            //		* column labels
-            //		* x-positions of the heatmap cells
-            //		* widths of the heatmap cells
-            //		* x-positions of the column side colors
-            //		* widths of the column side colors
+            //      * column labels
+            //      * x-positions of the heatmap cells
+            //      * widths of the heatmap cells
+            //      * x-positions of the column side colors
+            //      * widths of the column side colors
             // Similarly, when doing the same thing to the rows, we need only be
             // concerned with updating:
-            //		* row labels
-            //		* y-positions of the heatmap cells
-            //		* heights of the heatmap cells
-            //		* y-positions of the row side colors
-            //		* heights of the row side colors
+            //      * row labels
+            //      * y-positions of the heatmap cells
+            //      * heights of the heatmap cells
+            //      * y-positions of the row side colors
+            //      * heights of the row side colors
             // Grouping these another way, we see that there are different 'types'
             // of things that get updated:
-            //		* labels (column, row)
-            //		* positions (x, y)
-            //		* sizes (width, height)
-            //		* side colors (column, row)
-            //		* heatmap cells
+            //      * labels (column, row)
+            //      * positions (x, y)
+            //      * sizes (width, height)
+            //      * side colors (column, row)
+            //      * heatmap cells
             // For each of these types, col and row should store a reference (with
             // the same name) to the value of that type that is relevant to them
             // (note that we update the heatmap cells regardless, so we can just
             // store this as a global variable):
-            //		* col.labels = column labels
-            //		  row.labels = row labels
-            //		* col.pos = x
-            //		  row.pos = y
-            //		* col.size = width
-            //		  row.size = height
-            //		* col.cellsSide = column side colors
-            //		  row.cellsSide = row side colors
+            //      * col.labels = column labels
+            //        row.labels = row labels
+            //      * col.pos = x
+            //        row.pos = y
+            //      * col.size = width
+            //        row.size = height
+            //      * col.cellsSide = column side colors
+            //        row.cellsSide = row side colors
             // We can thus create a function which handles the event where either
             // dim has been zoomed/panned, needing only parameter, the dim, whose
             // 'labels', 'pos', 'size', and 'cellsSide' fields will be used (along
@@ -358,8 +358,8 @@
             // In combination with the axes, these make up all the SVG elements.
             // With the exception of the annotation titles and axes, every visual
             // component can be decomposed into 2 parts:
-            //		* group - a g element which gets positioned at an anchor point
-            //		* cells - rect elements which live inside the group
+            //      * group - a g element which gets positioned at an anchor point
+            //      * cells - rect elements which live inside the group
             // When a group is tranlated to a new position, all the elements inside
             // of it move as well, and this makes it so that the coordinates (x and
             // y) of cells are relative their group, not to the SVG as a whole.
@@ -550,12 +550,12 @@
             //
             // The axes provide a visualization for the labels of rows, columns, and
             // annotations. There are 3 parts that go into making a visible axis:
-            //		* scale - a d3.scalePoint object whose domain is the labels and
+            //      * scale - a d3.scalePoint object whose domain is the labels and
             //          range is the pixel coordinate extent in which to display
             //          them
-            //		* axis component - a d3.axis object determining the axis
+            //      * axis component - a d3.axis object determining the axis
             //          orientation (top/bottom/left/right)
-            //		* SVG element - a g element which makes the axis visible
+            //      * SVG element - a g element which makes the axis visible
             // When an axis is to be visually updated, first update its scale, then
             // call its axis component on its SVG element.
             //----------------------------------------------------------------------
@@ -668,12 +668,12 @@
             // The brushes provide a way to zoom and pan on the main heatmap by
             // selecting regions on brushable heatmaps, and they are made up of 2
             // parts:
-            //		* brush component - a d3.brush object (brushX of col, brushY for
+            //      * brush component - a d3.brush object (brushX of col, brushY for
             //          row) which defines important properties of the brush, namely
             //          its extent (the maximum pixel area that the user can brush)
             //          and its interactive behavior (what to do when the user
             //          starts/stops brushing, or while they are brushing)
-            //		* SVG element - a g element which makes the brush visible and
+            //      * SVG element - a g element which makes the brush visible and
             //          usable. By default, it contains 4 rect elements; an overlay
             //          which lets you create a selection, a selection which is
             //          draggable, and 2 'handles' on either side of the selection
@@ -808,7 +808,7 @@
             } else {
 
                 // reset scope
-              	dim.currentScope = [0, dim.names.length];
+                dim.currentScope = [0, dim.names.length];
 
                 // scale updates
                 dim.scaleCellPosSize.domain(dim.names);
@@ -1174,13 +1174,13 @@
                     '#7fff00', '#eead0e', '#00b2ee', '#ee2c2c', '#bf3eff',
                     '#d2b48c', '#6959cd', '#228b22', '#ff7f50', '#7a7a7a'
                 ],
-      			google: [
+                google: [
                     '#3366cc', '#dc3912', '#ff9900', '#109618', '#990099',
                     '#0099c6', '#dd4477', '#66aa00', '#b82e2e', '#316395',
                     '#994499', '#22aa99', '#aaaa11', '#6633cc', '#e67300',
                     '#8b0707', '#651067', '#329262', '#5574a6', '#3b3eac'
                 ],
-      			rainbow: [
+                rainbow: [
                     '#843c39', '#ad494a', '#d6616b', '#e7969c', '#e6550d',
                     '#fd8d3c', '#fdae6b', '#fdd0a2', '#8c6d31', '#bd9e39',
                     '#e7ba52', '#e7cb94', '#637939', '#8ca252', '#b5cf6b',
@@ -1190,12 +1190,12 @@
                     '#bcbddc', '#dadaeb',' #7b4173', '#a55194', '#ce6dbd',
                     '#de9ed6', '#636363', '#969696', '#bdbdbd',' #d9d9d9'
                 ]
-      	  	};
-      	  	var continuousSchemes = {
+            };
+            var continuousSchemes = {
                 cubehelix: d3.interpolateCubehelixDefault,
                 rainbow: d3.interpolateRainbow
-      	  	};
-      	  	var annoHeatSchemes = {
+            };
+            var annoHeatSchemes = {
                 viridis: d3.interpolateViridis,
                 inferno: d3.interpolateInferno,
                 magma: d3.interpolateMagma,
