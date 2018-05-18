@@ -328,7 +328,6 @@
                     me.labels[name] = new d3.Labels(
                         svg,
                         'labels',
-                        labels,
                         margin,
                         me.cells[name].attrs.height,
                         false,
@@ -336,6 +335,8 @@
                         maxLabelLength,
                         'right'
                     );
+                    me.labels[name].updateLabels(labels);
+                    me.labels[name].updateVis();
                 },
 
                 change: function (type) {
@@ -381,9 +382,23 @@
                         return me.scaleCellFill((d.value - ref.mean) / ref.stdev);
                     }
                 },
-                me.data.matrix,
-                me.key
+                {
+                    callbacks: {
+                        mouseover: function (d) {
+                            d3.select(this)
+                                .style('opacity', 0.5);
+                            me.cellTooltip.show(d);
+                        },
+                        mouseout: function () {
+                            d3.select(this)
+                                .style('opacity', 1);
+                            me.cellTooltip.hide();
+                        }
+                    }
+                }
             );
+            me.cells.updateData(me.data.matrix, me.key);
+            me.cells.bindEventListeners();
 
             col.cellsMini = new d3.ElementCollection(
                 me.container.svg,
@@ -395,10 +410,9 @@
                     width: function () { return col.scaleCellMiniPosSize.bandwidth(); },
                     height: function () { return row.scaleCellMiniOtherPosSize.bandwidth(); },
                     fill: me.cells.attrs.fill // inherit fill attribute from cells
-                },
-                me.data.matrix,
-                me.key
+                }
             );
+            col.cellsMini.updateData(me.data.matrix, me.key);
 
             row.cellsMini = new d3.ElementCollection(
                 me.container.svg,
@@ -410,10 +424,9 @@
                     width: function () { return col.scaleCellMiniOtherPosSize.bandwidth(); },
                     height: function () { return row.scaleCellMiniPosSize.bandwidth(); },
                     fill: me.cells.attrs.fill // inherit fill attribute from cells
-                },
-                me.data.matrix,
-                me.key
+                }
             );
+            row.cellsMini.updateData(me.data.matrix, me.key);
 
             me.colorKey.cells.none = new d3.ElementCollection(
                 me.container.svg,
@@ -425,10 +438,9 @@
                     width: function () { return me.marginAnnoColor; },
                     height: function () { return me.scaleGradient.bandwidth(); },
                     fill: me.identity
-                },
-                me.colorsHeatmap,
-                me.identity
+                }
             );
+            me.colorKey.cells.none.updateData(me.colorsHeatmap, me.identity);
 
             me.colorKey.cells.bucket = new d3.ElementCollection(
                 me.container.svg,
@@ -440,23 +452,9 @@
                     width: function () { return me.marginAnnoColor; },
                     height: function () { return me.scaleBucket.bandwidth(); },
                     fill: me.identity
-                },
-                me.colorsBucket,
-                me.identity
+                }
             );
-
-            // attach event listeners
-            me.cells.selection
-                .on('mouseover', function (d) {
-                    d3.select(this)
-                        .style('opacity', 0.5);
-                    me.cellTooltip.show(d);
-                })
-                .on('mouseout', function () {
-                    d3.select(this)
-                        .style('opacity', 1);
-                    me.cellTooltip.hide();
-                });
+            me.colorKey.cells.bucket.updateData(me.colorsBucket, me.identity);
 
             // initialize fills
             me.cells.updateVis('fill');
@@ -474,10 +472,9 @@
                         width: function () { return me.marginAnnoColor; },
                         height: function () { return me.scaleGradient.bandwidth(); },
                         fill: me.identity
-                    },
-                    me.colorsHeatmap,
-                    me.identity
+                    }
                 );
+                me.colorKey.cells[dim.self].updateData(me.colorsHeatmap, me.identity);
 
                 // initialize fills
                 dim.cellsMini.updateVis('fill');
@@ -495,9 +492,23 @@
                             height: (dim.self === 'row' ? me.cells.attrs.height : function () { return col.marginSideColor - me.options.SIDE_COLOR_OFFSET; }),
                             fill: function (d) { return dim.numToColor(dim.annoToNum(d.annos[dim.annoBy])); }
                         },
-                        dim.labelsAnnotated,
-                        me.key
+                        {
+                            callbacks: {
+                                mouseover: function (d) {
+                                    d3.select(this)
+                                        .style('opacity', 0.5);
+                                    dim.tooltip.show(d);
+                                },
+                                mouseout: function () {
+                                    d3.select(this)
+                                        .style('opacity', 1);
+                                    dim.tooltip.hide();
+                                }
+                            }
+                        }
                     );
+                    dim.cellsSide.updateData(dim.labelsAnnotated, me.key);
+                    dim.cellsSide.bindEventListeners();
 
                     dim.cellsAnno = new d3.ElementCollection(
                         me.container.svg,
@@ -510,33 +521,23 @@
                             height: function () { return dim.scaleAnnoColor.bandwidth(); },
                             fill: function (d) { return dim.numToColor(dim.annoToNum(d)); }
                         },
-                        dim.annotations[dim.annoBy],
-                        me.identity
+                        {
+                            callbacks: {
+                                mouseover: function (d) {
+                                    d3.select(this)
+                                        .style('opacity', 0.5);
+                                    dim.annoTooltip.show(d);
+                                },
+                                mouseout: function () {
+                                    d3.select(this)
+                                        .style('opacity', 1);
+                                    dim.annoTooltip.hide();
+                                }
+                            }
+                        }
                     );
-
-                    // attach event listeners
-                    dim.cellsSide.selection
-                        .on('mouseover', function (d) {
-                            d3.select(this)
-                                .style('opacity', 0.5);
-                            dim.tooltip.show(d);
-                        })
-                        .on('mouseout', function () {
-                            d3.select(this)
-                                .style('opacity', 1);
-                            dim.tooltip.hide();
-                        });
-                    dim.cellsAnno.selection
-                        .on('mouseover', function (d) {
-                            d3.select(this)
-                                .style('opacity', 0.5);
-                            dim.annoTooltip.show(d);
-                        })
-                        .on('mouseout', function () {
-                            d3.select(this)
-                                .style('opacity', 1);
-                            dim.annoTooltip.hide();
-                        });
+                    dim.cellsAnno.updateData(dim.annotations[dim.annoBy], me.identity);
+                    dim.cellsAnno.bindEventListeners();
 
                     // initialize fills
                     dim.cellsSide.updateVis('fill');
@@ -564,7 +565,6 @@
                 dim.labels = new d3.Labels(
                     me.container.svg,
                     'labels',
-                    dim.names,
                     dim.sizeHeatmap,
                     me.cells.attrs[dim.size],
                     dim.angled,
@@ -572,11 +572,12 @@
                     function () { return dim.marginLabel - dim.offsetMultiplier * me.options.AXIS_OFFSET; },
                     dim.orientation
                 );
+                dim.labels.updateLabels(dim.names);
+                dim.labels.updateVis();
 
                 dim.labelsMini = new d3.Labels(
                     me.container.svg,
                     'labels',
-                    dim.names,
                     dim.sizeHeatmap,
                     me.cells.attrs[dim.size],
                     dim.angled,
@@ -584,6 +585,8 @@
                     function () { return dim.marginLabelMini - dim.offsetMultiplier * me.options.AXIS_OFFSET; },
                     dim.orientation
                 );
+                dim.labelsMini.updateLabels(dim.names);
+                dim.labelsMini.updateVis();
 
                 me.colorKey.addLabels(
                     me.container.svg,
@@ -598,7 +601,6 @@
                     dim.labelsAnno = new d3.Labels(
                         me.container.svg,
                         'labels',
-                        dim.annotations[dim.annoBy],
                         function () { return dim.marginAnnoHeight; },
                         dim.cellsAnno.attrs.height,
                         false,
@@ -606,6 +608,8 @@
                         function () { return me.marginAnnoLabel - 4 * me.options.AXIS_OFFSET; },
                         'right'
                     );
+                    dim.labelsAnno.updateLabels(dim.annotations[dim.annoBy]);
+                    dim.labelsAnno.updateVis();
                 }
             });
 
@@ -887,17 +891,7 @@
             dim.titleAnno.setText(dim.annoBy);
             dim.cellsAnno.updateData(values, me.identity);
             dim.cellsAnno.updateVis('x', 'y', 'width', 'height', 'fill');
-            dim.cellsAnno.selection
-                .on('mouseover', function (d) {
-                    d3.select(this)
-                        .style('opacity', 0.5);
-                    dim.annoTooltip.show(d);
-                })
-                .on('mouseout', function () {
-                    d3.select(this)
-                        .style('opacity', 1);
-                    dim.annoTooltip.hide();
-                });
+            dim.cellsAnno.bindEventListeners();
             dim.labelsAnno.updateVis();
             dim.cellsSide.selection
                 .transition()
