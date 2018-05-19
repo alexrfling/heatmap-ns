@@ -387,11 +387,27 @@
                         mouseover: function (d) {
                             d3.select(this)
                                 .style('opacity', 0.5);
+                            dims.forEach(function (dim) {
+                                dim.labels.group
+                                    .select('#' + d3.htmlEscape(d[dim.self]))
+                                    .classed('bold', true);
+                                dim.labelsMini.group
+                                    .select('#' + d3.htmlEscape(d[dim.self]))
+                                    .classed('bold', true);
+                            });
                             me.cellTooltip.show(d);
                         },
-                        mouseout: function () {
+                        mouseout: function (d) {
                             d3.select(this)
                                 .style('opacity', 1);
+                            dims.forEach(function (dim) {
+                                dim.labels.group
+                                    .select('#' + d3.htmlEscape(d[dim.self]))
+                                    .classed('bold', false);
+                                dim.labelsMini.group
+                                    .select('#' + d3.htmlEscape(d[dim.self]))
+                                    .classed('bold', false);
+                            });
                             me.cellTooltip.hide();
                         }
                     }
