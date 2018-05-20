@@ -413,8 +413,6 @@
                     }
                 }
             );
-            me.cells.updateData(me.data.matrix, me.key);
-            me.cells.bindEventListeners();
 
             col.cellsMini = new d3.ElementCollection(
                 me.container.svg,
@@ -428,7 +426,6 @@
                     fill: me.cells.attrs.fill // inherit fill attribute from cells
                 }
             );
-            col.cellsMini.updateData(me.data.matrix, me.key);
 
             row.cellsMini = new d3.ElementCollection(
                 me.container.svg,
@@ -442,7 +439,6 @@
                     fill: me.cells.attrs.fill // inherit fill attribute from cells
                 }
             );
-            row.cellsMini.updateData(me.data.matrix, me.key);
 
             me.colorKey.cells.none = new d3.ElementCollection(
                 me.container.svg,
@@ -456,7 +452,6 @@
                     fill: me.identity
                 }
             );
-            me.colorKey.cells.none.updateData(me.colorsHeatmap, me.identity);
 
             me.colorKey.cells.bucket = new d3.ElementCollection(
                 me.container.svg,
@@ -470,12 +465,20 @@
                     fill: me.identity
                 }
             );
+
+            // initialize data
+            me.cells.updateData(me.data.matrix, me.key);
+            col.cellsMini.updateData(me.data.matrix, me.key);
+            row.cellsMini.updateData(me.data.matrix, me.key);
+            me.colorKey.cells.none.updateData(me.colorsHeatmap, me.identity);
             me.colorKey.cells.bucket.updateData(me.colorsBucket, me.identity);
 
             // initialize fills
             me.cells.updateVis('fill');
             me.colorKey.cells.none.updateVis('fill');
             me.colorKey.cells.bucket.updateVis('fill');
+
+            me.cells.bindEventListeners();
 
             dims.forEach(function (dim) {
                 me.colorKey.cells[dim.self] = new d3.ElementCollection(
