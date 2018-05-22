@@ -71,21 +71,7 @@
             me.scalingDim = (options.scalingDim || 'col');
             me.renderOnBrushEnd = (options.renderOnBrushEnd === undefined ? true : options.renderOnBrushEnd);
 
-            // clear out DOM elements inside parent
-            me.destroy();
-
-            // holds all HTML and SVG elements
-            me.container = new d3.SVGContainer(
-                me.id,
-                'd3-helpers-widget-div',
-                'd3-helpers-widget-svg',
-                me.options.SVG_MARGINS,
-                options.width,
-                (options.height || me.options.DEFAULT_HEIGHT),
-                {
-                    onWindowResize: (options.width ? null : function () { me.resize.call(me); })
-                }
-            );
+            me.container = me.newDefaultSVGContainer(options);
 
             //----------------------------------------------------------------------
             // REFERENCES BY DIM
